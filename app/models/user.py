@@ -9,6 +9,7 @@ import bcrypt
 from sqlmodel import (
     Field,
     Relationship,
+    Session as SQLSession,
 )
 
 from app.models.base import BaseModel
@@ -45,4 +46,4 @@ class User(BaseModel, table=True):
 
 
 # Avoid circular imports
-from app.models.session import Session  # noqa: E402
+from app.models.session import Session as ChatSession  # noqa: E402

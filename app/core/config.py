@@ -5,17 +5,9 @@ for the application. It includes environment detection, .env file loading, and
 configuration value parsing.
 """
 
-import json
 import os
 from enum import Enum
 from pathlib import Path
-from typing import (
-    Any,
-    Dict,
-    List,
-    Optional,
-    Union,
-)
 
 from dotenv import load_dotenv
 
@@ -105,12 +97,13 @@ def parse_dict_of_lists_from_env(prefix, default_dict=None):
     # Look for all env vars with the given prefix
     for key, value in os.environ.items():
         if key.startswith(prefix):
-            endpoint = key[len(prefix) :].lower()  # Extract endpoint name
+            endpoint = key[len(prefix):].lower()  # Extract endpoint name
             # Parse the values for this endpoint
             if value:
                 value = value.strip("\"'")
                 if "," in value:
-                    result[endpoint] = [item.strip() for item in value.split(",") if item.strip()]
+                    result[endpoint] = [item.strip()
+                                        for item in value.split(",") if item.strip()]
                 else:
                     result[endpoint] = [value]
 
@@ -131,13 +124,15 @@ class Settings:
         self.ENVIRONMENT = get_environment()
 
         # Application Settings
-        self.PROJECT_NAME = os.getenv("PROJECT_NAME", "FastAPI LangGraph Template")
+        self.PROJECT_NAME = os.getenv(
+            "PROJECT_NAME", "FastAPI LangGraph Template")
         self.VERSION = os.getenv("VERSION", "1.0.0")
         self.DESCRIPTION = os.getenv(
             "DESCRIPTION", "A production-ready FastAPI template with LangGraph and Langfuse integration"
         )
         self.API_V1_STR = os.getenv("API_V1_STR", "/api/v1")
-        self.DEBUG = os.getenv("DEBUG", "false").lower() in ("true", "1", "t", "yes")
+        self.DEBUG = os.getenv("DEBUG", "false").lower() in (
+            "true", "1", "t", "yes")
 
         # CORS Settings
         self.ALLOWED_ORIGINS = parse_list_from_env("ALLOWED_ORIGINS", ["*"])
@@ -145,33 +140,40 @@ class Settings:
         # Langfuse Configuration
         self.LANGFUSE_PUBLIC_KEY = os.getenv("LANGFUSE_PUBLIC_KEY", "")
         self.LANGFUSE_SECRET_KEY = os.getenv("LANGFUSE_SECRET_KEY", "")
-        self.LANGFUSE_HOST = os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com")
+        self.LANGFUSE_HOST = os.getenv(
+            "LANGFUSE_HOST", "https://cloud.langfuse.com")
 
         # LangGraph Configuration
         self.LLM_API_KEY = os.getenv("LLM_API_KEY", "")
         self.LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
-        self.DEFAULT_LLM_TEMPERATURE = float(os.getenv("DEFAULT_LLM_TEMPERATURE", "0.2"))
+        self.DEFAULT_LLM_TEMPERATURE = float(
+            os.getenv("DEFAULT_LLM_TEMPERATURE", "0.2"))
         self.MAX_TOKENS = int(os.getenv("MAX_TOKENS", "2000"))
         self.MAX_LLM_CALL_RETRIES = int(os.getenv("MAX_LLM_CALL_RETRIES", "3"))
 
         # JWT Configuration
         self.JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "")
         self.JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
-        self.JWT_ACCESS_TOKEN_EXPIRE_DAYS = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_DAYS", "30"))
+        self.JWT_ACCESS_TOKEN_EXPIRE_DAYS = int(
+            os.getenv("JWT_ACCESS_TOKEN_EXPIRE_DAYS", "30"))
 
         # Logging Configuration
         self.LOG_DIR = Path(os.getenv("LOG_DIR", "logs"))
         self.LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
-        self.LOG_FORMAT = os.getenv("LOG_FORMAT", "json")  # "json" or "console"
+        self.LOG_FORMAT = os.getenv(
+            "LOG_FORMAT", "json")  # "json" or "console"
 
         # Postgres Configuration
         self.POSTGRES_URL = os.getenv("POSTGRES_URL", "")
         self.POSTGRES_POOL_SIZE = int(os.getenv("POSTGRES_POOL_SIZE", "20"))
-        self.POSTGRES_MAX_OVERFLOW = int(os.getenv("POSTGRES_MAX_OVERFLOW", "10"))
-        self.CHECKPOINT_TABLES = ["checkpoint_blobs", "checkpoint_writes", "checkpoints"]
+        self.POSTGRES_MAX_OVERFLOW = int(
+            os.getenv("POSTGRES_MAX_OVERFLOW", "10"))
+        self.CHECKPOINT_TABLES = ["checkpoint_blobs",
+                                  "checkpoint_writes", "checkpoints"]
 
         # Rate Limiting Configuration
-        self.RATE_LIMIT_DEFAULT = parse_list_from_env("RATE_LIMIT_DEFAULT", ["200 per day", "50 per hour"])
+        self.RATE_LIMIT_DEFAULT = parse_list_from_env(
+            "RATE_LIMIT_DEFAULT", ["200 per day", "50 per hour"])
 
         # Rate limit endpoints defaults
         default_endpoints = {
@@ -194,9 +196,12 @@ class Settings:
 
         # Evaluation Configuration
         self.EVALUATION_LLM = os.getenv("EVALUATION_LLM", "gpt-4o-mini")
-        self.EVALUATION_BASE_URL = os.getenv("EVALUATION_BASE_URL", "https://api.openai.com/v1")
-        self.EVALUATION_API_KEY = os.getenv("EVALUATION_API_KEY", self.LLM_API_KEY)
-        self.EVALUATION_SLEEP_TIME = int(os.getenv("EVALUATION_SLEEP_TIME", "10"))
+        self.EVALUATION_BASE_URL = os.getenv(
+            "EVALUATION_BASE_URL", "https://api.openai.com/v1")
+        self.EVALUATION_API_KEY = os.getenv(
+            "EVALUATION_API_KEY", self.LLM_API_KEY)
+        self.EVALUATION_SLEEP_TIME = int(
+            os.getenv("EVALUATION_SLEEP_TIME", "10"))
 
         # Apply environment-specific settings
         self.apply_environment_settings()
@@ -224,7 +229,8 @@ class Settings:
                 "DEBUG": True,
                 "LOG_LEVEL": "DEBUG",
                 "LOG_FORMAT": "console",
-                "RATE_LIMIT_DEFAULT": ["1000 per day", "1000 per hour"],  # Relaxed for testing
+                # Relaxed for testing
+                "RATE_LIMIT_DEFAULT": ["1000 per day", "1000 per hour"],
             },
         }
 

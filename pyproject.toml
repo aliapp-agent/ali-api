@@ -1,17 +1,11 @@
 [project]
-name = "langgraph-fastapi-template"
+name = "agno-fastapi-template"
 version = "0.1.0"
-description = "LangGraph FastAPI Template"
+description = "Agno FastAPI Template"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.115.12",
-    "langchain>=0.3.25",
-    "langchain-core>=0.3.58",
-    "langchain-openai>=0.3.16",
-    "langfuse==3.0.3",
-    "langgraph>=0.4.1",
-    "langgraph-checkpoint-postgres>=2.0.19",
     "passlib[bcrypt]>=1.7.4",
     "psycopg2-binary>=2.9.10",
     "pydantic[email]>=2.11.1",
@@ -30,9 +24,12 @@ dependencies = [
     "starlette-prometheus>=0.7.0",
     "asgiref>=3.8.1",
     "duckduckgo-search>=3.9.0",
-    "langchain-community>=0.3.20",
     "tqdm>=4.67.1",
     "colorama>=0.4.6",
+    "agno>=1.7.2",
+    "openai>=1.70.0",
+    "anthropic>=0.40.0",
+    "multidict>=6.1.0,!=6.3.0",
 ]
 
 [project.optional-dependencies]
@@ -47,7 +44,7 @@ markers = ["slow: marks tests as slow (deselect with '-m \"not slow\"')"]
 python_files = ["test_*.py", "*_test.py", "tests.py"]
 
 [tool.black]
-line-length = 119
+line-length = 79
 exclude = "venv|migrations"
 
 [tool.flake8]
@@ -81,12 +78,12 @@ disable = [
 ignore = "migrations"
 
 [tool.ruff]
-line-length = 119
+line-length = 79
 exclude = ["migrations", "*.ipynb", "venv"]
 
 [tool.ruff.lint]
 # Enable flake8-bugbear (`B`) rules and docstring (`D`) rules
-select = ["E", "F", "B", "ERA", "D"]
+select = ["E", "F", "B", "ERA", "D", "I", "W", "PL", "PT"]
 # Never enforce `E501` (line length violations).
 ignore = ["E501", "F401", "D203", "D213", "B904", "B008"]
 # Avoid trying to fix flake8-bugbear (`B`) violations.

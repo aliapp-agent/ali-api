@@ -1,47 +1,55 @@
-# This file is a draft migration of the LangGraphAgent class to use Agno instead of LangGraph
+from typing import AsyncGenerator, Optional
 
-from typing import Optional, AsyncGenerator
-from openai import OpenAIError
+from agno.agent import Agent
+from agno.memory.v2.db.sqlite import SqliteMemoryDb
+from agno.memory.v2.memory import Memory
+from agno.models.openai import OpenAIChat
+from agno.storage.sqlite import SqliteStorage
 from asgiref.sync import sync_to_async
-from app.core.config import settings, Environment
+from openai import OpenAIError
+
+from app.core.agno.tools import tools
+from app.core.config import Environment, settings
 from app.core.logging import logger
-from app.core.prompts import SYSTEM_PROMPT
 from app.core.metrics import llm_inference_duration_seconds
-from app.core.langgraph.tools import tools
+from app.core.prompts import SYSTEM_PROMPT
 from app.schemas import Message
 from app.utils import dump_messages, prepare_messages
-from agno.agents import Agent
-from agno.schema import ToolCall, ToolResponse
-from agno.memory.postgres import PostgresMemory
-from agno.callbacks.langfuse import LangfuseCallback
+
+db_file = "tmp/agent.db"
 
 
-class AgnoAgent:
-    def __init__(self):
+memory = Memory(
+    model=OpenAIChat(id="gpt-4.1-nano"),
+    db=SqliteMemoryDb(table_name="user memories", db_file=db_file),
+    delete_memories=True,
+    clear_memories=True,
+)
+
+storage = SqliteStorage(table_name="agent_sessions", db_file=db_file)
+
+
+class AgnoAgent:  # noqa: D101
+    def __init__(self):  # noqa: D107
         self.tools = tools
         self.agent: Optional[Agent] = None
 
     def _build_agent(self):
-        memory = PostgresMemory(  # Optional: you can disable or mock this for dev
-            postgres_url=settings.POSTGRES_URL,
-            tables=settings.CHECKPOINT_TABLES
-        )
 
         self.agent = Agent(
             model=settings.LLM_MODEL,
             tools=self.tools,
+            instructions="",
+            description="",
             memory=memory,
-            config={
-                "temperature": settings.DEFAULT_LLM_TEMPERATURE,
-                "top_p": 0.95 if settings.ENVIRONMENT == Environment.PRODUCTION else 0.8,
-                "presence_penalty": 0.1,
-                "frequency_penalty": 0.1,
-                "max_tokens": settings.MAX_TOKENS,
-            },
-            callbacks=[LangfuseCallback(environment=settings.ENVIRONMENT.value)],
+            storage=storage,
+            add_history_to_messages=True,
+            num_history_runs=3,
+            enable_user_memmories=True,
+            markdown=True,
         )
 
-    async def get_response(self, messages: list[Message], session_id: str, user_id: Optional[str] = None) -> list[dict]:
+    async def get_response(self, messages: list[Message], session_id: str, user_id: Optional[str] = None) -> list[dict]:  # noqa: D102
         if self.agent is None:
             self._build_agent()
 
@@ -57,7 +65,7 @@ class AgnoAgent:
             logger.error("agno_llm_call_failed", error=str(e))
             raise
 
-    async def get_stream_response(
+    async def get_stream_response(  # noqa: D102
         self, messages: list[Message], session_id: str, user_id: Optional[str] = None
     ) -> AsyncGenerator[str, None]:
         if self.agent is None:
@@ -75,7 +83,7 @@ class AgnoAgent:
             logger.error("agno_streaming_failed", error=str(e))
             raise
 
-    async def get_chat_history(self, session_id: str) -> list[Message]:
+    async def get_chat_history(self, session_id: str) -> list[Message]:  # noqa: D102
         if self.agent is None:
             self._build_agent()
 
@@ -86,7 +94,7 @@ class AgnoAgent:
         messages = await sync_to_async(memory.load)(thread_id=session_id)
         return self.__process_messages(messages)
 
-    async def clear_chat_history(self, session_id: str) -> None:
+    async def clear_chat_history(self, session_id: str) -> None:  # noqa: D102
         if self.agent is None:
             self._build_agent()
 

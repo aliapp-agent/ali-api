@@ -169,14 +169,25 @@ def setup_logging() -> None:
         )
 
 
-# Initialize logging
-setup_logging()
+# Initialize logging on first import (lazy)
+_logger_initialized = False
 
-# Create logger instance
-logger = structlog.get_logger()
-logger.info(
-    "logging_initialized",
-    environment=settings.ENVIRONMENT.value,
-    log_level=settings.LOG_LEVEL,
-    log_format=settings.LOG_FORMAT,
-)
+def get_logger():
+    """Get configured logger with lazy initialization."""
+    global _logger_initialized
+    if not _logger_initialized:
+        setup_logging()
+        _logger_initialized = True
+        # Only log initialization in production or when explicitly requested
+        if settings.ENVIRONMENT != Environment.DEVELOPMENT or settings.LOG_LEVEL == "DEBUG":
+            logger = structlog.get_logger()
+            logger.info(
+                "logging_initialized",
+                environment=settings.ENVIRONMENT.value,
+                log_level=settings.LOG_LEVEL,
+                log_format=settings.LOG_FORMAT,
+            )
+    return structlog.get_logger()
+
+# Create logger instance (will be initialized on first use)
+logger = get_logger()
