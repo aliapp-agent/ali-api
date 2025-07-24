@@ -30,6 +30,14 @@ dependencies = [
     "openai>=1.70.0",
     "anthropic>=0.40.0",
     "multidict>=6.1.0,!=6.3.0",
+    "elasticsearch>=8.0.0",
+    "sentence-transformers>=2.2.0",
+    "langchain>=0.1.0",
+    "langchain-community>=0.0.20",
+    "pypdf2>=3.0.0",
+    "python-docx>=0.8.11",
+    "python-multipart>=0.0.6",
+    "pydantic-settings = "ˆ2.0.0",
 ]
 
 [project.optional-dependencies]

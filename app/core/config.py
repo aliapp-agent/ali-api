@@ -10,6 +10,8 @@ from enum import Enum
 from pathlib import Path
 
 from dotenv import load_dotenv
+from pydantic import Field
+from pydantic_settings import BaseSettings
 
 
 # Define environment types
@@ -110,139 +112,89 @@ def parse_dict_of_lists_from_env(prefix, default_dict=None):
     return result
 
 
-class Settings:
-    """Application settings without using pydantic."""
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings
 
-    def __init__(self):
-        """Initialize application settings from environment variables.
 
-        Loads and sets all configuration values from environment variables,
-        with appropriate defaults for each setting. Also applies
-        environment-specific overrides based on the current environment.
-        """
-        # Set the environment
-        self.ENVIRONMENT = get_environment()
-
-        # Application Settings
-        self.PROJECT_NAME = os.getenv(
-            "PROJECT_NAME", "FastAPI LangGraph Template")
-        self.VERSION = os.getenv("VERSION", "1.0.0")
-        self.DESCRIPTION = os.getenv(
-            "DESCRIPTION", "A production-ready FastAPI template with LangGraph and Langfuse integration"
-        )
-        self.API_V1_STR = os.getenv("API_V1_STR", "/api/v1")
-        self.DEBUG = os.getenv("DEBUG", "false").lower() in (
-            "true", "1", "t", "yes")
-
-        # CORS Settings
-        self.ALLOWED_ORIGINS = parse_list_from_env("ALLOWED_ORIGINS", ["*"])
-
-        # Langfuse Configuration
-        self.LANGFUSE_PUBLIC_KEY = os.getenv("LANGFUSE_PUBLIC_KEY", "")
-        self.LANGFUSE_SECRET_KEY = os.getenv("LANGFUSE_SECRET_KEY", "")
-        self.LANGFUSE_HOST = os.getenv(
-            "LANGFUSE_HOST", "https://cloud.langfuse.com")
-
-        # LangGraph Configuration
-        self.LLM_API_KEY = os.getenv("LLM_API_KEY", "")
-        self.LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
-        self.DEFAULT_LLM_TEMPERATURE = float(
-            os.getenv("DEFAULT_LLM_TEMPERATURE", "0.2"))
-        self.MAX_TOKENS = int(os.getenv("MAX_TOKENS", "2000"))
-        self.MAX_LLM_CALL_RETRIES = int(os.getenv("MAX_LLM_CALL_RETRIES", "3"))
-
-        # JWT Configuration
-        self.JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "")
-        self.JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
-        self.JWT_ACCESS_TOKEN_EXPIRE_DAYS = int(
-            os.getenv("JWT_ACCESS_TOKEN_EXPIRE_DAYS", "30"))
-
-        # Logging Configuration
-        self.LOG_DIR = Path(os.getenv("LOG_DIR", "logs"))
-        self.LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
-        self.LOG_FORMAT = os.getenv(
-            "LOG_FORMAT", "json")  # "json" or "console"
-
-        # Postgres Configuration
-        self.POSTGRES_URL = os.getenv("POSTGRES_URL", "")
-        self.POSTGRES_POOL_SIZE = int(os.getenv("POSTGRES_POOL_SIZE", "20"))
-        self.POSTGRES_MAX_OVERFLOW = int(
-            os.getenv("POSTGRES_MAX_OVERFLOW", "10"))
-        self.CHECKPOINT_TABLES = ["checkpoint_blobs",
-                                  "checkpoint_writes", "checkpoints"]
-
-        # Rate Limiting Configuration
-        self.RATE_LIMIT_DEFAULT = parse_list_from_env(
-            "RATE_LIMIT_DEFAULT", ["200 per day", "50 per hour"])
-
-        # Rate limit endpoints defaults
-        default_endpoints = {
-            "chat": ["30 per minute"],
-            "chat_stream": ["20 per minute"],
-            "messages": ["50 per minute"],
-            "register": ["10 per hour"],
-            "login": ["20 per minute"],
-            "root": ["10 per minute"],
-            "health": ["20 per minute"],
-        }
-
-        # Update rate limit endpoints from environment variables
-        self.RATE_LIMIT_ENDPOINTS = default_endpoints.copy()
-        for endpoint in default_endpoints:
-            env_key = f"RATE_LIMIT_{endpoint.upper()}"
-            value = parse_list_from_env(env_key)
-            if value:
-                self.RATE_LIMIT_ENDPOINTS[endpoint] = value
-
-        # Evaluation Configuration
-        self.EVALUATION_LLM = os.getenv("EVALUATION_LLM", "gpt-4o-mini")
-        self.EVALUATION_BASE_URL = os.getenv(
-            "EVALUATION_BASE_URL", "https://api.openai.com/v1")
-        self.EVALUATION_API_KEY = os.getenv(
-            "EVALUATION_API_KEY", self.LLM_API_KEY)
-        self.EVALUATION_SLEEP_TIME = int(
-            os.getenv("EVALUATION_SLEEP_TIME", "10"))
-
-        # Apply environment-specific settings
-        self.apply_environment_settings()
-
-    def apply_environment_settings(self):
-        """Apply environment-specific settings based on the current environment."""
-        env_settings = {
-            Environment.DEVELOPMENT: {
-                "DEBUG": True,
-                "LOG_LEVEL": "DEBUG",
-                "LOG_FORMAT": "console",
-                "RATE_LIMIT_DEFAULT": ["1000 per day", "200 per hour"],
-            },
-            Environment.STAGING: {
-                "DEBUG": False,
-                "LOG_LEVEL": "INFO",
-                "RATE_LIMIT_DEFAULT": ["500 per day", "100 per hour"],
-            },
-            Environment.PRODUCTION: {
-                "DEBUG": False,
-                "LOG_LEVEL": "WARNING",
-                "RATE_LIMIT_DEFAULT": ["200 per day", "50 per hour"],
-            },
-            Environment.TEST: {
-                "DEBUG": True,
-                "LOG_LEVEL": "DEBUG",
-                "LOG_FORMAT": "console",
-                # Relaxed for testing
-                "RATE_LIMIT_DEFAULT": ["1000 per day", "1000 per hour"],
-            },
-        }
-
-        # Get settings for current environment
-        current_env_settings = env_settings.get(self.ENVIRONMENT, {})
-
-        # Apply settings if not explicitly set in environment variables
-        for key, value in current_env_settings.items():
-            env_var_name = key.upper()
-            # Only override if environment variable wasn't explicitly set
-            if env_var_name not in os.environ:
-                setattr(self, key, value)
+class Settings(BaseSettings):
+    """Application settings."""
+    
+    # Environment
+    ENVIRONMENT: Environment = Field(default_factory=get_environment)
+    
+    # Application Settings
+    PROJECT_NAME: str = Field(default="FastAPI LangGraph Template", env="PROJECT_NAME")
+    VERSION: str = Field(default="1.0.0", env="VERSION")
+    DESCRIPTION: str = Field(default="A production-ready FastAPI template with LangGraph and Langfuse integration", env="DESCRIPTION")
+    API_V1_STR: str = Field(default="/api/v1", env="API_V1_STR")
+    DEBUG: bool = Field(default=False, env="DEBUG")
+    
+    # CORS Settings
+    ALLOWED_ORIGINS: str = Field(default="*", env="ALLOWED_ORIGINS")
+    
+    @property
+    def allowed_origins_list(self) -> list[str]:
+        if not self.ALLOWED_ORIGINS or self.ALLOWED_ORIGINS.strip() == "":
+            return ["*"]
+        # Remove quotes if they exist
+        value = self.ALLOWED_ORIGINS.strip("\"'")
+        # Handle single value case
+        if "," not in value:
+            return [value]
+        # Split comma-separated values
+        return [item.strip() for item in value.split(",") if item.strip()]
+    
+    # Langfuse Configuration
+    LANGFUSE_PUBLIC_KEY: str = Field(default="", env="LANGFUSE_PUBLIC_KEY")
+    LANGFUSE_SECRET_KEY: str = Field(default="", env="LANGFUSE_SECRET_KEY")
+    LANGFUSE_HOST: str = Field(default="https://cloud.langfuse.com", env="LANGFUSE_HOST")
+    
+    # LangGraph Configuration
+    LLM_API_KEY: str = Field(default="", env="LLM_API_KEY")
+    LLM_MODEL: str = Field(default="gpt-4o-mini", env="LLM_MODEL")
+    DEFAULT_LLM_TEMPERATURE: float = Field(default=0.2, env="DEFAULT_LLM_TEMPERATURE")
+    MAX_TOKENS: int = Field(default=2000, env="MAX_TOKENS")
+    MAX_LLM_CALL_RETRIES: int = Field(default=3, env="MAX_LLM_CALL_RETRIES")
+    
+    # JWT Configuration
+    JWT_SECRET_KEY: str = Field(default="", env="JWT_SECRET_KEY")
+    JWT_ALGORITHM: str = Field(default="HS256", env="JWT_ALGORITHM")
+    JWT_ACCESS_TOKEN_EXPIRE_DAYS: int = Field(default=30, env="JWT_ACCESS_TOKEN_EXPIRE_DAYS")
+    
+    # Logging Configuration
+    LOG_LEVEL: str = Field(default="INFO", env="LOG_LEVEL")
+    LOG_FORMAT: str = Field(default="json", env="LOG_FORMAT")
+    
+    # Postgres Configuration
+    POSTGRES_URL: str = Field(default="", env="POSTGRES_URL")
+    POSTGRES_POOL_SIZE: int = Field(default=20, env="POSTGRES_POOL_SIZE")
+    POSTGRES_MAX_OVERFLOW: int = Field(default=10, env="POSTGRES_MAX_OVERFLOW")
+    
+    # Rate Limiting Configuration
+    RATE_LIMIT_DEFAULT: str = Field(default="200 per day,50 per hour", env="RATE_LIMIT_DEFAULT")
+    
+    # Elasticsearch Configuration
+    ELASTICSEARCH_URL: str = Field(default="", env="ELASTICSEARCH_URL")
+    ELASTICSEARCH_API_KEY: str = Field(default="", env="ELASTICSEARCH_API_KEY")
+    
+    # RAG Configuration
+    RAG_INDEX_NAME: str = Field(default="agua-clara-ms", env="RAG_INDEX_NAME")
+    RAG_EMBEDDING_MODEL: str = Field(default="sentence-transformers/all-MiniLM-L6-v2", env="RAG_EMBEDDING_MODEL")
+    RAG_CHUNK_SIZE: int = Field(default=1000, env="RAG_CHUNK_SIZE")
+    RAG_CHUNK_OVERLAP: int = Field(default=200, env="RAG_CHUNK_OVERLAP")
+    RAG_MAX_RESULTS: int = Field(default=5, env="RAG_MAX_RESULTS")
+    
+    class Config:
+        env_file = ".env"
+        case_sensitive = True
+        
+    @property
+    def LOG_DIR(self) -> Path:
+        return Path(os.getenv("LOG_DIR", "logs"))
+        
+    @property
+    def CHECKPOINT_TABLES(self) -> list[str]:
+        return ["checkpoint_blobs", "checkpoint_writes", "checkpoints"]
 
 
 # Create settings instance
