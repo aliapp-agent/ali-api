@@ -1,13 +1,14 @@
-# FastAPI LangGraph Agent Template
+# Ali API - FastAPI Agno Agent Template
 
-A production-ready FastAPI template for building AI agent applications with LangGraph integration. This template provides a robust foundation for building scalable, secure, and maintainable AI agent services.
+A production-ready FastAPI template for building AI agent applications with Agno integration. This template provides a robust foundation for building scalable, secure, and maintainable AI agent services with RAG capabilities.
 
 ## 🌟 Features
 
 - **Production-Ready Architecture**
 
   - FastAPI for high-performance async API endpoints
-  - LangGraph integration for AI agent workflows
+  - Agno integration for AI agent workflows with memory and storage
+  - RAG (Retrieval-Augmented Generation) with Elasticsearch
   - Langfuse for LLM observability and monitoring
   - Structured logging with environment-specific formatting
   - Rate limiting with configurable rules
@@ -78,7 +79,7 @@ cp .env.example .env.[development|staging|production] # e.g. .env.development
 POSTGRES_URL="postgresql://:your-db-password@POSTGRES_HOST:POSTGRES_PORT/POSTGRES_DB"
 ```
 
-- You don't have to create the tables manually, the ORM will handle that for you.But if you faced any issues,please run the `schemas.sql` file to create the tables manually.
+- Database tables are managed by Alembic migrations. Run `alembic upgrade head` to create/update tables.
 
 ### Running the Application
 
@@ -90,13 +91,19 @@ POSTGRES_URL="postgresql://:your-db-password@POSTGRES_HOST:POSTGRES_PORT/POSTGRE
 uv sync
 ```
 
-2. Run the application:
+2. Run database migrations:
 
 ```bash
-make [dev|staging|production] # e.g. make dev
+alembic upgrade head
 ```
 
-1. Go to Swagger UI:
+3. Run the application:
+
+```bash
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+4. Go to Swagger UI:
 
 ```bash
 http://localhost:8000/docs
@@ -104,7 +111,13 @@ http://localhost:8000/docs
 
 #### Using Docker
 
-1. Build and run with Docker Compose:
+1. Set your environment:
+
+```bash
+export APP_ENV=development # or staging/production
+```
+
+2. Build and run with Docker Compose:
 
 ```bash
 make docker-build-env ENV=[development|staging|production] # e.g. make docker-build-env ENV=development

@@ -166,24 +166,33 @@ async def register_user(request: Request, user_data: UserCreate):
 
         # Check if user exists
         if await db_service.get_user_by_email(sanitized_email):
-            raise HTTPException(status_code=400, detail="Email already registered")
+            raise HTTPException(
+                status_code=400, detail="Email already registered"
+            )
 
         # Create user
-        user = await db_service.create_user(email=sanitized_email, password=User.hash_password(password))
+        user = await db_service.create_user(
+            email=sanitized_email, password=User.hash_password(password)
+        )
 
         # Create access token
         token = create_access_token(str(user.id))
 
         return UserResponse(id=user.id, email=user.email, token=token)
     except ValueError as ve:
-        logger.error("user_registration_validation_failed", error=str(ve), exc_info=True)
+        logger.error(
+            "user_registration_validation_failed", error=str(ve), exc_info=True
+        )
         raise HTTPException(status_code=422, detail=str(ve))
 
 
 @router.post("/login", response_model=TokenResponse)
 @limiter.limit(settings.RATE_LIMIT_ENDPOINTS["login"][0])
 async def login(
-    request: Request, username: str = Form(...), password: str = Form(...), grant_type: str = Form(default="password")
+    request: Request,
+    username: str = Form(...),
+    password: str = Form(...),
+    grant_type: str = Form(default="password"),
 ):
     """Login a user.
 
@@ -221,7 +230,11 @@ async def login(
             )
 
         token = create_access_token(str(user.id))
-        return TokenResponse(access_token=token.access_token, token_type="bearer", expires_at=token.expires_at)
+        return TokenResponse(
+            access_token=token.access_token,
+            token_type="bearer",
+            expires_at=token.expires_at,
+        )
     except ValueError as ve:
         logger.error("login_validation_failed", error=str(ve), exc_info=True)
         raise HTTPException(status_code=422, detail=str(ve))
@@ -255,15 +268,24 @@ async def create_session(user: User = Depends(get_current_user)):
             expires_at=token.expires_at.isoformat(),
         )
 
-        return SessionResponse(session_id=session_id, name=session.name, token=token)
+        return SessionResponse(
+            session_id=session_id, name=session.name, token=token
+        )
     except ValueError as ve:
-        logger.error("session_creation_validation_failed", error=str(ve), user_id=user.id, exc_info=True)
+        logger.error(
+            "session_creation_validation_failed",
+            error=str(ve),
+            user_id=user.id,
+            exc_info=True,
+        )
         raise HTTPException(status_code=422, detail=str(ve))
 
 
 @router.patch("/session/{session_id}/name", response_model=SessionResponse)
 async def update_session_name(
-    session_id: str, name: str = Form(...), current_session: Session = Depends(get_current_session)
+    session_id: str,
+    name: str = Form(...),
+    current_session: Session = Depends(get_current_session),
 ):
     """Update a session's name.
 
@@ -283,22 +305,35 @@ async def update_session_name(
 
         # Verify the session ID matches the authenticated session
         if sanitized_session_id != sanitized_current_session:
-            raise HTTPException(status_code=403, detail="Cannot modify other sessions")
+            raise HTTPException(
+                status_code=403, detail="Cannot modify other sessions"
+            )
 
         # Update the session name
-        session = await db_service.update_session_name(sanitized_session_id, sanitized_name)
+        session = await db_service.update_session_name(
+            sanitized_session_id, sanitized_name
+        )
 
         # Create a new token (not strictly necessary but maintains consistency)
         token = create_access_token(sanitized_session_id)
 
-        return SessionResponse(session_id=sanitized_session_id, name=session.name, token=token)
+        return SessionResponse(
+            session_id=sanitized_session_id, name=session.name, token=token
+        )
     except ValueError as ve:
-        logger.error("session_update_validation_failed", error=str(ve), session_id=session_id, exc_info=True)
+        logger.error(
+            "session_update_validation_failed",
+            error=str(ve),
+            session_id=session_id,
+            exc_info=True,
+        )
         raise HTTPException(status_code=422, detail=str(ve))
 
 
 @router.delete("/session/{session_id}")
-async def delete_session(session_id: str, current_session: Session = Depends(get_current_session)):
+async def delete_session(
+    session_id: str, current_session: Session = Depends(get_current_session)
+):
     """Delete a session for the authenticated user.
 
     Args:
@@ -315,14 +350,25 @@ async def delete_session(session_id: str, current_session: Session = Depends(get
 
         # Verify the session ID matches the authenticated session
         if sanitized_session_id != sanitized_current_session:
-            raise HTTPException(status_code=403, detail="Cannot delete other sessions")
+            raise HTTPException(
+                status_code=403, detail="Cannot delete other sessions"
+            )
 
         # Delete the session
         await db_service.delete_session(sanitized_session_id)
 
-        logger.info("session_deleted", session_id=session_id, user_id=current_session.user_id)
+        logger.info(
+            "session_deleted",
+            session_id=session_id,
+            user_id=current_session.user_id,
+        )
     except ValueError as ve:
-        logger.error("session_deletion_validation_failed", error=str(ve), session_id=session_id, exc_info=True)
+        logger.error(
+            "session_deletion_validation_failed",
+            error=str(ve),
+            session_id=session_id,
+            exc_info=True,
+        )
         raise HTTPException(status_code=422, detail=str(ve))
 
 
@@ -347,5 +393,10 @@ async def get_user_sessions(user: User = Depends(get_current_user)):
             for session in sessions
         ]
     except ValueError as ve:
-        logger.error("get_sessions_validation_failed", user_id=user.id, error=str(ve), exc_info=True)
+        logger.error(
+            "get_sessions_validation_failed",
+            user_id=user.id,
+            error=str(ve),
+            exc_info=True,
+        )
         raise HTTPException(status_code=422, detail=str(ve))

@@ -12,7 +12,9 @@ from typing import (
     Union,
 )
 
-from langfuse.api.resources.commons.types.trace_with_details import TraceWithDetails
+from langfuse.api.resources.commons.types.trace_with_details import (
+    TraceWithDetails,
+)
 
 from app.core.logging import logger
 from evals.schemas import ScoreSchema
@@ -36,11 +38,15 @@ def format_messages(messages: list[dict]) -> str:
                 else f"tool {message.get('name')}: {message.get('content')}"
             )
         elif message["content"]:
-            formatted_messages.append(f"{message['type']}: {message['content']}")
+            formatted_messages.append(
+                f"{message['type']}: {message['content']}"
+            )
     return "\n".join(formatted_messages)
 
 
-def get_input_output(trace: TraceWithDetails) -> Tuple[Optional[str], Optional[str]]:
+def get_input_output(
+    trace: TraceWithDetails,
+) -> Tuple[Optional[str], Optional[str]]:
     """Extract and format input and output messages from a trace.
 
     Args:
@@ -78,7 +84,9 @@ def initialize_report(model_name: str) -> Dict[str, Any]:
     }
 
 
-def initialize_metrics_summary(report: Dict[str, Any], metrics: List[Dict[str, str]]) -> None:
+def initialize_metrics_summary(
+    report: Dict[str, Any], metrics: List[Dict[str, str]]
+) -> None:
     """Initialize metrics summary in the report.
 
     Args:
@@ -86,11 +94,19 @@ def initialize_metrics_summary(report: Dict[str, Any], metrics: List[Dict[str, s
         metrics: List of metric definitions.
     """
     for metric in metrics:
-        report["metrics_summary"][metric["name"]] = {"success_count": 0, "failure_count": 0, "avg_score": 0.0}
+        report["metrics_summary"][metric["name"]] = {
+            "success_count": 0,
+            "failure_count": 0,
+            "avg_score": 0.0,
+        }
 
 
 def update_success_metrics(
-    report: Dict[str, Any], trace_id: str, metric_name: str, score: ScoreSchema, trace_results: Dict[str, Any]
+    report: Dict[str, Any],
+    trace_id: str,
+    metric_name: str,
+    score: ScoreSchema,
+    trace_results: Dict[str, Any],
 ) -> None:
     """Update metrics for a successful evaluation.
 
@@ -112,7 +128,10 @@ def update_success_metrics(
 
 
 def update_failure_metrics(
-    report: Dict[str, Any], trace_id: str, metric_name: str, trace_results: Dict[str, Any]
+    report: Dict[str, Any],
+    trace_id: str,
+    metric_name: str,
+    trace_results: Dict[str, Any],
 ) -> None:
     """Update metrics for a failed evaluation.
 
@@ -122,12 +141,17 @@ def update_failure_metrics(
         metric_name: Name of the metric.
         trace_results: Dictionary to store trace results.
     """
-    trace_results[trace_id]["metrics_results"][metric_name] = {"success": False}
+    trace_results[trace_id]["metrics_results"][metric_name] = {
+        "success": False
+    }
     report["metrics_summary"][metric_name]["failure_count"] += 1
 
 
 def process_trace_results(
-    report: Dict[str, Any], trace_id: str, trace_results: Dict[str, Any], metrics_count: int
+    report: Dict[str, Any],
+    trace_id: str,
+    trace_results: Dict[str, Any],
+    metrics_count: int,
 ) -> None:
     """Process results for a single trace.
 
@@ -141,15 +165,22 @@ def process_trace_results(
         trace_results[trace_id]["success"] = True
         report["successful_traces"] += 1
         report["successful_traces_details"].append(
-            {"trace_id": trace_id, "metrics_results": trace_results[trace_id]["metrics_results"]}
+            {
+                "trace_id": trace_id,
+                "metrics_results": trace_results[trace_id]["metrics_results"],
+            }
         )
     else:
         report["failed_traces"] += 1
         report["failed_traces_details"].append(
             {
                 "trace_id": trace_id,
-                "metrics_evaluated": trace_results[trace_id]["metrics_evaluated"],
-                "metrics_succeeded": trace_results[trace_id]["metrics_succeeded"],
+                "metrics_evaluated": trace_results[trace_id][
+                    "metrics_evaluated"
+                ],
+                "metrics_succeeded": trace_results[trace_id][
+                    "metrics_succeeded"
+                ],
                 "metrics_results": trace_results[trace_id]["metrics_results"],
             }
         )
@@ -163,7 +194,9 @@ def calculate_avg_scores(report: Dict[str, Any]) -> None:
     """
     for _, data in report["metrics_summary"].items():
         if data["success_count"] > 0:
-            data["avg_score"] = round(data["avg_score"] / data["success_count"], 2)
+            data["avg_score"] = round(
+                data["avg_score"] / data["success_count"], 2
+            )
 
 
 def generate_report(report: Dict[str, Any]) -> str:
@@ -175,11 +208,15 @@ def generate_report(report: Dict[str, Any]) -> str:
     Returns:
         str: Path to the generated report file.
     """
-    report_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "reports")
+    report_dir = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "reports"
+    )
     os.makedirs(report_dir, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    report_path = os.path.join(report_dir, f"evaluation_report_{timestamp}.json")
+    report_path = os.path.join(
+        report_dir, f"evaluation_report_{timestamp}.json"
+    )
 
     with open(report_path, "w") as f:
         json.dump(report, f, indent=2)

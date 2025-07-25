@@ -17,7 +17,9 @@ from app.constants.validation import (
 )
 
 
-def sanitize_string(value: str, max_length: int = 1000, strict: bool = False) -> str:
+def sanitize_string(
+    value: str, max_length: int = 1000, strict: bool = False
+) -> str:
     """Sanitize a string to prevent XSS and other injection attacks.
 
     Args:
@@ -48,7 +50,8 @@ def sanitize_string(value: str, max_length: int = 1000, strict: bool = False) ->
         if pattern.search(value):
             if strict:
                 raise ValueError(
-                    "String contains potentially dangerous content")
+                    "String contains potentially dangerous content"
+                )
             else:
                 value = pattern.sub("", value)
 
@@ -57,7 +60,8 @@ def sanitize_string(value: str, max_length: int = 1000, strict: bool = False) ->
         if pattern.search(value):
             if strict:
                 raise ValueError(
-                    "String contains potentially harmful SQL patterns")
+                    "String contains potentially harmful SQL patterns"
+                )
             else:
                 value = pattern.sub("", value)
 
@@ -153,12 +157,12 @@ def validate_password_strength(password: str) -> bool:
         ValueError: If the password is not strong enough with detailed reason
     """
     from app.constants.validation import (
-        PASSWORD_MIN_LENGTH,
-        PASSWORD_MAX_LENGTH,
-        PASSWORD_UPPERCASE_REGEX,
-        PASSWORD_LOWERCASE_REGEX,
         PASSWORD_DIGIT_REGEX,
+        PASSWORD_LOWERCASE_REGEX,
+        PASSWORD_MAX_LENGTH,
+        PASSWORD_MIN_LENGTH,
         PASSWORD_SPECIAL_CHAR_REGEX,
+        PASSWORD_UPPERCASE_REGEX,
     )
 
     # Check length constraints
@@ -183,13 +187,22 @@ def validate_password_strength(password: str) -> bool:
 
     # Check against common weak passwords
     common_weak_passwords = {
-        "password", "123456", "password123", "admin", "qwerty",
-        "letmein", "welcome", "monkey", "dragon", "master"
+        "password",
+        "123456",
+        "password123",
+        "admin",
+        "qwerty",
+        "letmein",
+        "welcome",
+        "monkey",
+        "dragon",
+        "master",
     }
 
     if password.lower() in common_weak_passwords:
         raise ValueError(
-            "Password is too common. Please choose a stronger password")
+            "Password is too common. Please choose a stronger password"
+        )
 
     return True
 
@@ -231,9 +244,9 @@ def validate_jwt_token(token: str) -> str:
         ValueError: If the token format is invalid
     """
     from app.constants.validation import (
-        JWT_TOKEN_REGEX,
-        JWT_TOKEN_MIN_LENGTH,
         JWT_TOKEN_MAX_LENGTH,
+        JWT_TOKEN_MIN_LENGTH,
+        JWT_TOKEN_REGEX,
     )
 
     # Basic length validation

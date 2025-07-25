@@ -1,24 +1,13 @@
 """This file contains the database service for the application."""
 
-from typing import (
-    List,
-    Optional,
-)
+from typing import List, Optional
 
 from fastapi import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.pool import QueuePool
-from sqlmodel import (
-    Session,
-    SQLModel,
-    create_engine,
-    select,
-)
+from sqlmodel import Session, SQLModel, create_engine, select
 
-from app.core.config import (
-    Environment,
-    settings,
-)
+from app.core.config import Environment, settings
 from app.core.logging import logger
 from app.models.session import Session as ChatSession
 from app.models.user import User
@@ -54,14 +43,18 @@ class DatabaseService:
 
             logger.info(
                 "database_initialized",
-                environment=settings.ENVIRONMENT.value,
+                environment=settings.APP_ENV.value,
                 pool_size=pool_size,
                 max_overflow=max_overflow,
             )
+
         except SQLAlchemyError as e:
-            logger.error("database_initialization_error", error=str(e), environment=settings.ENVIRONMENT.value)
-            # In production, don't raise - allow app to start even with DB issues
-            if settings.ENVIRONMENT != Environment.PRODUCTION:
+            logger.error(
+                "database_initialization_error",
+                error=str(e),
+                environment=settings.APP_ENV.value,
+            )
+            if settings.APP_ENV != Environment.PRODUCTION:
                 raise
 
     async def create_user(self, email: str, password: str) -> User:
@@ -128,7 +121,9 @@ class DatabaseService:
             logger.info("user_deleted", email=email)
             return True
 
-    async def create_session(self, session_id: str, user_id: int, name: str = "") -> ChatSession:
+    async def create_session(
+        self, session_id: str, user_id: int, name: str = ""
+    ) -> ChatSession:
         """Create a new chat session.
 
         Args:
@@ -140,11 +135,18 @@ class DatabaseService:
             ChatSession: The created session
         """
         with Session(self.engine) as session:
-            chat_session = ChatSession(id=session_id, user_id=user_id, name=name)
+            chat_session = ChatSession(
+                id=session_id, user_id=user_id, name=name
+            )
             session.add(chat_session)
             session.commit()
             session.refresh(chat_session)
-            logger.info("session_created", session_id=session_id, user_id=user_id, name=name)
+            logger.info(
+                "session_created",
+                session_id=session_id,
+                user_id=user_id,
+                name=name,
+            )
             return chat_session
 
     async def delete_session(self, session_id: str) -> bool:
@@ -189,11 +191,17 @@ class DatabaseService:
             List[ChatSession]: List of user's sessions
         """
         with Session(self.engine) as session:
-            statement = select(ChatSession).where(ChatSession.user_id == user_id).order_by(ChatSession.created_at)
+            statement = (
+                select(ChatSession)
+                .where(ChatSession.user_id == user_id)
+                .order_by(ChatSession.created_at)
+            )
             sessions = session.exec(statement).all()
             return sessions
 
-    async def update_session_name(self, session_id: str, name: str) -> ChatSession:
+    async def update_session_name(
+        self, session_id: str, name: str
+    ) -> ChatSession:
         """Update a session's name.
 
         Args:
@@ -209,13 +217,17 @@ class DatabaseService:
         with Session(self.engine) as session:
             chat_session = session.get(ChatSession, session_id)
             if not chat_session:
-                raise HTTPException(status_code=404, detail="Session not found")
+                raise HTTPException(
+                    status_code=404, detail="Session not found"
+                )
 
             chat_session.name = name
             session.add(chat_session)
             session.commit()
             session.refresh(chat_session)
-            logger.info("session_name_updated", session_id=session_id, name=name)
+            logger.info(
+                "session_name_updated", session_id=session_id, name=name
+            )
             return chat_session
 
     def get_session_maker(self):

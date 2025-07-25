@@ -23,8 +23,15 @@ class Message(BaseModel):
 
     model_config = {"extra": "ignore"}
 
-    role: Literal["user", "assistant", "system"] = Field(..., description="The role of the message sender")
-    content: str = Field(..., description="The content of the message", min_length=1, max_length=3000)
+    role: Literal["user", "assistant", "system"] = Field(
+        ..., description="The role of the message sender"
+    )
+    content: str = Field(
+        ...,
+        description="The content of the message",
+        min_length=1,
+        max_length=3000,
+    )
 
     @field_validator("content")
     @classmethod
@@ -42,7 +49,9 @@ class Message(BaseModel):
         """
         # Check for potentially harmful content
         if re.search(r"<script.*?>.*?</script>", v, re.IGNORECASE | re.DOTALL):
-            raise ValueError("Content contains potentially harmful script tags")
+            raise ValueError(
+                "Content contains potentially harmful script tags"
+            )
 
         # Check for null bytes
         if "\0" in v:
@@ -72,7 +81,9 @@ class ChatResponse(BaseModel):
         messages: List of messages in the conversation.
     """
 
-    messages: List[Message] = Field(..., description="List of messages in the conversation")
+    messages: List[Message] = Field(
+        ..., description="List of messages in the conversation"
+    )
 
 
 class StreamResponse(BaseModel):
@@ -83,5 +94,9 @@ class StreamResponse(BaseModel):
         done: Whether the stream is complete.
     """
 
-    content: str = Field(default="", description="The content of the current chunk")
-    done: bool = Field(default=False, description="Whether the stream is complete")
+    content: str = Field(
+        default="", description="The content of the current chunk"
+    )
+    done: bool = Field(
+        default=False, description="Whether the stream is complete"
+    )

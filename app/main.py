@@ -1,20 +1,16 @@
 """This file contains the main application entry point."""
 
-from contextlib import asynccontextmanager
-from datetime import datetime
-from typing import (
-    Any,
-    Dict,
-)
 import traceback
 import uuid
+from contextlib import asynccontextmanager
+from datetime import datetime
 
 from dotenv import load_dotenv
 from fastapi import (
     FastAPI,
+    HTTPException,
     Request,
     status,
-    HTTPException,
 )
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,24 +19,24 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app.api.v1.api import api_router
-from app.core.config import settings
-from app.core.limiter import limiter
-from app.core.logging import logger
-from app.core.metrics import setup_metrics
-from app.core.middleware import MetricsMiddleware
-from app.services.database import database_service
-from app.exceptions import (
-    APIError,
-    AuthenticationError,
-    DatabaseError,
-    ValidationError,
-)
 from app.constants.http import (
     HTTP_422_UNPROCESSABLE_ENTITY,
     HTTP_500_INTERNAL_SERVER_ERROR,
     HTTP_503_SERVICE_UNAVAILABLE,
     SECURITY_HEADERS,
 )
+from app.core.config import settings
+from app.core.limiter import limiter
+from app.core.logging import logger
+from app.core.metrics import setup_metrics
+from app.core.middleware import MetricsMiddleware
+from app.exceptions import (
+    APIError,
+    AuthenticationError,
+    DatabaseError,
+    ValidationError,
+)
+from app.services.database import database_service
 
 # Load environment variables
 load_dotenv()
@@ -49,11 +45,15 @@ load_dotenv()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Handle application startup and shutdown events."""
+    # Set startup time for health check uptime calculation
+    app.state.start_time = datetime.now()
+
     logger.info(
         "application_startup",
         project_name=settings.PROJECT_NAME,
         version=settings.VERSION,
         api_prefix=settings.API_V1_STR,
+        startup_time=app.state.start_time.isoformat(),
     )
     yield
     logger.info("application_shutdown")
@@ -80,7 +80,9 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Exception handlers
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+):
     """Handle validation errors from request data.
 
     Args:
@@ -105,13 +107,16 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     # Format the errors to be more user-friendly
     formatted_errors = []
     for error in exc.errors():
-        loc = " -> ".join([str(loc_part)
-                          for loc_part in error["loc"] if loc_part != "body"])
-        formatted_errors.append({
-            "field": loc,
-            "message": error["msg"],
-            "type": error.get("type", "validation_error")
-        })
+        loc = " -> ".join(
+            [str(loc_part) for loc_part in error["loc"] if loc_part != "body"]
+        )
+        formatted_errors.append(
+            {
+                "field": loc,
+                "message": error["msg"],
+                "type": error.get("type", "validation_error"),
+            }
+        )
 
     response = JSONResponse(
         status_code=HTTP_422_UNPROCESSABLE_ENTITY,
@@ -183,7 +188,9 @@ async def api_exception_handler(request: Request, exc: APIError):
 
 
 @app.exception_handler(AuthenticationError)
-async def authentication_exception_handler(request: Request, exc: AuthenticationError):
+async def authentication_exception_handler(
+    request: Request, exc: AuthenticationError
+):
     """Handle authentication errors.
 
     Args:
@@ -284,7 +291,7 @@ async def validation_error_handler(request: Request, exc: ValidationError):
         error_id=error_id,
         error_type=type(exc).__name__,
         message=str(exc),
-        field=getattr(exc, 'field', None),
+        field=getattr(exc, "field", None),
         path=request.url.path,
         method=request.method,
         client_host=request.client.host if request.client else "unknown",
@@ -298,10 +305,10 @@ async def validation_error_handler(request: Request, exc: ValidationError):
         "path": request.url.path,
     }
 
-    if hasattr(exc, 'field') and exc.field:
+    if hasattr(exc, "field") and exc.field:
         response_data["field"] = exc.field
 
-    if hasattr(exc, 'value') and exc.value is not None:
+    if hasattr(exc, "value") and exc.value is not None:
         response_data["value"] = str(exc.value)
 
     response = JSONResponse(
@@ -384,7 +391,7 @@ async def general_exception_handler(request: Request, exc: Exception):
     )
 
     # Don't expose internal error details in production
-    if settings.ENVIRONMENT.value == "production":
+    if settings.APP_ENV.value == "production":
         message = "An internal server error occurred. Please try again later."
     else:
         message = f"Internal server error: {str(exc)}"
@@ -419,6 +426,9 @@ app.add_middleware(
 # Include API router
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
+# Import deep health check endpoints
+from app import deep_health  # noqa: E402, F401
+
 
 @app.get("/")
 @limiter.limit(settings.RATE_LIMIT_ENDPOINTS["root"][0])
@@ -449,26 +459,77 @@ async def health_check(request: Request) -> JSONResponse:
         # Check database connectivity
         db_healthy = await database_service.health_check()
 
-        # Check other components (can be extended)
+        # Check RAG service health
+        rag_health = {}
+        try:
+            from app.services.rag import rag_service
+            rag_health = await rag_service.health_check()
+            rag_healthy = rag_health.get("status") == "healthy"
+        except Exception as e:
+            logger.warning("rag_health_check_failed", error=str(e))
+            rag_healthy = False
+            rag_health = {"status": "unhealthy", "error": str(e)}
+
+        # Check Agno agent health (if available)
+        agno_healthy = True
+        agno_health = {}
+        try:
+            from app.core.agno.graph import AgnoAgent
+            agent = AgnoAgent()
+            agno_health = await agent.health_check()
+            agno_healthy = agno_health.get("status") == "healthy"
+        except Exception as e:
+            logger.warning("agno_health_check_failed", error=str(e))
+            agno_healthy = False
+            agno_health = {"status": "unhealthy", "error": str(e)}
+
+        # Detailed component status
         components = {
             "api": "healthy",
             "database": "healthy" if db_healthy else "unhealthy",
+            "rag_service": "healthy" if rag_healthy else "unhealthy",
+            "agno_agent": "healthy" if agno_healthy else "unhealthy",
         }
 
-        overall_status = "healthy" if all(
-            status == "healthy" for status in components.values()
-        ) else "degraded"
+        # Add detailed component information
+        component_details = {
+            "database": {"connected": db_healthy},
+            "rag_service": rag_health,
+            "agno_agent": agno_health,
+        }
+
+        # Calculate overall health status
+        critical_components = ["api", "database"]
+
+        critical_healthy = all(
+            components[comp] == "healthy" for comp in critical_components
+        )
+        all_healthy = all(status == "healthy" for status in components.values())
+
+        if all_healthy:
+            overall_status = "healthy"
+        elif critical_healthy:
+            overall_status = "degraded"
+        else:
+            overall_status = "unhealthy"
 
         response_data = {
             "status": overall_status,
             "version": settings.VERSION,
             "environment": settings.ENVIRONMENT.value,
             "components": components,
+            "component_details": component_details,
             "timestamp": datetime.now().isoformat(),
+            "uptime_seconds": (datetime.now() - app.state.start_time).total_seconds() if hasattr(app.state, 'start_time') else None,
         }
 
-        # If any component is unhealthy, set the appropriate status code
-        status_code = status.HTTP_200_OK if overall_status == "healthy" else HTTP_503_SERVICE_UNAVAILABLE
+        # Set appropriate status code based on health
+        if overall_status == "healthy":
+            status_code = status.HTTP_200_OK
+        elif overall_status == "degraded":
+            status_code = status.HTTP_200_OK  # Still functional, just degraded
+        else:  # unhealthy
+            status_code = HTTP_503_SERVICE_UNAVAILABLE
 
         response = JSONResponse(content=response_data, status_code=status_code)
 

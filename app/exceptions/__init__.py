@@ -4,10 +4,10 @@ This module defines custom exception classes that provide better error handling
 and more specific error messages throughout the application.
 """
 
+from .api import *
 from .auth import *
 from .database import *
 from .validation import *
-from .api import *
 
 __all__ = [
     # Authentication exceptions
@@ -18,14 +18,12 @@ __all__ = [
     "SessionNotFoundError",
     "UserNotFoundError",
     "InvalidCredentialsError",
-
     # Database exceptions
     "DatabaseConnectionError",
     "DatabaseOperationError",
     "RecordNotFoundError",
     "DuplicateRecordError",
     "DatabaseTimeoutError",
-
     # Validation exceptions
     "ValidationError",
     "InvalidInputError",
@@ -34,7 +32,6 @@ __all__ = [
     "InvalidSessionIdError",
     "StringTooLongError",
     "SecurityViolationError",
-
     # API exceptions
     "APIError",
     "RateLimitExceededError",

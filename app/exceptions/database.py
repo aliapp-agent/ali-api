@@ -6,7 +6,11 @@ from typing import Optional
 class DatabaseError(Exception):
     """Base class for database-related errors."""
 
-    def __init__(self, message: str = "Database operation failed", details: Optional[str] = None):
+    def __init__(
+        self,
+        message: str = "Database operation failed",
+        details: Optional[str] = None,
+    ):
         self.message = message
         self.details = details
         super().__init__(self.message)
@@ -20,7 +24,11 @@ class DatabaseError(Exception):
 class DatabaseConnectionError(DatabaseError):
     """Raised when database connection fails."""
 
-    def __init__(self, message: str = "Failed to connect to database", host: Optional[str] = None):
+    def __init__(
+        self,
+        message: str = "Failed to connect to database",
+        host: Optional[str] = None,
+    ):
         self.host = host
         if host:
             message = f"{message} at {host}"
@@ -40,7 +48,9 @@ class DatabaseOperationError(DatabaseError):
 class RecordNotFoundError(DatabaseError):
     """Raised when a database record is not found."""
 
-    def __init__(self, table: str, identifier: str, identifier_type: str = "ID"):
+    def __init__(
+        self, table: str, identifier: str, identifier_type: str = "ID"
+    ):
         self.table = table
         self.identifier = identifier
         self.identifier_type = identifier_type

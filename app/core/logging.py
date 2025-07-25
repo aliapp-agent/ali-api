@@ -10,11 +10,7 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import (
-    Any,
-    Dict,
-    List,
-)
+from typing import Any, List
 
 import structlog
 
@@ -24,7 +20,12 @@ from app.core.config import (
 )
 
 # Ensure log directory exists
-settings.LOG_DIR.mkdir(parents=True, exist_ok=True)
+log_dir = (
+    Path(settings.LOG_DIR)
+    if isinstance(settings.LOG_DIR, str)
+    else settings.LOG_DIR
+)
+log_dir.mkdir(parents=True, exist_ok=True)
 
 
 def get_log_file_path() -> Path:
@@ -33,8 +34,15 @@ def get_log_file_path() -> Path:
     Returns:
         Path: The path to the log file
     """
-    env_prefix = settings.ENVIRONMENT.value
-    return settings.LOG_DIR / f"{env_prefix}-{datetime.now().strftime('%Y-%m-%d')}.jsonl"
+    log_dir = (
+        Path(settings.LOG_DIR)
+        if isinstance(settings.LOG_DIR, str)
+        else settings.LOG_DIR
+    )
+    env_prefix = settings.APP_ENV.value
+    return (
+        log_dir / f"{env_prefix}-{datetime.now().strftime('%Y-%m-%d')}.jsonl"
+    )
 
 
 class JsonlFileHandler(logging.Handler):
@@ -53,14 +61,16 @@ class JsonlFileHandler(logging.Handler):
         """Emit a record to the JSONL file."""
         try:
             log_entry = {
-                "timestamp": datetime.fromtimestamp(record.created).isoformat(),
+                "timestamp": datetime.fromtimestamp(
+                    record.created
+                ).isoformat(),
                 "level": record.levelname,
                 "message": record.getMessage(),
                 "module": record.module,
                 "function": record.funcName,
                 "filename": record.pathname,
                 "line": record.lineno,
-                "environment": settings.ENVIRONMENT.value,
+                "environment": settings.APP_ENV.value,
             }
             if hasattr(record, "extra"):
                 log_entry.update(record.extra)
@@ -111,7 +121,12 @@ def get_structlog_processors(include_file_info: bool = True) -> List[Any]:
         )
 
     # Add environment info
-    processors.append(lambda _, __, event_dict: {**event_dict, "environment": settings.ENVIRONMENT.value})
+    processors.append(
+        lambda _, __, event_dict: {
+            **event_dict,
+            "environment": settings.APP_ENV.value,
+        }
+    )
 
     return processors
 
@@ -133,7 +148,8 @@ def setup_logging() -> None:
     # Get shared processors
     shared_processors = get_structlog_processors(
         # Include detailed file info only in development and test
-        include_file_info=settings.ENVIRONMENT in [Environment.DEVELOPMENT, Environment.TEST]
+        include_file_info=settings.APP_ENV
+        in [Environment.DEVELOPMENT, Environment.TEST]
     )
 
     # Configure standard logging
@@ -172,6 +188,7 @@ def setup_logging() -> None:
 # Initialize logging on first import (lazy)
 _logger_initialized = False
 
+
 def get_logger():
     """Get configured logger with lazy initialization."""
     global _logger_initialized
@@ -179,15 +196,40 @@ def get_logger():
         setup_logging()
         _logger_initialized = True
         # Only log initialization in production or when explicitly requested
-        if settings.ENVIRONMENT != Environment.DEVELOPMENT or settings.LOG_LEVEL == "DEBUG":
+        if (
+            settings.APP_ENV != Environment.DEVELOPMENT
+            or settings.LOG_LEVEL == "DEBUG"
+        ):
             logger = structlog.get_logger()
             logger.info(
                 "logging_initialized",
-                environment=settings.ENVIRONMENT.value,
+                environment=settings.APP_ENV.value,
                 log_level=settings.LOG_LEVEL,
                 log_format=settings.LOG_FORMAT,
             )
     return structlog.get_logger()
+
+
+def log_request_response(request, response_data, duration):
+    """Log request and response information.
+
+    Args:
+        request: The HTTP request object
+        response_data: The response data
+        duration: Request duration in seconds
+    """
+    logger = get_logger()
+    logger.info(
+        "api_request",
+        method=request.method,
+        url=str(request.url),
+        status_code=getattr(response_data, "status_code", None),
+        duration=duration,
+        environment=settings.APP_ENV.value,
+        user_agent=request.headers.get("user-agent"),
+        ip=request.client.host if hasattr(request, "client") else None,
+    )
+
 
 # Create logger instance (will be initialized on first use)
 logger = get_logger()

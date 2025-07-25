@@ -50,151 +50,158 @@ def get_environment() -> Environment:
 def load_env_file():
     """Load environment-specific .env file."""
     env = get_environment()
-    print(f"Loading environment: {env}")
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    env_file = f".env.{env.value}"
 
-    # Define env files in priority order
-    env_files = [
-        os.path.join(base_dir, f".env.{env.value}.local"),
-        os.path.join(base_dir, f".env.{env.value}"),
-        os.path.join(base_dir, ".env.local"),
-        os.path.join(base_dir, ".env"),
-    ]
-
-    # Load the first env file that exists
-    for env_file in env_files:
-        if os.path.isfile(env_file):
-            load_dotenv(dotenv_path=env_file)
-            print(f"Loaded environment from {env_file}")
-            return env_file
-
-    # Fall back to default if no env file found
-    return None
+    if Path(env_file).exists():
+        load_dotenv(env_file)
+    else:
+        # Fallback to .env if environment-specific file doesn't exist
+        load_dotenv(".env")
 
 
-ENV_FILE = load_env_file()
-
-
-# Parse list values from environment variables
-def parse_list_from_env(env_key, default=None):
-    """Parse a comma-separated list from an environment variable."""
-    value = os.getenv(env_key)
-    if not value:
-        return default or []
-
-    # Remove quotes if they exist
-    value = value.strip("\"'")
-    # Handle single value case
-    if "," not in value:
-        return [value]
-    # Split comma-separated values
-    return [item.strip() for item in value.split(",") if item.strip()]
-
-
-# Parse dict of lists from environment variables with prefix
-def parse_dict_of_lists_from_env(prefix, default_dict=None):
-    """Parse dictionary of lists from environment variables with a common prefix."""
-    result = default_dict or {}
-
-    # Look for all env vars with the given prefix
-    for key, value in os.environ.items():
-        if key.startswith(prefix):
-            endpoint = key[len(prefix):].lower()  # Extract endpoint name
-            # Parse the values for this endpoint
-            if value:
-                value = value.strip("\"'")
-                if "," in value:
-                    result[endpoint] = [item.strip()
-                                        for item in value.split(",") if item.strip()]
-                else:
-                    result[endpoint] = [value]
-
-    return result
-
-
-from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings
+# Load environment file
+load_env_file()
 
 
 class Settings(BaseSettings):
-    """Application settings."""
-    
-    # Environment
-    ENVIRONMENT: Environment = Field(default_factory=get_environment)
-    
+    """Application settings.
+
+    This class defines all configuration settings for the application,
+    including database connections, API keys, and feature flags.
+    """
+
     # Application Settings
-    PROJECT_NAME: str = Field(default="FastAPI LangGraph Template", env="PROJECT_NAME")
+    APP_ENV: Environment = Field(
+        default=Environment.DEVELOPMENT, env="APP_ENV"
+    )
+    PROJECT_NAME: str = Field(default="Ali API", env="PROJECT_NAME")
     VERSION: str = Field(default="1.0.0", env="VERSION")
-    DESCRIPTION: str = Field(default="A production-ready FastAPI template with LangGraph and Langfuse integration", env="DESCRIPTION")
+    DESCRIPTION: str = Field(
+        default="A production-ready FastAPI template with Agno and Langfuse integration",
+        env="DESCRIPTION",
+    )
     API_V1_STR: str = Field(default="/api/v1", env="API_V1_STR")
     DEBUG: bool = Field(default=False, env="DEBUG")
-    
-    # CORS Settings
-    ALLOWED_ORIGINS: str = Field(default="*", env="ALLOWED_ORIGINS")
-    
-    @property
-    def allowed_origins_list(self) -> list[str]:
-        if not self.ALLOWED_ORIGINS or self.ALLOWED_ORIGINS.strip() == "":
-            return ["*"]
-        # Remove quotes if they exist
-        value = self.ALLOWED_ORIGINS.strip("\"'")
-        # Handle single value case
-        if "," not in value:
-            return [value]
-        # Split comma-separated values
-        return [item.strip() for item in value.split(",") if item.strip()]
-    
-    # Langfuse Configuration
-    LANGFUSE_PUBLIC_KEY: str = Field(default="", env="LANGFUSE_PUBLIC_KEY")
-    LANGFUSE_SECRET_KEY: str = Field(default="", env="LANGFUSE_SECRET_KEY")
-    LANGFUSE_HOST: str = Field(default="https://cloud.langfuse.com", env="LANGFUSE_HOST")
-    
-    # LangGraph Configuration
-    LLM_API_KEY: str = Field(default="", env="LLM_API_KEY")
-    LLM_MODEL: str = Field(default="gpt-4o-mini", env="LLM_MODEL")
-    DEFAULT_LLM_TEMPERATURE: float = Field(default=0.2, env="DEFAULT_LLM_TEMPERATURE")
-    MAX_TOKENS: int = Field(default=2000, env="MAX_TOKENS")
-    MAX_LLM_CALL_RETRIES: int = Field(default=3, env="MAX_LLM_CALL_RETRIES")
-    
-    # JWT Configuration
-    JWT_SECRET_KEY: str = Field(default="", env="JWT_SECRET_KEY")
-    JWT_ALGORITHM: str = Field(default="HS256", env="JWT_ALGORITHM")
-    JWT_ACCESS_TOKEN_EXPIRE_DAYS: int = Field(default=30, env="JWT_ACCESS_TOKEN_EXPIRE_DAYS")
-    
-    # Logging Configuration
-    LOG_LEVEL: str = Field(default="INFO", env="LOG_LEVEL")
-    LOG_FORMAT: str = Field(default="json", env="LOG_FORMAT")
-    
-    # Postgres Configuration
-    POSTGRES_URL: str = Field(default="", env="POSTGRES_URL")
-    POSTGRES_POOL_SIZE: int = Field(default=20, env="POSTGRES_POOL_SIZE")
-    POSTGRES_MAX_OVERFLOW: int = Field(default=10, env="POSTGRES_MAX_OVERFLOW")
-    
-    # Rate Limiting Configuration
-    RATE_LIMIT_DEFAULT: str = Field(default="200 per day,50 per hour", env="RATE_LIMIT_DEFAULT")
-    
+
+    # Database Configuration
+    POSTGRES_URL: str = Field(
+        default="postgresql://ali_user:ali_password@localhost:5432/ali_db",
+        env="POSTGRES_URL",
+    )
+    POSTGRES_POOL_SIZE: int = Field(default=10, env="POSTGRES_POOL_SIZE")
+    POSTGRES_MAX_OVERFLOW: int = Field(default=5, env="POSTGRES_MAX_OVERFLOW")
+
+    # Agno Memory Configuration
+    AGNO_MEMORY_PATH: str = Field(
+        default="./data/agno_memory.db", env="AGNO_MEMORY_PATH"
+    )
+
     # Elasticsearch Configuration
-    ELASTICSEARCH_URL: str = Field(default="", env="ELASTICSEARCH_URL")
+    ELASTICSEARCH_URL: str = Field(
+        default="http://localhost:9200", env="ELASTICSEARCH_URL"
+    )
+    ELASTICSEARCH_TIMEOUT: int = Field(default=30, env="ELASTICSEARCH_TIMEOUT")
+    ELASTICSEARCH_MAX_RETRIES: int = Field(
+        default=3, env="ELASTICSEARCH_MAX_RETRIES"
+    )
+    ELASTICSEARCH_INDEX_NAME: str = Field(
+        default="agua-clara-ms", env="ELASTICSEARCH_INDEX_NAME"
+    )
     ELASTICSEARCH_API_KEY: str = Field(default="", env="ELASTICSEARCH_API_KEY")
-    
+
     # RAG Configuration
     RAG_INDEX_NAME: str = Field(default="agua-clara-ms", env="RAG_INDEX_NAME")
-    RAG_EMBEDDING_MODEL: str = Field(default="sentence-transformers/all-MiniLM-L6-v2", env="RAG_EMBEDDING_MODEL")
+    RAG_EMBEDDING_MODEL: str = Field(
+        default="sentence-transformers/all-MiniLM-L6-v2",
+        env="RAG_EMBEDDING_MODEL",
+    )
     RAG_CHUNK_SIZE: int = Field(default=1000, env="RAG_CHUNK_SIZE")
     RAG_CHUNK_OVERLAP: int = Field(default=200, env="RAG_CHUNK_OVERLAP")
     RAG_MAX_RESULTS: int = Field(default=5, env="RAG_MAX_RESULTS")
-    
+
+    # CORS Settings
+    ALLOWED_ORIGINS: str = Field(
+        default="http://localhost:3000,http://localhost:8080,http://127.0.0.1:3000",
+        env="ALLOWED_ORIGINS",
+    )
+
+    # Logging Configuration
+    LOG_DIR: Path = Field(default=Path("./logs"), env="LOG_DIR")
+    LOG_LEVEL: str = Field(default="INFO", env="LOG_LEVEL")
+    LOG_FORMAT: str = Field(default="console", env="LOG_FORMAT")
+
+    # Rate Limiting
+    RATE_LIMIT_DEFAULT: str = Field(
+        default="1000 per day,200 per hour", env="RATE_LIMIT_DEFAULT"
+    )
+    RATE_LIMIT_CHAT: str = Field(
+        default="100 per minute", env="RATE_LIMIT_CHAT"
+    )
+    RATE_LIMIT_CHAT_STREAM: str = Field(
+        default="50 per minute", env="RATE_LIMIT_CHAT_STREAM"
+    )
+    RATE_LIMIT_MESSAGES: str = Field(
+        default="100 per minute", env="RATE_LIMIT_MESSAGES"
+    )
+    RATE_LIMIT_REGISTER: str = Field(
+        default="20 per hour", env="RATE_LIMIT_REGISTER"
+    )
+    RATE_LIMIT_LOGIN: str = Field(
+        default="50 per minute", env="RATE_LIMIT_LOGIN"
+    )
+    RATE_LIMIT_ROOT: str = Field(
+        default="50 per minute", env="RATE_LIMIT_ROOT"
+    )
+    RATE_LIMIT_HEALTH: str = Field(
+        default="100 per minute", env="RATE_LIMIT_HEALTH"
+    )
+
+    # Langfuse Configuration
+    LANGFUSE_PUBLIC_KEY: str = Field(default="", env="LANGFUSE_PUBLIC_KEY")
+    LANGFUSE_SECRET_KEY: str = Field(default="", env="LANGFUSE_SECRET_KEY")
+    LANGFUSE_HOST: str = Field(
+        default="https://cloud.langfuse.com", env="LANGFUSE_HOST"
+    )
+
+    # Agno Agent Configuration
+    LLM_API_KEY: str = Field(default="", env="LLM_API_KEY")
+    LLM_MODEL: str = Field(default="gpt-4o-mini", env="LLM_MODEL")
+    DEFAULT_LLM_TEMPERATURE: float = Field(
+        default=0.2, env="DEFAULT_LLM_TEMPERATURE"
+    )
+    MAX_TOKENS: int = Field(default=2000, env="MAX_TOKENS")
+    MAX_LLM_CALL_RETRIES: int = Field(default=3, env="MAX_LLM_CALL_RETRIES")
+
+    # JWT Configuration
+    JWT_SECRET_KEY: str = Field(
+        default="your-super-secret-jwt-key-for-development-change-in-production",
+        env="JWT_SECRET_KEY",
+    )
+    JWT_ALGORITHM: str = Field(default="HS256", env="JWT_ALGORITHM")
+    JWT_ACCESS_TOKEN_EXPIRE_DAYS: int = Field(
+        default=30, env="JWT_ACCESS_TOKEN_EXPIRE_DAYS"
+    )
+
+    # Rate Limiting Endpoints
+    @property
+    def RATE_LIMIT_ENDPOINTS(self) -> dict:
+        """Get rate limit configuration for endpoints."""
+        return {
+            "default": [self.RATE_LIMIT_DEFAULT],
+            "chat": [self.RATE_LIMIT_CHAT],
+            "chat_stream": [self.RATE_LIMIT_CHAT_STREAM],
+            "messages": [self.RATE_LIMIT_MESSAGES],
+            "register": [self.RATE_LIMIT_REGISTER],
+            "login": [self.RATE_LIMIT_LOGIN],
+            "root": [self.RATE_LIMIT_ROOT],
+            "health": [self.RATE_LIMIT_HEALTH],
+        }
+
     class Config:
+        """Pydantic configuration."""
+
         env_file = ".env"
         case_sensitive = True
-        
-    @property
-    def LOG_DIR(self) -> Path:
-        return Path(os.getenv("LOG_DIR", "logs"))
-        
-    @property
-    def CHECKPOINT_TABLES(self) -> list[str]:
-        return ["checkpoint_blobs", "checkpoint_writes", "checkpoints"]
 
 
 # Create settings instance

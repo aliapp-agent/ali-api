@@ -1,12 +1,17 @@
 """Validation-related exceptions."""
 
-from typing import Optional, List, Any
+from typing import Any, List, Optional
 
 
 class ValidationError(Exception):
     """Base class for validation-related errors."""
 
-    def __init__(self, message: str = "Validation failed", field: Optional[str] = None, value: Optional[Any] = None):
+    def __init__(
+        self,
+        message: str = "Validation failed",
+        field: Optional[str] = None,
+        value: Optional[Any] = None,
+    ):
         self.message = message
         self.field = field
         self.value = value
@@ -159,7 +164,9 @@ class FileTooLargeError(ValidationError):
 class UnsupportedFileTypeError(ValidationError):
     """Raised when file type is not supported."""
 
-    def __init__(self, filename: str, file_type: str, supported_types: List[str]):
+    def __init__(
+        self, filename: str, file_type: str, supported_types: List[str]
+    ):
         self.filename = filename
         self.file_type = file_type
         self.supported_types = supported_types
@@ -218,7 +225,13 @@ class InvalidEnumValueError(ValidationError):
 class InvalidRangeError(ValidationError):
     """Raised when numeric value is outside valid range."""
 
-    def __init__(self, field: str, value: Any, min_value: Optional[float] = None, max_value: Optional[float] = None):
+    def __init__(
+        self,
+        field: str,
+        value: Any,
+        min_value: Optional[float] = None,
+        max_value: Optional[float] = None,
+    ):
         self.min_value = min_value
         self.max_value = max_value
 

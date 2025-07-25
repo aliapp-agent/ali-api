@@ -3,9 +3,7 @@
 import re
 
 # Email Validation
-EMAIL_REGEX = re.compile(
-    r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-)
+EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 EMAIL_MAX_LENGTH = 254
 EMAIL_MIN_LENGTH = 5
 
@@ -74,43 +72,35 @@ DANGEROUS_PATTERNS = [
 # SQL Injection Prevention
 SQL_INJECTION_PATTERNS = [
     re.compile(
-        r"(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION)\b)", re.IGNORECASE),
+        r"(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION)\b)",
+        re.IGNORECASE,
+    ),
     re.compile(r"(\b(OR|AND)\s+\d+\s*=\s*\d+)", re.IGNORECASE),
     re.compile(r"(--|\#|\/\*|\*\/)", re.IGNORECASE),
     re.compile(r"(\b(CHAR|CONCAT|SUBSTRING|ASCII|HEX)\s*\()", re.IGNORECASE),
 ]
 
 # Date/Time Validation
-ISO_DATE_REGEX = re.compile(
-    r"^\d{4}-\d{2}-\d{2}$"
-)
+ISO_DATE_REGEX = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 ISO_DATETIME_REGEX = re.compile(
     r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?(?:Z|[+-]\d{2}:\d{2})$"
 )
 
 # Phone Number Validation (International format)
-PHONE_REGEX = re.compile(
-    r"^\+?[1-9]\d{1,14}$"
-)
+PHONE_REGEX = re.compile(r"^\+?[1-9]\d{1,14}$")
 
 # Username Validation
-USERNAME_REGEX = re.compile(
-    r"^[a-zA-Z0-9_-]{3,30}$"
-)
+USERNAME_REGEX = re.compile(r"^[a-zA-Z0-9_-]{3,30}$")
 USERNAME_MIN_LENGTH = 3
 USERNAME_MAX_LENGTH = 30
 
 # API Key Validation
-API_KEY_REGEX = re.compile(
-    r"^[a-zA-Z0-9]{32,}$"
-)
+API_KEY_REGEX = re.compile(r"^[a-zA-Z0-9]{32,}$")
 API_KEY_MIN_LENGTH = 32
 API_KEY_MAX_LENGTH = 128
 
 # Rate Limit Format Validation
-RATE_LIMIT_REGEX = re.compile(
-    r"^\d+\s+per\s+(second|minute|hour|day)$"
-)
+RATE_LIMIT_REGEX = re.compile(r"^\d+\s+per\s+(second|minute|hour|day)$")
 
 # Common Validation Messages
 VALIDATION_MESSAGES = {

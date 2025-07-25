@@ -6,7 +6,11 @@ from typing import Optional
 class AuthenticationError(Exception):
     """Base class for authentication-related errors."""
 
-    def __init__(self, message: str = "Authentication failed", details: Optional[str] = None):
+    def __init__(
+        self,
+        message: str = "Authentication failed",
+        details: Optional[str] = None,
+    ):
         self.message = message
         self.details = details
         super().__init__(self.message)
@@ -20,7 +24,9 @@ class AuthenticationError(Exception):
 class AuthorizationError(AuthenticationError):
     """Raised when user lacks permission for an action."""
 
-    def __init__(self, message: str = "Access denied", resource: Optional[str] = None):
+    def __init__(
+        self, message: str = "Access denied", resource: Optional[str] = None
+    ):
         self.resource = resource
         if resource:
             message = f"{message}: insufficient permissions for {resource}"
@@ -37,7 +43,9 @@ class TokenExpiredError(AuthenticationError):
 class TokenInvalidError(AuthenticationError):
     """Raised when a JWT token is invalid or malformed."""
 
-    def __init__(self, message: str = "Invalid token", reason: Optional[str] = None):
+    def __init__(
+        self, message: str = "Invalid token", reason: Optional[str] = None
+    ):
         if reason:
             message = f"{message}: {reason}"
         super().__init__(message)
@@ -73,7 +81,11 @@ class InvalidCredentialsError(AuthenticationError):
 class AccountLockedError(AuthenticationError):
     """Raised when user account is locked."""
 
-    def __init__(self, message: str = "Account is locked", unlock_time: Optional[str] = None):
+    def __init__(
+        self,
+        message: str = "Account is locked",
+        unlock_time: Optional[str] = None,
+    ):
         if unlock_time:
             message = f"{message}. Try again after {unlock_time}"
         super().__init__(message)

@@ -13,6 +13,15 @@ from jose import (
     jwt,
 )
 
+from app.constants.auth import (
+    ACCESS_TOKEN_EXPIRE_DAYS_DEFAULT,
+    JWT_ALGORITHM_DEFAULT,
+    TOKEN_TYPE_BEARER,
+)
+from app.constants.validation import (
+    JWT_TOKEN_MAX_LENGTH,
+    JWT_TOKEN_MIN_LENGTH,
+)
 from app.core.config import settings
 from app.core.logging import logger
 from app.schemas.auth import Token
@@ -20,18 +29,11 @@ from app.utils.sanitization import (
     sanitize_string,
     validate_jwt_token,
 )
-from app.constants.auth import (
-    JWT_ALGORITHM_DEFAULT,
-    ACCESS_TOKEN_EXPIRE_DAYS_DEFAULT,
-    TOKEN_TYPE_BEARER,
-)
-from app.constants.validation import (
-    JWT_TOKEN_MIN_LENGTH,
-    JWT_TOKEN_MAX_LENGTH,
-)
 
 
-def create_access_token(session_id: str, expires_delta: Optional[timedelta] = None) -> Token:
+def create_access_token(
+    session_id: str, expires_delta: Optional[timedelta] = None
+) -> Token:
     """Create a new access token for a session.
 
     Args:
@@ -55,7 +57,10 @@ def create_access_token(session_id: str, expires_delta: Optional[timedelta] = No
         expire = datetime.now(UTC) + expires_delta
     else:
         expire_days = getattr(
-            settings, 'JWT_ACCESS_TOKEN_EXPIRE_DAYS', ACCESS_TOKEN_EXPIRE_DAYS_DEFAULT)
+            settings,
+            "JWT_ACCESS_TOKEN_EXPIRE_DAYS",
+            ACCESS_TOKEN_EXPIRE_DAYS_DEFAULT,
+        )
         expire = datetime.now(UTC) + timedelta(days=expire_days)
 
     # Get current time for issued at claim
@@ -75,8 +80,8 @@ def create_access_token(session_id: str, expires_delta: Optional[timedelta] = No
 
     try:
         # Get JWT configuration with fallbacks
-        secret_key = getattr(settings, 'JWT_SECRET_KEY', None)
-        algorithm = getattr(settings, 'JWT_ALGORITHM', JWT_ALGORITHM_DEFAULT)
+        secret_key = getattr(settings, "JWT_SECRET_KEY", None)
+        algorithm = getattr(settings, "JWT_ALGORITHM", JWT_ALGORITHM_DEFAULT)
 
         if not secret_key:
             raise ValueError("JWT secret key is not configured")
@@ -89,7 +94,7 @@ def create_access_token(session_id: str, expires_delta: Optional[timedelta] = No
             session_id=session_id,
             expires_at=expire.isoformat(),
             algorithm=algorithm,
-            jti=jti
+            jti=jti,
         )
 
         return Token(access_token=encoded_jwt, expires_at=expire)
@@ -99,7 +104,7 @@ def create_access_token(session_id: str, expires_delta: Optional[timedelta] = No
             "token_creation_failed",
             session_id=session_id,
             error=str(e),
-            exc_info=True
+            exc_info=True,
         )
         raise ValueError(f"Failed to create access token: {str(e)}")
 
@@ -117,8 +122,9 @@ def verify_token(token: str) -> Optional[str]:
         ValueError: If the token format is invalid
     """
     if not token or not isinstance(token, str):
-        logger.warning("token_invalid_format",
-                       token_length=len(token) if token else 0)
+        logger.warning(
+            "token_invalid_format", token_length=len(token) if token else 0
+        )
         raise ValueError("Token must be a non-empty string")
 
     # Validate token format and length
@@ -130,8 +136,8 @@ def verify_token(token: str) -> Optional[str]:
 
     try:
         # Get JWT configuration
-        secret_key = getattr(settings, 'JWT_SECRET_KEY', None)
-        algorithm = getattr(settings, 'JWT_ALGORITHM', JWT_ALGORITHM_DEFAULT)
+        secret_key = getattr(settings, "JWT_SECRET_KEY", None)
+        algorithm = getattr(settings, "JWT_ALGORITHM", JWT_ALGORITHM_DEFAULT)
 
         if not secret_key:
             logger.error("jwt_secret_key_not_configured")
@@ -148,14 +154,15 @@ def verify_token(token: str) -> Optional[str]:
                 "verify_iat": True,
                 "require_exp": True,
                 "require_iat": True,
-            }
+            },
         )
 
         # Extract session ID from subject claim
         session_id: str = payload.get("sub")
         if not session_id:
-            logger.warning("token_missing_session_id",
-                           payload_keys=list(payload.keys()))
+            logger.warning(
+                "token_missing_session_id", payload_keys=list(payload.keys())
+            )
             return None
 
         # Verify token type if present
@@ -171,7 +178,7 @@ def verify_token(token: str) -> Optional[str]:
             session_id=session_id,
             jti=jti,
             exp=payload.get("exp"),
-            iat=payload.get("iat")
+            iat=payload.get("iat"),
         )
 
         return session_id
@@ -180,15 +187,17 @@ def verify_token(token: str) -> Optional[str]:
         logger.warning("token_expired", token_part=token[:20] + "...")
         return None
     except jwt.InvalidTokenError as e:
-        logger.warning("token_invalid", error=str(e),
-                       token_part=token[:20] + "...")
+        logger.warning(
+            "token_invalid", error=str(e), token_part=token[:20] + "..."
+        )
         return None
     except JWTError as e:
         logger.error("token_verification_failed", error=str(e), exc_info=True)
         return None
     except Exception as e:
-        logger.error("token_verification_unexpected_error",
-                     error=str(e), exc_info=True)
+        logger.error(
+            "token_verification_unexpected_error", error=str(e), exc_info=True
+        )
         return None
 
 

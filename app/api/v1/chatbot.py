@@ -4,17 +4,16 @@ This module provides endpoints for chat interactions, including regular chat,
 message history management, and chat history clearing.
 """
 
-
-
 from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
     Request,
 )
+
 from app.api.v1.auth import get_current_session
-from app.core.config import settings
 from app.core.agno.graph import AgnoAgent
+from app.core.config import settings
 from app.core.limiter import limiter
 from app.core.logging import logger
 from app.models.session import Session
@@ -62,9 +61,14 @@ async def chat(
 
         return ChatResponse(messages=result)
     except Exception as e:
-        logger.error("chat_request_failed", session_id=session.id,
-                     error=str(e), exc_info=True)
+        logger.error(
+            "chat_request_failed",
+            session_id=session.id,
+            error=str(e),
+            exc_info=True,
+        )
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/messages", response_model=ChatResponse)
 @limiter.limit(settings.RATE_LIMIT_ENDPOINTS["messages"][0])
@@ -88,8 +92,12 @@ async def get_session_messages(
         messages = await agent.get_chat_history(session.id)
         return ChatResponse(messages=messages)
     except Exception as e:
-        logger.error("get_messages_failed", session_id=session.id,
-                     error=str(e), exc_info=True)
+        logger.error(
+            "get_messages_failed",
+            session_id=session.id,
+            error=str(e),
+            exc_info=True,
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -112,6 +120,10 @@ async def clear_chat_history(
         await agent.clear_chat_history(session.id)
         return {"message": "Chat history cleared successfully"}
     except Exception as e:
-        logger.error("clear_chat_history_failed",
-                     session_id=session.id, error=str(e), exc_info=True)
+        logger.error(
+            "clear_chat_history_failed",
+            session_id=session.id,
+            error=str(e),
+            exc_info=True,
+        )
         raise HTTPException(status_code=500, detail=str(e))

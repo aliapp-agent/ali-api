@@ -23,7 +23,9 @@ class Token(BaseModel):
 
     access_token: str = Field(..., description="The JWT access token")
     token_type: str = Field(default="bearer", description="The type of token")
-    expires_at: datetime = Field(..., description="The token expiration timestamp")
+    expires_at: datetime = Field(
+        ..., description="The token expiration timestamp"
+    )
 
 
 class TokenResponse(BaseModel):
@@ -49,7 +51,9 @@ class UserCreate(BaseModel):
     """
 
     email: EmailStr = Field(..., description="User's email address")
-    password: SecretStr = Field(..., description="User's password", min_length=8, max_length=64)
+    password: SecretStr = Field(
+        ..., description="User's password", min_length=8, max_length=64
+    )
 
     @field_validator("password")
     @classmethod
@@ -72,16 +76,22 @@ class UserCreate(BaseModel):
             raise ValueError("Password must be at least 8 characters long")
 
         if not re.search(r"[A-Z]", password):
-            raise ValueError("Password must contain at least one uppercase letter")
+            raise ValueError(
+                "Password must contain at least one uppercase letter"
+            )
 
         if not re.search(r"[a-z]", password):
-            raise ValueError("Password must contain at least one lowercase letter")
+            raise ValueError(
+                "Password must contain at least one lowercase letter"
+            )
 
         if not re.search(r"[0-9]", password):
             raise ValueError("Password must contain at least one number")
 
         if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
-            raise ValueError("Password must contain at least one special character")
+            raise ValueError(
+                "Password must contain at least one special character"
+            )
 
         return v
 
@@ -109,9 +119,15 @@ class SessionResponse(BaseModel):
         token: The authentication token for the session
     """
 
-    session_id: str = Field(..., description="The unique identifier for the chat session")
-    name: str = Field(default="", description="Name of the session", max_length=100)
-    token: Token = Field(..., description="The authentication token for the session")
+    session_id: str = Field(
+        ..., description="The unique identifier for the chat session"
+    )
+    name: str = Field(
+        default="", description="Name of the session", max_length=100
+    )
+    token: Token = Field(
+        ..., description="The authentication token for the session"
+    )
 
     @field_validator("name")
     @classmethod

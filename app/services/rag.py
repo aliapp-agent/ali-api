@@ -1,325 +1,195 @@
-from elasticsearch import Elasticsearch, helpers
+from datetime import datetime, timezone
+from typing import Dict, List, Optional
+
+from elasticsearch import Elasticsearch
 from sentence_transformers import SentenceTransformer
-from typing import List, Dict, Any, Optional
-import logging
-from datetime import datetime
+
 from app.core.config import settings
+from app.core.logging import logger
 from app.schemas.rag import DocumentoLegislativo, DocumentSearchResult
 
-logger = logging.getLogger(__name__)
 
 class RAGService:
     def __init__(self):
-        self.client = None
-        self.embedding_model = None
-        self._initialize_client()
-        self._initialize_embedding_model()
-    
-    def _initialize_client(self):
-        """Initialize Elasticsearch client for Serverless"""
-        try:
-            self.client = Elasticsearch(
-                settings.ELASTICSEARCH_URL,
-                api_key=settings.ELASTICSEARCH_API_KEY,
-                request_timeout=30,
-                retry_on_timeout=True,
-                max_retries=3
-            )
-            
-            if self.client.ping():
-                logger.info("Successfully connected to Elasticsearch Serverless")
-                info = self.client.info()
-                logger.info(f"Connected to cluster: {info['cluster_name']}")
-            else:
-                logger.error("Failed to connect to Elasticsearch Serverless")
-                
-        except Exception as e:
-            logger.error(f"Error initializing Elasticsearch client: {e}")
-            self.client = None
-    
-    def _initialize_embedding_model(self):
-        """Initialize sentence transformer model"""
-        try:
-            self.embedding_model = SentenceTransformer(settings.RAG_EMBEDDING_MODEL)
-            logger.info(f"Loaded embedding model: {settings.RAG_EMBEDDING_MODEL}")
-        except Exception as e:
-            logger.error(f"Error loading embedding model: {e}")
-    
-    def create_index(self) -> bool:
-        """Create index with mapping for legislative documents"""
-        try:
-            if not self.client:
-                return False
-            
-            index_mapping = {
+        # Configurar Elasticsearch com autenticação se necessário
+        es_config = {
+            "hosts": [settings.ELASTICSEARCH_URL],
+            "timeout": settings.ELASTICSEARCH_TIMEOUT,
+            "max_retries": settings.ELASTICSEARCH_MAX_RETRIES,
+        }
+
+        # Adicionar API key se fornecida
+        if settings.ELASTICSEARCH_API_KEY:
+            es_config["api_key"] = settings.ELASTICSEARCH_API_KEY
+
+        self.es_client = Elasticsearch(**es_config)
+        self.embedding_model = SentenceTransformer(
+            settings.RAG_EMBEDDING_MODEL
+        )
+        self.index_name = settings.RAG_INDEX_NAME
+
+    async def initialize_index(self):
+        """Cria o índice do Elasticsearch se não existir."""
+        if not self.es_client.indices.exists(index=self.index_name):
+            mapping = {
                 "mappings": {
                     "properties": {
-                        "id": {"type": "keyword"},
+                        "content": {"type": "text"},
+                        "title": {"type": "text"},
                         "source_type": {"type": "keyword"},
-                        "title": {
-                            "type": "text",
-                            "analyzer": "standard",
-                            "fields": {
-                                "keyword": {"type": "keyword"}
-                            }
-                        },
-                        "content": {
-                            "type": "text",
-                            "analyzer": "standard"
-                        },
-                        "summary": {
-                            "type": "text",
-                            "analyzer": "standard"
-                        },
-                        "embedding": {
-                            "type": "dense_vector",
-                            "dims": 384
-                        },
-                        "date": {"type": "date"},
+                        "summary": {"type": "text"},
                         "municipio": {"type": "keyword"},
                         "legislatura": {"type": "keyword"},
-                        "autor": {
-                            "type": "text",
-                            "fields": {
-                                "keyword": {"type": "keyword"}
-                            }
-                        },
+                        "autor": {"type": "keyword"},
                         "categoria": {"type": "keyword"},
                         "status": {"type": "keyword"},
                         "tipo_documento": {"type": "keyword"},
+                        "embedding": {"type": "dense_vector", "dims": 384},
+                        "date": {"type": "date"},
+                        "tokens": {"type": "integer"},
                         "file_path": {"type": "keyword"},
-                        "timestamp": {"type": "date"}
+                        "timestamp": {"type": "date"},
                     }
                 }
             }
-            
-            if not self.client.indices.exists(index=settings.RAG_INDEX_NAME):
-                self.client.indices.create(
-                    index=settings.RAG_INDEX_NAME,
-                    body=index_mapping
-                )
-                logger.info(f"Created index: {settings.RAG_INDEX_NAME}")
-            else:
-                logger.info(f"Index {settings.RAG_INDEX_NAME} already exists")
-            
-            return True
-        except Exception as e:
-            logger.error(f"Error creating index: {e}")
-            return False
-    
-    def add_legislative_document(self, documento: DocumentoLegislativo) -> bool:
-        """Add legislative document to index"""
-        try:
-            if not self.client or not self.embedding_model:
-                return False
-            
-            # Generate embedding from content + summary
-            text_for_embedding = f"{documento.title} {documento.summary} {documento.content}"
-            embedding = self.embedding_model.encode(text_for_embedding).tolist()
-            
-            doc = {
-                "id": documento.id,
-                "source_type": documento.source_type,
-                "title": documento.title,
-                "content": documento.content,
-                "summary": documento.summary,
-                "embedding": embedding,
-                "date": documento.date.isoformat(),
-                "municipio": documento.municipio,
-                "legislatura": documento.legislatura,
-                "autor": documento.autor,
-                "categoria": documento.categoria,
-                "status": documento.status,
-                "tipo_documento": documento.tipo_documento,
-                "file_path": documento.file_path,
-                "timestamp": datetime.now().isoformat()
-            }
-            
-            response = self.client.index(
-                index=settings.RAG_INDEX_NAME,
-                id=documento.id,  # Use document ID as Elasticsearch ID
-                body=doc
-            )
-            
-            logger.info(f"Added legislative document: {documento.id}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Error adding legislative document: {e}")
-            return False
-    
-    def search_legislative_documents(
-        self, 
-        query: str, 
-        max_results: int = None,
+            self.es_client.indices.create(index=self.index_name, body=mapping)
+            logger.info(f"Índice {self.index_name} criado com sucesso")
+
+    async def add_legislative_document(
+        self, document: DocumentoLegislativo
+    ) -> str:
+        """Adiciona um documento legislativo ao índice."""
+        embedding = self.embedding_model.encode(document.content).tolist()
+
+        doc = {
+            "content": document.content,
+            "title": document.title,
+            "source_type": document.source_type,
+            "summary": document.summary,
+            "municipio": document.municipio,
+            "legislatura": document.legislatura,
+            "autor": document.autor,
+            "categoria": document.categoria,
+            "status": document.status,
+            "tipo_documento": document.tipo_documento,
+            "embedding": embedding,
+            "date": document.date,
+            "tokens": document.tokens,
+            "file_path": document.file_path,
+            "timestamp": datetime.now(timezone.utc),
+        }
+
+        result = self.es_client.index(index=self.index_name, body=doc)
+        logger.info(f"Documento adicionado com ID: {result['_id']}")
+        return result["_id"]
+
+    async def search_legislative_documents(
+        self,
+        query: str,
+        max_results: int = 5,
         categoria: Optional[str] = None,
         source_type: Optional[str] = None,
         status: Optional[str] = None,
-        legislatura: Optional[str] = None
+        legislatura: Optional[str] = None,
     ) -> List[DocumentSearchResult]:
-        """Search legislative documents with filters"""
-        try:
-            if not self.client or not self.embedding_model:
-                return []
-            
-            max_results = max_results or settings.RAG_MAX_RESULTS
-            
-            # Generate query embedding
-            query_embedding = self.embedding_model.encode(query).tolist()
-            
-            # Build filters
-            filters = []
-            if categoria:
-                filters.append({"term": {"categoria": categoria}})
-            if source_type:
-                filters.append({"term": {"source_type": source_type}})
-            if status:
-                filters.append({"term": {"status": status}})
-            if legislatura:
-                filters.append({"term": {"legislatura": legislatura}})
-            
-            # Build query
-            base_query = {"match_all": {}}
-            if filters:
-                base_query = {
-                    "bool": {
-                        "must": filters
-                    }
-                }
-            
-            search_body = {
-                "query": {
-                    "script_score": {
-                        "query": base_query,
-                        "script": {
-                            "source": "cosineSimilarity(params.query_vector, 'embedding') + 1.0",
-                            "params": {"query_vector": query_embedding}
-                        }
-                    }
-                },
-                "size": max_results,
-                "_source": [
-                    "id", "title", "summary", "content", "categoria", 
-                    "source_type", "status", "autor", "date", 
-                    "legislatura", "tipo_documento"
-                ]
-            }
-            
-            response = self.client.search(
-                index=settings.RAG_INDEX_NAME,
-                body=search_body
-            )
-            
-            results = []
-            for hit in response["hits"]["hits"]:
-                source = hit["_source"]
-                results.append(DocumentSearchResult(
-                    id=source["id"],
-                    title=source["title"],
-                    summary=source["summary"],
-                    content=source["content"],
-                    score=hit["_score"],
-                    categoria=source["categoria"],
-                    source_type=source["source_type"],
-                    status=source["status"],
-                    autor=source["autor"],
-                    date=source["date"],
-                    legislatura=source["legislatura"],
-                    tipo_documento=source["tipo_documento"]
-                ))
-            
-            return results
-            
-        except Exception as e:
-            logger.error(f"Error searching legislative documents: {e}")
-            return []
-    
-    def get_document_by_id(self, document_id: str) -> Optional[Dict[str, Any]]:
-        """Get specific document by ID"""
-        try:
-            if not self.client:
-                return None
-            
-            response = self.client.get(
-                index=settings.RAG_INDEX_NAME,
-                id=document_id
-            )
-            
-            return response["_source"]
-            
-        except Exception as e:
-            logger.error(f"Error getting document by ID: {e}")
-            return None
-    
-    def get_categories(self) -> List[str]:
-        """Get all available categories"""
-        try:
-            if not self.client:
-                return []
-            
-            search_body = {
-                "size": 0,
-                "aggs": {
-                    "categories": {
-                        "terms": {
-                            "field": "categoria",
-                            "size": 100
-                        }
-                    }
-                }
-            }
-            
-            response = self.client.search(
-                index=settings.RAG_INDEX_NAME,
-                body=search_body
-            )
-            
-            categories = []
-            for bucket in response["aggregations"]["categories"]["buckets"]:
-                categories.append(bucket["key"])
-            
-            return categories
-            
-        except Exception as e:
-            logger.error(f"Error getting categories: {e}")
-            return []
-    
-    # Adicionar este método à classe RAGService
-    
-    async def health_check(self) -> dict:
-    '''Verificar saúde do Elasticsearch.'''
-    try:
-        health = await self.es_client.cluster.health()
-        return {
-            "status": health["status"],
-            "cluster_name": health["cluster_name"],
-            "number_of_nodes": health["number_of_nodes"]
-        }
-    except Exception as e:
-        raise Exception(f"Elasticsearch não disponível: {str(e)}")
-        
-        try:
-            if not self.client:
-                return {"status": "error", "message": "Client not initialized"}
-            
-            if self.client.ping():
-                info = self.client.info()
-                count_response = self.client.count(index=settings.RAG_INDEX_NAME)
-                
-                return {
-                    "status": "healthy",
-                    "cluster_name": info["cluster_name"],
-                    "version": info["version"]["number"],
-                    "index_name": settings.RAG_INDEX_NAME,
-                    "total_documents": count_response["count"],
-                    "mode": "serverless",
-                    "municipio": "Água Clara-MS"
-                }
-            else:
-                return {"status": "error", "message": "Connection failed"}
-                
-        except Exception as e:
-            return {"status": "error", "message": str(e)}
+        """Busca documentos legislativos usando busca semântica e filtros."""
+        # Gerar embedding da query
+        query_embedding = self.embedding_model.encode(query).tolist()
 
-# Global RAG service instance
+        # Construir filtros
+        filters = []
+        if categoria:
+            filters.append({"term": {"categoria": categoria}})
+        if source_type:
+            filters.append({"term": {"source_type": source_type}})
+        if status:
+            filters.append({"term": {"status": status}})
+        if legislatura:
+            filters.append({"term": {"legislatura": legislatura}})
+
+        # Query híbrida: busca semântica + busca textual
+        search_body = {
+            "size": max_results,
+            "query": {
+                "bool": {
+                    "should": [
+                        {
+                            "script_score": {
+                                "query": {"match_all": {}},
+                                "script": {
+                                    "source": "cosineSimilarity(params.query_vector, 'embedding') + 1.0",
+                                    "params": {
+                                        "query_vector": query_embedding
+                                    },
+                                },
+                            }
+                        },
+                        {
+                            "multi_match": {
+                                "query": query,
+                                "fields": [
+                                    "title^2",
+                                    "content",
+                                    "summary^1.5",
+                                ],
+                                "type": "best_fields",
+                            }
+                        },
+                    ],
+                    "filter": filters if filters else [],
+                }
+            },
+        }
+
+        response = self.es_client.search(
+            index=self.index_name, body=search_body
+        )
+
+        results = []
+        for hit in response["hits"]["hits"]:
+            source = hit["_source"]
+            result = DocumentSearchResult(
+                id=hit["_id"],
+                title=source["title"],
+                content=source["content"],
+                source_type=source["source_type"],
+                summary=source.get("summary", ""),
+                municipio=source.get("municipio", ""),
+                legislatura=source.get("legislatura", ""),
+                autor=source.get("autor", ""),
+                categoria=source.get("categoria", ""),
+                status=source.get("status", ""),
+                tipo_documento=source.get("tipo_documento", ""),
+                date=source.get("date"),
+                tokens=source.get("tokens", 0),
+                file_path=source.get("file_path", ""),
+                score=hit["_score"],
+            )
+            results.append(result)
+
+        return results
+
+    async def health_check(self) -> Dict[str, str]:
+        """Verifica a saúde do serviço RAG."""
+        try:
+            # Verificar conexão com Elasticsearch
+            es_health = self.es_client.ping()
+
+            # Verificar se o índice existe
+            index_exists = self.es_client.indices.exists(index=self.index_name)
+
+            return {
+                "status": "healthy"
+                if es_health and index_exists
+                else "unhealthy",
+                "elasticsearch": "connected" if es_health else "disconnected",
+                "index": "exists" if index_exists else "missing",
+                "embedding_model": settings.RAG_EMBEDDING_MODEL,
+            }
+        except Exception as e:
+            logger.error(f"RAG health check failed: {str(e)}")
+            return {"status": "unhealthy", "error": str(e)}
+
+
+# Criar instância global do serviço
 rag_service = RAGService()

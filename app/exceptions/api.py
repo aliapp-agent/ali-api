@@ -1,12 +1,17 @@
 """API-related exceptions."""
 
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 
 class APIError(Exception):
     """Base class for API-related errors."""
 
-    def __init__(self, message: str = "API error", status_code: int = 500, details: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        message: str = "API error",
+        status_code: int = 500,
+        details: Optional[Dict[str, Any]] = None,
+    ):
         self.message = message
         self.status_code = status_code
         self.details = details or {}
@@ -30,21 +35,31 @@ class APIError(Exception):
 class BadRequestError(APIError):
     """Raised for HTTP 400 Bad Request errors."""
 
-    def __init__(self, message: str = "Bad request", details: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        message: str = "Bad request",
+        details: Optional[Dict[str, Any]] = None,
+    ):
         super().__init__(message, 400, details)
 
 
 class UnauthorizedError(APIError):
     """Raised for HTTP 401 Unauthorized errors."""
 
-    def __init__(self, message: str = "Unauthorized", details: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        message: str = "Unauthorized",
+        details: Optional[Dict[str, Any]] = None,
+    ):
         super().__init__(message, 401, details)
 
 
 class ForbiddenError(APIError):
     """Raised for HTTP 403 Forbidden errors."""
 
-    def __init__(self, message: str = "Forbidden", resource: Optional[str] = None):
+    def __init__(
+        self, message: str = "Forbidden", resource: Optional[str] = None
+    ):
         details = {"resource": resource} if resource else None
         super().__init__(message, 403, details)
 
@@ -52,7 +67,12 @@ class ForbiddenError(APIError):
 class NotFoundError(APIError):
     """Raised for HTTP 404 Not Found errors."""
 
-    def __init__(self, message: str = "Resource not found", resource_type: Optional[str] = None, resource_id: Optional[str] = None):
+    def __init__(
+        self,
+        message: str = "Resource not found",
+        resource_type: Optional[str] = None,
+        resource_id: Optional[str] = None,
+    ):
         details = {}
         if resource_type:
             details["resource_type"] = resource_type
@@ -76,7 +96,11 @@ class MethodNotAllowedError(APIError):
 class ConflictError(APIError):
     """Raised for HTTP 409 Conflict errors."""
 
-    def __init__(self, message: str = "Resource conflict", resource: Optional[str] = None):
+    def __init__(
+        self,
+        message: str = "Resource conflict",
+        resource: Optional[str] = None,
+    ):
         details = {"resource": resource} if resource else None
         super().__init__(message, 409, details)
 
@@ -84,16 +108,28 @@ class ConflictError(APIError):
 class UnprocessableEntityError(APIError):
     """Raised for HTTP 422 Unprocessable Entity errors."""
 
-    def __init__(self, message: str = "Unprocessable entity", validation_errors: Optional[Dict[str, Any]] = None):
-        details = {
-            "validation_errors": validation_errors} if validation_errors else None
+    def __init__(
+        self,
+        message: str = "Unprocessable entity",
+        validation_errors: Optional[Dict[str, Any]] = None,
+    ):
+        details = (
+            {"validation_errors": validation_errors}
+            if validation_errors
+            else None
+        )
         super().__init__(message, 422, details)
 
 
 class RateLimitExceededError(APIError):
     """Raised for HTTP 429 Too Many Requests errors."""
 
-    def __init__(self, message: str = "Rate limit exceeded", retry_after: Optional[int] = None, limit: Optional[str] = None):
+    def __init__(
+        self,
+        message: str = "Rate limit exceeded",
+        retry_after: Optional[int] = None,
+        limit: Optional[str] = None,
+    ):
         details = {}
         if retry_after:
             details["retry_after"] = retry_after
@@ -105,7 +141,11 @@ class RateLimitExceededError(APIError):
 class InternalServerError(APIError):
     """Raised for HTTP 500 Internal Server Error."""
 
-    def __init__(self, message: str = "Internal server error", error_id: Optional[str] = None):
+    def __init__(
+        self,
+        message: str = "Internal server error",
+        error_id: Optional[str] = None,
+    ):
         details = {"error_id": error_id} if error_id else None
         super().__init__(message, 500, details)
 
@@ -113,16 +153,28 @@ class InternalServerError(APIError):
 class BadGatewayError(APIError):
     """Raised for HTTP 502 Bad Gateway errors."""
 
-    def __init__(self, message: str = "Bad gateway", upstream_service: Optional[str] = None):
-        details = {
-            "upstream_service": upstream_service} if upstream_service else None
+    def __init__(
+        self,
+        message: str = "Bad gateway",
+        upstream_service: Optional[str] = None,
+    ):
+        details = (
+            {"upstream_service": upstream_service}
+            if upstream_service
+            else None
+        )
         super().__init__(message, 502, details)
 
 
 class ServiceUnavailableError(APIError):
     """Raised for HTTP 503 Service Unavailable errors."""
 
-    def __init__(self, message: str = "Service unavailable", retry_after: Optional[int] = None, service: Optional[str] = None):
+    def __init__(
+        self,
+        message: str = "Service unavailable",
+        retry_after: Optional[int] = None,
+        service: Optional[str] = None,
+    ):
         details = {}
         if retry_after:
             details["retry_after"] = retry_after
@@ -134,7 +186,9 @@ class ServiceUnavailableError(APIError):
 class GatewayTimeoutError(APIError):
     """Raised for HTTP 504 Gateway Timeout errors."""
 
-    def __init__(self, message: str = "Gateway timeout", timeout: Optional[int] = None):
+    def __init__(
+        self, message: str = "Gateway timeout", timeout: Optional[int] = None
+    ):
         details = {"timeout": timeout} if timeout else None
         super().__init__(message, 504, details)
 
@@ -142,7 +196,12 @@ class GatewayTimeoutError(APIError):
 class RequestTooLargeError(APIError):
     """Raised for HTTP 413 Request Entity Too Large errors."""
 
-    def __init__(self, message: str = "Request too large", max_size: Optional[int] = None, actual_size: Optional[int] = None):
+    def __init__(
+        self,
+        message: str = "Request too large",
+        max_size: Optional[int] = None,
+        actual_size: Optional[int] = None,
+    ):
         details = {}
         if max_size:
             details["max_size"] = max_size
@@ -154,7 +213,9 @@ class RequestTooLargeError(APIError):
 class UnsupportedMediaTypeError(APIError):
     """Raised for HTTP 415 Unsupported Media Type errors."""
 
-    def __init__(self, media_type: str, supported_types: Optional[list] = None):
+    def __init__(
+        self, media_type: str, supported_types: Optional[list] = None
+    ):
         message = f"Unsupported media type: {media_type}"
         details = {"media_type": media_type}
         if supported_types:
@@ -166,7 +227,9 @@ class UnsupportedMediaTypeError(APIError):
 class RequestTimeoutError(APIError):
     """Raised for HTTP 408 Request Timeout errors."""
 
-    def __init__(self, message: str = "Request timeout", timeout: Optional[int] = None):
+    def __init__(
+        self, message: str = "Request timeout", timeout: Optional[int] = None
+    ):
         details = {"timeout": timeout} if timeout else None
         super().__init__(message, 408, details)
 
@@ -181,7 +244,11 @@ class LengthRequiredError(APIError):
 class PreconditionFailedError(APIError):
     """Raised for HTTP 412 Precondition Failed errors."""
 
-    def __init__(self, message: str = "Precondition failed", condition: Optional[str] = None):
+    def __init__(
+        self,
+        message: str = "Precondition failed",
+        condition: Optional[str] = None,
+    ):
         details = {"condition": condition} if condition else None
         super().__init__(message, 412, details)
 
@@ -189,7 +256,11 @@ class PreconditionFailedError(APIError):
 class ExpectationFailedError(APIError):
     """Raised for HTTP 417 Expectation Failed errors."""
 
-    def __init__(self, message: str = "Expectation failed", expectation: Optional[str] = None):
+    def __init__(
+        self,
+        message: str = "Expectation failed",
+        expectation: Optional[str] = None,
+    ):
         details = {"expectation": expectation} if expectation else None
         super().__init__(message, 417, details)
 
@@ -197,7 +268,12 @@ class ExpectationFailedError(APIError):
 class TooManyRequestsError(APIError):
     """Raised when client makes too many requests."""
 
-    def __init__(self, message: str = "Too many requests", window: Optional[str] = None, limit: Optional[int] = None):
+    def __init__(
+        self,
+        message: str = "Too many requests",
+        window: Optional[str] = None,
+        limit: Optional[int] = None,
+    ):
         details = {}
         if window:
             details["window"] = window
@@ -209,7 +285,9 @@ class TooManyRequestsError(APIError):
 class InvalidAPIVersionError(APIError):
     """Raised when API version is invalid or unsupported."""
 
-    def __init__(self, version: str, supported_versions: Optional[list] = None):
+    def __init__(
+        self, version: str, supported_versions: Optional[list] = None
+    ):
         message = f"Invalid API version: {version}"
         details = {"version": version}
         if supported_versions:
@@ -221,16 +299,28 @@ class InvalidAPIVersionError(APIError):
 class MaintenanceModeError(APIError):
     """Raised when API is in maintenance mode."""
 
-    def __init__(self, message: str = "API is currently under maintenance", estimated_completion: Optional[str] = None):
-        details = {
-            "estimated_completion": estimated_completion} if estimated_completion else None
+    def __init__(
+        self,
+        message: str = "API is currently under maintenance",
+        estimated_completion: Optional[str] = None,
+    ):
+        details = (
+            {"estimated_completion": estimated_completion}
+            if estimated_completion
+            else None
+        )
         super().__init__(message, 503, details)
 
 
 class QuotaExceededError(APIError):
     """Raised when API quota is exceeded."""
 
-    def __init__(self, message: str = "API quota exceeded", quota_type: Optional[str] = None, reset_time: Optional[str] = None):
+    def __init__(
+        self,
+        message: str = "API quota exceeded",
+        quota_type: Optional[str] = None,
+        reset_time: Optional[str] = None,
+    ):
         details = {}
         if quota_type:
             details["quota_type"] = quota_type

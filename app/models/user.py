@@ -9,6 +9,8 @@ import bcrypt
 from sqlmodel import (
     Field,
     Relationship,
+)
+from sqlmodel import (
     Session as SQLSession,
 )
 
@@ -36,7 +38,9 @@ class User(BaseModel, table=True):
 
     def verify_password(self, password: str) -> bool:
         """Verify if the provided password matches the hash."""
-        return bcrypt.checkpw(password.encode("utf-8"), self.hashed_password.encode("utf-8"))
+        return bcrypt.checkpw(
+            password.encode("utf-8"), self.hashed_password.encode("utf-8")
+        )
 
     @staticmethod
     def hash_password(password: str) -> str:

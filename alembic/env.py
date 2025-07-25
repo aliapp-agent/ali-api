@@ -1,14 +1,12 @@
 from logging.config import fileConfig
-import os
+
 from sqlalchemy import engine_from_config, pool
+
 from alembic import context
+from app.core.config import settings
 
 # Importar os modelos para autogenerate
 from app.models.base import SQLModel
-from app.models.user import User
-from app.models.session import Session
-from app.models.thread import Thread
-from app.core.config import settings
 
 # this is the Alembic Config object
 config = context.config
@@ -18,10 +16,11 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Set the SQLAlchemy URL from environment
-config.set_main_option('sqlalchemy.url', settings.POSTGRES_URL)
+config.set_main_option("sqlalchemy.url", settings.POSTGRES_URL)
 
 # add your model's MetaData object here for 'autogenerate' support
 target_metadata = SQLModel.metadata
+
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""
@@ -35,6 +34,7 @@ def run_migrations_offline() -> None:
 
     with context.begin_transaction():
         context.run_migrations()
+
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
@@ -51,6 +51,7 @@ def run_migrations_online() -> None:
 
         with context.begin_transaction():
             context.run_migrations()
+
 
 if context.is_offline_mode():
     run_migrations_offline()

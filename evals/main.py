@@ -122,12 +122,18 @@ def display_summary(report: Dict[str, Any]) -> None:
     print_title("Evaluation Summary")
 
     print(f"{Fore.CYAN}Model:{Style.RESET_ALL} {report['model']}")
-    print(f"{Fore.CYAN}Duration:{Style.RESET_ALL} {report['duration_seconds']} seconds")
-    print(f"{Fore.CYAN}Total Traces:{Style.RESET_ALL} {report['total_traces']}")
+    print(
+        f"{Fore.CYAN}Duration:{Style.RESET_ALL} {report['duration_seconds']} seconds"
+    )
+    print(
+        f"{Fore.CYAN}Total Traces:{Style.RESET_ALL} {report['total_traces']}"
+    )
 
     success_rate = 0
     if report["total_traces"] > 0:
-        success_rate = (report["successful_traces"] / report["total_traces"]) * 100
+        success_rate = (
+            report["successful_traces"] / report["total_traces"]
+        ) * 100
 
     if success_rate > 80:
         status_color = Fore.GREEN
@@ -159,7 +165,9 @@ def display_summary(report: Dict[str, Any]) -> None:
         )
 
     if report["generate_report_path"]:
-        print(f"\n{Fore.CYAN}Report generated at:{Style.RESET_ALL} {report['generate_report_path']}")
+        print(
+            f"\n{Fore.CYAN}Report generated at:{Style.RESET_ALL} {report['generate_report_path']}"
+        )
 
 
 async def run_evaluation(generate_report: bool = True) -> None:
@@ -170,7 +178,9 @@ async def run_evaluation(generate_report: bool = True) -> None:
     """
     print_title("Starting Evaluation")
     print_info(f"Using model: {settings.EVALUATION_LLM}")
-    print_info(f"Report generation: {'Enabled' if generate_report else 'Disabled'}")
+    print_info(
+        f"Report generation: {'Enabled' if generate_report else 'Disabled'}"
+    )
 
     try:
         evaluator = Evaluator()
@@ -196,7 +206,9 @@ def display_configuration(config: Dict[str, Any]) -> None:
     print_title("Configuration")
     print_info(f"Model: {config['model']}")
     print_info(f"API Base: {config['api_base']}")
-    print_info(f"Generate Report: {'Yes' if config['generate_report'] else 'No'}")
+    print_info(
+        f"Generate Report: {'Yes' if config['generate_report'] else 'No'}"
+    )
 
 
 def interactive_mode() -> None:
@@ -213,16 +225,25 @@ def interactive_mode() -> None:
     # Display current configuration
     display_configuration(config)
 
-    print("\n" + f"{Fore.CYAN}Configuration Options (press Enter to accept defaults):{Style.RESET_ALL}")
+    print(
+        "\n"
+        + f"{Fore.CYAN}Configuration Options (press Enter to accept defaults):{Style.RESET_ALL}"
+    )
 
     # Allow user to change configuration or accept defaults
-    change_config = get_yes_no("Would you like to change the default configuration?", default=False)
+    change_config = get_yes_no(
+        "Would you like to change the default configuration?", default=False
+    )
 
     if change_config:
-        config["generate_report"] = get_yes_no("Generate JSON report?", default=config["generate_report"])
+        config["generate_report"] = get_yes_no(
+            "Generate JSON report?", default=config["generate_report"]
+        )
 
     print("\n")
-    confirm = get_yes_no("Ready to start evaluation with these settings?", default=True)
+    confirm = get_yes_no(
+        "Ready to start evaluation with these settings?", default=True
+    )
 
     if confirm:
         asyncio.run(run_evaluation(generate_report=config["generate_report"]))
@@ -241,7 +262,9 @@ def quick_mode() -> None:
     display_configuration(DEFAULT_CONFIG)
 
     try:
-        asyncio.run(run_evaluation(generate_report=DEFAULT_CONFIG["generate_report"]))
+        asyncio.run(
+            run_evaluation(generate_report=DEFAULT_CONFIG["generate_report"])
+        )
     except KeyboardInterrupt:
         print_warning("\nEvaluation canceled by user.")
         sys.exit(0)
@@ -249,10 +272,20 @@ def quick_mode() -> None:
 
 def main() -> None:
     """Main entry point for the command-line interface."""
-    parser = argparse.ArgumentParser(description="Run evaluations on model outputs")
-    parser.add_argument("--no-report", action="store_true", help="Don't generate a JSON report")
-    parser.add_argument("--interactive", action="store_true", help="Run in interactive mode")
-    parser.add_argument("--quick", action="store_true", help="Run with all default settings (no prompts)")
+    parser = argparse.ArgumentParser(
+        description="Run evaluations on model outputs"
+    )
+    parser.add_argument(
+        "--no-report", action="store_true", help="Don't generate a JSON report"
+    )
+    parser.add_argument(
+        "--interactive", action="store_true", help="Run in interactive mode"
+    )
+    parser.add_argument(
+        "--quick",
+        action="store_true",
+        help="Run with all default settings (no prompts)",
+    )
 
     args = parser.parse_args()
 

@@ -8,16 +8,18 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
 from app.core.metrics import (
-    http_requests_total,
-    http_request_duration_seconds,
     db_connections,
+    http_request_duration_seconds,
+    http_requests_total,
 )
 
 
 class MetricsMiddleware(BaseHTTPMiddleware):
     """Middleware for tracking HTTP request metrics."""
 
-    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: Callable
+    ) -> Response:
         """Track metrics for each request.
 
         Args:
@@ -39,8 +41,14 @@ class MetricsMiddleware(BaseHTTPMiddleware):
             duration = time.time() - start_time
 
             # Record metrics
-            http_requests_total.labels(method=request.method, endpoint=request.url.path, status=status_code).inc()
+            http_requests_total.labels(
+                method=request.method,
+                endpoint=request.url.path,
+                status=status_code,
+            ).inc()
 
-            http_request_duration_seconds.labels(method=request.method, endpoint=request.url.path).observe(duration)
+            http_request_duration_seconds.labels(
+                method=request.method, endpoint=request.url.path
+            ).observe(duration)
 
         return response

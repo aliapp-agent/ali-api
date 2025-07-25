@@ -16,11 +16,7 @@ CONNECTION_RETRY_DELAY = 1  # seconds
 # Table Names
 USERS_TABLE = "users"
 SESSIONS_TABLE = "sessions"
-CHECKPOINT_TABLES = [
-    "checkpoint_blobs",
-    "checkpoint_writes",
-    "checkpoints"
-]
+CHECKPOINT_TABLES = ["checkpoint_blobs", "checkpoint_writes", "checkpoints"]
 
 # Database Limits
 MAX_CONNECTIONS_PER_USER = 10
