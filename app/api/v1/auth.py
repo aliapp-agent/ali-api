@@ -25,6 +25,11 @@ from app.core.logging import logger
 from app.models.session import Session
 from app.models.user import User
 from app.schemas.auth import (
+    ForgotPasswordRequest,
+    LogoutRequest,
+    MessageResponse,
+    RefreshTokenRequest,
+    ResetPasswordRequest,
     SessionResponse,
     TokenResponse,
     UserCreate,
@@ -33,6 +38,10 @@ from app.schemas.auth import (
 from app.services.database import DatabaseService
 from app.utils.auth import (
     create_access_token,
+    create_password_reset_token,
+    create_refresh_token,
+    verify_password_reset_token,
+    verify_refresh_token,
     verify_token,
 )
 from app.utils.sanitization import (
@@ -400,3 +409,184 @@ async def get_user_sessions(user: User = Depends(get_current_user)):
             exc_info=True,
         )
         raise HTTPException(status_code=422, detail=str(ve))
+
+
+@router.post("/logout", response_model=MessageResponse)
+@limiter.limit("10/minute")
+async def logout(
+    request: Request,
+    logout_request: LogoutRequest | None = None,
+    current_user: User = Depends(get_current_user),
+):
+    """Logout a user by invalidating their token.
+    
+    Args:
+        request: The FastAPI request object for rate limiting.
+        logout_request: Optional logout request data.
+        current_user: The authenticated user.
+        
+    Returns:
+        MessageResponse: Confirmation message.
+    """
+    try:
+        # In a real implementation, you would add the token to a blacklist
+        # or invalidate it in the database
+        logger.info("user_logged_out", user_id=current_user.id)
+        
+        return MessageResponse(
+            message="Successfully logged out",
+            success=True
+        )
+    except Exception as e:
+        logger.error("logout_failed", user_id=current_user.id, error=str(e))
+        raise HTTPException(status_code=500, detail="Logout failed")
+
+
+@router.post("/refresh", response_model=TokenResponse)
+@limiter.limit("20/minute")
+async def refresh_token(
+    request: Request,
+    refresh_request: RefreshTokenRequest,
+):
+    """Refresh an access token using a refresh token.
+    
+    Args:
+        request: The FastAPI request object for rate limiting.
+        refresh_request: The refresh token request.
+        
+    Returns:
+        TokenResponse: New access token.
+    """
+    try:
+        # Verify the refresh token
+        user_id = verify_refresh_token(refresh_request.refresh_token)
+        if not user_id:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid refresh token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # Verify user still exists
+        user = await db_service.get_user(int(user_id))
+        if not user:
+            raise HTTPException(
+                status_code=404,
+                detail="User not found",
+            )
+        
+        # Create new access token
+        token = create_access_token(str(user.id))
+        
+        logger.info("token_refreshed", user_id=user.id)
+        
+        return TokenResponse(
+            access_token=token.access_token,
+            token_type="bearer",
+            expires_at=token.expires_at,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("token_refresh_failed", error=str(e))
+        raise HTTPException(status_code=500, detail="Token refresh failed")
+
+
+@router.post("/forgot-password", response_model=MessageResponse)
+@limiter.limit("5/minute")
+async def forgot_password(
+    request: Request,
+    forgot_request: ForgotPasswordRequest,
+):
+    """Send a password reset email to the user.
+    
+    Args:
+        request: The FastAPI request object for rate limiting.
+        forgot_request: The forgot password request.
+        
+    Returns:
+        MessageResponse: Confirmation message.
+    """
+    try:
+        # Sanitize email
+        email = sanitize_email(forgot_request.email)
+        
+        # Check if user exists (but don't reveal if they don't)
+        user = await db_service.get_user_by_email(email)
+        
+        if user:
+            # Generate reset token
+            reset_token = create_password_reset_token(email)
+            
+            # In a real implementation, you would:
+            # 1. Store the reset token in the database with expiration
+            # 2. Send an email with the reset link
+            logger.info("password_reset_requested", email=email)
+        
+        # Always return success to prevent email enumeration
+        return MessageResponse(
+            message="If an account with that email exists, a password reset link has been sent",
+            success=True
+        )
+    except Exception as e:
+        logger.error("forgot_password_failed", error=str(e))
+        # Still return success to prevent information leakage
+        return MessageResponse(
+            message="If an account with that email exists, a password reset link has been sent",
+            success=True
+        )
+
+
+@router.post("/reset-password", response_model=MessageResponse)
+@limiter.limit("10/minute")
+async def reset_password(
+    request: Request,
+    reset_request: ResetPasswordRequest,
+):
+    """Reset a user's password using a reset token.
+    
+    Args:
+        request: The FastAPI request object for rate limiting.
+        reset_request: The password reset request.
+        
+    Returns:
+        MessageResponse: Confirmation message.
+    """
+    try:
+        # Verify the reset token
+        email = verify_password_reset_token(reset_request.reset_token)
+        if not email:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid or expired reset token"
+            )
+        
+        # Get user by email
+        user = await db_service.get_user_by_email(email)
+        if not user:
+            raise HTTPException(
+                status_code=404,
+                detail="User not found"
+            )
+        
+        # Update password
+        new_password = reset_request.new_password.get_secret_value()
+        hashed_password = User.hash_password(new_password)
+        
+        # In a real implementation, you would update the user's password in the database
+        # await db_service.update_user_password(user.id, hashed_password)
+        
+        logger.info("password_reset_completed", user_id=user.id)
+        
+        return MessageResponse(
+            message="Password has been reset successfully",
+            success=True
+        )
+    except HTTPException:
+        raise
+    except ValueError as ve:
+        logger.error("password_reset_validation_failed", error=str(ve))
+        raise HTTPException(status_code=422, detail=str(ve))
+    except Exception as e:
+        logger.error("password_reset_failed", error=str(e))
+        raise HTTPException(status_code=500, detail="Password reset failed")

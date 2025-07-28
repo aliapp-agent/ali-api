@@ -125,6 +125,33 @@ class Settings(BaseSettings):
         env="ALLOWED_ORIGINS",
     )
 
+    @property
+    def ALLOWED_ORIGINS_LIST(self) -> list[str]:
+        """Parse ALLOWED_ORIGINS string into a list."""
+        if not self.ALLOWED_ORIGINS:
+            return ["*"]  # Allow all origins if none specified (dev only)
+        
+        origins = [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
+        
+        # Add environment-specific defaults
+        if self.APP_ENV == Environment.STAGING:
+            # Add staging frontend URLs
+            default_staging = [
+                "https://ali-frontend-staging.vercel.app",
+                "https://staging.ali-app.com"  # Custom staging domain
+            ]
+            origins.extend([url for url in default_staging if url not in origins])
+        elif self.APP_ENV == Environment.PRODUCTION:
+            # Add production frontend URLs
+            default_production = [
+                "https://ali-frontend.vercel.app", 
+                "https://app.ali.com",  # Custom production domain
+                "https://ali.com"
+            ]
+            origins.extend([url for url in default_production if url not in origins])
+        
+        return origins
+
     # Logging Configuration
     LOG_DIR: Path = Field(default=Path("./logs"), env="LOG_DIR")
     LOG_LEVEL: str = Field(default="INFO", env="LOG_LEVEL")

@@ -1,88 +1,56 @@
- Lista de Tasks - Ali API
-
-  Criei uma lista organizada com 15 tarefas divididas por prioridade. Aqui está o resumo:
-
-  🔴 Tarefas CRÍTICAS (Prioridade Alta)
-
-  Impedem o funcionamento da aplicação:
-
-  1. ✅ Documentação arquitetural - CONCLUÍDO
-  2. ✅ Adicionar dependência 'agno' ao pyproject.toml
-  3. Criar .env.development com variáveis necessárias
-  4. Corrigir schema.sql para PostgreSQL
-  5. Adicionar PostgreSQL ao docker-compose.yml
-  6. Resolver conflito LangGraph vs Agno e corrigir imports
-   7. Migrar para Agno - Remover LangGraph, usar apenas Agno                                                                                                       │ │
-    8. Implementar Alembic - Setup de migrations                                                                                                                    │ │
-    9. Configurar SQLite para memória do agente                                                                                                                     │ │
-    10. Ajustar imports e dependências                                                                                                                               │ │
-    11. Atualizar Docker e configurações                                                                                                                             │ │
-    12. Simplificar setup sem PostgreSQL para agente
-
-  🟡 Tarefas IMPORTANTES (Prioridade Média)
-
-  Melhoram funcionalidade e deployment:
-
-  13. Implementar tools corretamente
-  14. Gerar requirements.txt
-  15. Instalar curl no Dockerfile
-  16. Adicionar tabelas checkpoint ao schema
-
-  🟢 Tarefas OPCIONAIS (Prioridade Baixa)
-
-  Melhorias de qualidade e DX:
-
-  17. Criar .env.example
-  18. Validação de variáveis obrigatórias
-  19. Melhorar error handling
-  20. Criar testes básicos
-  21. Documentar setup local
-
-  Recomendação: Comece pelas tarefas críticas (2-6) para ter a API funcionando, depois avance para as melhorias conforme necessário.
-
-  Lista de Tarefas - Ali API
-
-Tarefas reorganizadas para maior clareza e foco.
-
 ---
-### 🔴 Prioridade Alta - Blocker
-Itens essenciais para a aplicação funcionar.
+## 🚀 PRÓXIMAS FASES - DEPLOY E FRONTEND
 
-1.  ✅ Documentação da arquitetura inicial.
-2.  ✅ Adicionar dependência `agno` ao `pyproject.toml`.
-3.  **Configuração do Ambiente:**
-    -  ✅ Criar arquivo `.env.development` com as variáveis de ambiente necessárias.
-    -  ✅ Criar um arquivo `.env.example` como guia.
-4.  **Setup do Banco de Dados:**
-    -   Adicionar e configurar o serviço do PostgreSQL no `docker-compose.yml`.
-    -   Implementar Alembic para gerenciar as migrações do schema.
-    -   Adicionar as tabelas de checkpoint do Agno ao schema de migração inicial.
-5.  **Migração de LangGraph para Agno:**
-    -   Remover completamente as dependências e o código relacionado ao `langgraph`.
-    -   Refatorar o `AgnoAgent` e os endpoints para usar exclusivamente `agno`.
-    -   Ajustar o `Dockerfile` e as configurações relacionadas.
-6.  **Implementar Ferramentas (Tools):**
-    -   Corrigir a implementação das `tools` para que sejam compatíveis com o `AgnoAgent`.
+### Fase 1: Deploy Staging Backend (Prioridade Alta)
+12. **Configuração GCP Environment:**
+    - Criar/configurar projeto GCP
+    - Setup Cloud SQL PostgreSQL para staging
+    - Configurar secrets e variáveis de ambiente
+    - Configurar IAM e permissões
 
----
-### 🟡 Prioridade Média - Importante
-Melhorias de funcionalidade, robustez e deployment.
+13. **Deploy API Staging:**
+    - Build da imagem Docker para Cloud Run
+    - Deploy no Cloud Run com configurações staging
+    - Configurar domínio personalizado e SSL
+    - Testar endpoints /health, /docs em staging
 
-7.  **Validação e Error Handling:**
-    -   Adicionar validação para variáveis de ambiente obrigatórias na inicialização.
-    -   Melhorar o tratamento de erros na API e nos agentes.
-8.  **Deployment e CI/CD:**
-    -   Gerar e manter um `requirements.txt` a partir do `pyproject.toml`.
-    -   Garantir que o `Dockerfile` tenha todas as ferramentas necessárias (ex: `curl`).
-9.  **Testes:**
-    -   Criar testes de unidade básicos para os principais componentes (ex: `AgnoAgent`).
-    -   Criar testes de integração para os endpoints da API.
+### Fase 2: Frontend Integration (Prioridade Alta)
+14. **Setup Frontend:**
+    - Identificar/criar aplicação frontend (Next.js/React/Vue)
+    - Configurar CORS na API para domínio do frontend
+    - Implementar client HTTP para comunicação com API
+    - Integrar autenticação JWT no frontend
 
----
-### 🟢 Prioridade Baixa - Opcional
-Melhorias de qualidade de código e experiência do desenvolvedor (DX).
+15. **Deploy Frontend:**
+    - Deploy frontend em plataforma (Vercel/Netlify/GCP)
+    - Configurar environment variables do frontend
+    - Conectar frontend à API staging
+    - Testar fluxo completo: UI → API → Database
 
-10. **Documentação:**
-    -   Documentar o processo de setup local para novos desenvolvedores.
-11. **Alternativa de Desenvolvimento:**
-    -   Configurar uma opção para usar SQLite em memória para a memória do agente, simplificando o setup local sem Docker.
+### Fase 3: CI/CD Pipeline (Prioridade Média)
+16. **GitHub Actions Setup:**
+    - Workflow de build e test para backend
+    - Workflow de build e deploy para frontend  
+    - Deploy automático para staging (push to main)
+    - Deploy manual para production (manual trigger)
+    - Integração com GCP secrets e credenciais
+
+17. **Monitoramento e Alertas:**
+    - Configurar alertas básicos (uptime, errors)
+    - Dashboard de métricas (Cloud Monitoring)
+    - Logging estruturado e centralized
+    - Health check monitoring
+
+### Fase 4: Validação End-to-End (Prioridade Média)
+18. **Testes Integrados:**
+    - Validar fluxo completo: Frontend → API → Database
+    - Testar autenticação e autorização
+    - Validar RAG service via interface web
+    - Testar Agno agent responses no frontend
+    - Load testing básico com ferramentas
+
+19. **Preparação Production:**
+    - Review de configurações de segurança
+    - Backup e disaster recovery setup
+    - Documentation de deployment
+    - Treinamento de usuários finais

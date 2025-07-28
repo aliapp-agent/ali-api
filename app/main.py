@@ -417,10 +417,19 @@ async def general_exception_handler(request: Request, exc: Exception):
 # Set up CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=settings.ALLOWED_ORIGINS_LIST,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=[
+        "Accept",
+        "Accept-Language",
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "X-API-Key",
+        "Cache-Control"
+    ],
+    expose_headers=["X-Total-Count", "X-Rate-Limit-Remaining"],
 )
 
 # Include API router
