@@ -52,7 +52,12 @@ from app.utils.sanitization import (
 
 router = APIRouter()
 security = HTTPBearer()
-db_service = DatabaseService()
+
+# Initialize database service - handle Firebase mode
+if DatabaseService is not None:
+    db_service = DatabaseService()
+else:
+    db_service = None
 
 
 async def get_current_user(
@@ -84,6 +89,12 @@ async def get_current_user(
 
         # Verify user exists in database
         user_id_int = int(user_id)
+        if db_service is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Database service not available",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         user = await db_service.get_user(user_id_int)
         if user is None:
             logger.error("user_not_found", user_id=user_id_int)
@@ -134,6 +145,12 @@ async def get_current_session(
         session_id = sanitize_string(session_id)
 
         # Verify session exists in database
+        if db_service is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Database service not available",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         session = await db_service.get_session(session_id)
         if session is None:
             logger.error("session_not_found", session_id=session_id)
@@ -174,12 +191,24 @@ async def register_user(request: Request, user_data: UserCreate):
         validate_password_strength(password)
 
         # Check if user exists
+        if db_service is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Database service not available",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         if await db_service.get_user_by_email(sanitized_email):
             raise HTTPException(
                 status_code=400, detail="Email already registered"
             )
 
         # Create user
+        if db_service is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Database service not available",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         user = await db_service.create_user(
             email=sanitized_email, password=User.hash_password(password)
         )
@@ -230,6 +259,12 @@ async def login(
                 detail="Unsupported grant type. Must be 'password'",
             )
 
+        if db_service is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Database service not available",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         user = await db_service.get_user_by_email(username)
         if not user or not user.verify_password(password):
             raise HTTPException(
@@ -264,6 +299,11 @@ async def create_session(user: User = Depends(get_current_user)):
         session_id = str(uuid.uuid4())
 
         # Create session in database
+        if db_service is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Database service not available"
+            )
         session = await db_service.create_session(session_id, user.id)
 
         # Create access token for the session
@@ -319,6 +359,11 @@ async def update_session_name(
             )
 
         # Update the session name
+        if db_service is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Database service not available"
+            )
         session = await db_service.update_session_name(
             sanitized_session_id, sanitized_name
         )
@@ -364,6 +409,11 @@ async def delete_session(
             )
 
         # Delete the session
+        if db_service is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Database service not available"
+            )
         await db_service.delete_session(sanitized_session_id)
 
         logger.info(
@@ -392,6 +442,11 @@ async def get_user_sessions(user: User = Depends(get_current_user)):
         List[SessionResponse]: List of session IDs
     """
     try:
+        if db_service is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Database service not available"
+            )
         sessions = await db_service.get_user_sessions(user.id)
         return [
             SessionResponse(
@@ -468,6 +523,12 @@ async def refresh_token(
             )
         
         # Verify user still exists
+        if db_service is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Database service not available",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         user = await db_service.get_user(int(user_id))
         if not user:
             raise HTTPException(
@@ -512,6 +573,11 @@ async def forgot_password(
         email = sanitize_email(forgot_request.email)
         
         # Check if user exists (but don't reveal if they don't)
+        if db_service is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Database service not available"
+            )
         user = await db_service.get_user_by_email(email)
         
         if user:
@@ -562,6 +628,11 @@ async def reset_password(
             )
         
         # Get user by email
+        if db_service is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Database service not available"
+            )
         user = await db_service.get_user_by_email(email)
         if not user:
             raise HTTPException(
