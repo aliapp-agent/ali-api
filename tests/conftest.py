@@ -141,24 +141,35 @@ class MockBlob:
 
 
 def patch_firebase_imports():
-    """Patch Firebase imports globally for testing."""
-    # Mock Firebase Admin
+    """Patch Firebase imports by injecting mocks into sys.modules."""
     mock_admin = MockFirebaseAdmin()
     
-    # Apply patches
-    patches = [
-        patch('firebase_admin.initialize_app', mock_admin.initialize_app),
-        patch('firebase_admin.credentials.Certificate', Mock),
-        patch('firebase_admin.auth', mock_admin.auth),
-        patch('firebase_admin.firestore.client', mock_admin.firestore.client),
-        patch('firebase_admin.storage.bucket', mock_admin.storage.bucket),
-    ]
+    # Create mock modules and inject them into sys.modules
+    mock_modules = {
+        'firebase_admin': Mock(
+            initialize_app=mock_admin.initialize_app,
+            credentials=Mock(Certificate=Mock),
+            auth=mock_admin.auth,
+            firestore=mock_admin.firestore,
+            storage=mock_admin.storage,
+        ),
+        'firebase_admin.auth': mock_admin.auth,
+        'firebase_admin.firestore': mock_admin.firestore,
+        'firebase_admin.storage': mock_admin.storage,
+        'firebase_admin.credentials': Mock(Certificate=Mock),
+        'google.cloud.firestore': mock_admin.firestore,
+        'google.cloud.storage': mock_admin.storage,
+        'google.cloud.logging': Mock(),
+    }
     
-    # Start all patches
-    for p in patches:
-        p.start()
+    # Inject mocks into sys.modules
+    original_modules = {}
+    for module_name, mock_module in mock_modules.items():
+        if module_name in sys.modules:
+            original_modules[module_name] = sys.modules[module_name]
+        sys.modules[module_name] = mock_module
     
-    return patches
+    return original_modules
 
 
 def setup_test_environment():
@@ -180,13 +191,28 @@ def setup_test_environment():
 
 
 # Apply patches immediately when this module is imported
+# Only if we're in a test environment
 if "pytest" in sys.modules or os.environ.get("APP_ENV") == "test":
-    setup_test_environment()
+    # Set environment variables first
+    os.environ.update({
+        "APP_ENV": "test",
+        "FIREBASE_PROJECT_ID": "test-project",
+        "FIREBASE_CREDENTIALS_PATH": "/tmp/test-firebase-credentials.json",
+        "FIREBASE_STORAGE_BUCKET": "test-project.appspot.com",
+        "FIREBASE_REGION": "us-central1",
+        "QDRANT_URL": "http://localhost:6333",
+        "JWT_SECRET_KEY": "test-secret-key",
+        "LLM_API_KEY": "test-llm-key",
+    })
+    
+    # Apply Firebase mocks to sys.modules
+    patch_firebase_imports()
 
 # ============================================================================
 # END FIREBASE MOCKS
 # ============================================================================
 
+# Import app components - Firebase mocks already applied above
 from app.core.config import settings
 from app.main import app as fastapi_app
 
