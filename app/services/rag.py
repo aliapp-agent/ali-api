@@ -14,8 +14,8 @@ class RAGService:
         # Configurar Elasticsearch com autenticação se necessário
         es_config = {
             "hosts": [settings.ELASTICSEARCH_URL],
-            "timeout": settings.ELASTICSEARCH_TIMEOUT,
-            "max_retries": settings.ELASTICSEARCH_MAX_RETRIES,
+            "request_timeout": settings.ELASTICSEARCH_TIMEOUT,
+            "retry_on_timeout": True,
         }
 
         # Adicionar API key se fornecida

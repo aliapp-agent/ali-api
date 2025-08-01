@@ -5,7 +5,8 @@ WORKDIR /app
 
 # Set non-sensitive environment variables
 ARG APP_ENV=production
-ARG POSTGRES_URL
+ARG FIREBASE_PROJECT_ID
+ARG QDRANT_URL
 
 ENV APP_ENV=${APP_ENV} \
     PYTHONFAULTHANDLER=1 \
@@ -14,13 +15,14 @@ ENV APP_ENV=${APP_ENV} \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
     PIP_DEFAULT_TIMEOUT=100 \
-    POSTGRES_URL=${POSTGRES_URL}
+    FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID} \
+    QDRANT_URL=${QDRANT_URL}
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
-    libpq-dev \
     curl \
+    wget \
     && pip install --upgrade pip \
     && pip install uv \
     && rm -rf /var/lib/apt/lists/*

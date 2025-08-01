@@ -52,6 +52,11 @@ def load_env_file():
     env = get_environment()
     env_file = f".env.{env.value}"
 
+    # Also try to load .env.firebase if it exists
+    firebase_env = ".env.firebase"
+    if Path(firebase_env).exists():
+        load_dotenv(firebase_env)
+
     if Path(env_file).exists():
         load_dotenv(env_file)
     else:
@@ -207,6 +212,31 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = Field(default="HS256", env="JWT_ALGORITHM")
     JWT_ACCESS_TOKEN_EXPIRE_DAYS: int = Field(
         default=30, env="JWT_ACCESS_TOKEN_EXPIRE_DAYS"
+    )
+
+    # Firebase Configuration
+    FIREBASE_PROJECT_ID: str = Field(
+        default="", env="FIREBASE_PROJECT_ID"
+    )
+    FIREBASE_CREDENTIALS_PATH: str = Field(
+        default="", env="FIREBASE_CREDENTIALS_PATH"
+    )
+    FIREBASE_STORAGE_BUCKET: str = Field(
+        default="", env="FIREBASE_STORAGE_BUCKET"
+    )
+    FIREBASE_REGION: str = Field(
+        default="us-central1", env="FIREBASE_REGION"
+    )
+
+    # Qdrant Configuration
+    QDRANT_URL: str = Field(
+        default="http://localhost:6333", env="QDRANT_URL"
+    )
+    QDRANT_API_KEY: str = Field(
+        default="", env="QDRANT_API_KEY"
+    )
+    QDRANT_COLLECTION_NAME: str = Field(
+        default="documents", env="QDRANT_COLLECTION_NAME"
     )
 
     # Rate Limiting Endpoints

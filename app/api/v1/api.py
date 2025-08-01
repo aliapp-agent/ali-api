@@ -6,7 +6,7 @@ endpoints like authentication and chatbot functionality.
 
 from fastapi import APIRouter
 
-from app.api.v1.auth import router as auth_router
+from app.api.v1.firebase_auth import router as auth_router
 from app.api.v1.chatbot import router as chatbot_router
 from app.api.v1.documents import router as documents_router
 from app.api.v1.users import router as users_router

@@ -36,7 +36,11 @@ from app.exceptions import (
     DatabaseError,
     ValidationError,
 )
-from app.services.database import database_service
+# Firebase mode - PostgreSQL not needed
+try:
+    from app.services.database import database_service
+except Exception:
+    database_service = None
 
 # Load environment variables
 load_dotenv()
@@ -466,7 +470,10 @@ async def health_check(request: Request) -> JSONResponse:
 
     try:
         # Check database connectivity
-        db_healthy = await database_service.health_check()
+        if database_service:
+            db_healthy = await database_service.health_check()
+        else:
+            db_healthy = True  # Firebase mode - no PostgreSQL needed
 
         # Check RAG service health
         rag_health = {}
