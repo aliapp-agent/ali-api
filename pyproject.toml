@@ -7,15 +7,12 @@ requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.115.12",
     "passlib[bcrypt]>=1.7.4",
-    "psycopg2-binary>=2.9.10",
     "pydantic[email]>=2.11.1",
     "pydantic-settings>=2.8.1",
     "python-dotenv>=1.1.0",
     "python-jose[cryptography]>=3.4.0",
     "python-multipart>=0.0.20",
-    "sqlmodel>=0.0.24",
     "structlog>=25.2.0",
-    "supabase>=2.15.0",
     "uvicorn>=0.34.0",
     "bcrypt>=4.3.0",
     "slowapi>=0.1.9",
@@ -30,17 +27,19 @@ dependencies = [
     "openai>=1.70.0",
     "anthropic>=0.40.0",
     "multidict>=6.1.0,!=6.3.0",
-    "elasticsearch>=8.11.0",
     "sentence-transformers>=2.2.2",
     "langchain>=0.1.0",
-    "langchain-elasticsearch>=0.1.0",
     "pypdf>=3.17.0",
     "python-docx>=1.1.0",
     "beautifulsoup4>=4.12.0",
     "tiktoken>=0.5.0",
     "langchain-community>=0.0.20",
-    "alembic>=1.13.0",
     "psutil>=5.9.0",
+    "firebase-admin>=6.4.0",
+    "google-cloud-firestore>=2.14.0",
+    "google-cloud-storage>=2.10.0",
+    "google-cloud-logging>=3.8.0",
+    "qdrant-client>=1.7.0",
 ]
 
 [project.optional-dependencies]
@@ -57,7 +56,10 @@ packages = ["app"]
 dev-dependencies = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
     "httpx>=0.24.0",
+    "safety>=2.3.0",
+    "bandit>=1.7.0",
 ]
 
 [dependency-groups]
