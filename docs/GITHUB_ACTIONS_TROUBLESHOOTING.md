@@ -19,7 +19,12 @@ O problema estava relacionado a:
    - Apenas 5 tentativas de retry
    - Solução: Aumentar para 10s timeout, 10 retries, 30s start period
 
-3. **Falta de Logs de Debug**
+3. **Formatação YAML Incorreta**
+   - Uso de `>` em vez de `>-` causava quebra de linha extra
+   - Erro: `time: unknown unit "s\x0a"` no parâmetro `--health-start-period`
+   - Solução: Usar `>-` para remover quebra de linha final
+
+4. **Falta de Logs de Debug**
    - Difícil identificar onde exatamente falha
    - Solução: Adicionar logs detalhados e testes de conectividade
 
@@ -35,13 +40,26 @@ options: >
   --health-retries 5
 
 # DEPOIS (corrigido)
-options: >
+options: >-
   --health-cmd "curl -f http://localhost:6333/ || exit 1"
   --health-interval 30s
   --health-timeout 10s
   --health-retries 10
   --health-start-period 30s
 ```
+
+#### 🚨 **Problema Crítico: Formatação YAML**
+```yaml
+# ❌ ERRADO - Causa erro "time: unknown unit 's\x0a'"
+options: >
+  --health-start-period 30s
+
+# ✅ CORRETO - Remove quebra de linha final
+options: >-
+  --health-start-period 30s
+```
+
+**Explicação**: O operador `>` em YAML preserva a quebra de linha final, enquanto `>-` a remove. Docker interpreta `30s\n` como uma unidade de tempo inválida.
 
 #### 2. Logs de Debug Adicionados
 ```bash

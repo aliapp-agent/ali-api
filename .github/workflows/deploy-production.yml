@@ -61,7 +61,7 @@ jobs:
         image: qdrant/qdrant:latest
         ports:
           - 6333:6333
-        options: >
+        options: >-
           --health-cmd "curl -f http://localhost:6333/ || exit 1"
           --health-interval 30s
           --health-timeout 10s
