@@ -1,9 +1,46 @@
-FROM python:3.13.2-slim
+# Multi-stage build for better security and smaller image size
+FROM python:3.13.2-slim as builder
+
+# Install system dependencies for building
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv for faster dependency resolution
+RUN pip install uv
 
 # Set working directory
 WORKDIR /app
 
-# Set non-sensitive environment variables
+# Copy dependency files
+COPY pyproject.toml uv.lock ./
+
+# Create virtual environment and install dependencies
+RUN uv venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+RUN uv pip install -e .
+
+# Production stage
+FROM python:3.13.2-slim as production
+
+# Create non-root user for security
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Set working directory
+WORKDIR /app
+
+# Copy virtual environment from builder stage
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Set environment variables
 ARG APP_ENV=production
 ARG FIREBASE_PROJECT_ID
 ARG QDRANT_URL
@@ -14,9 +51,9 @@ ENV APP_ENV=${APP_ENV} \
     PYTHONHASHSEED=random \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
-    PIP_DEFAULT_TIMEOUT=100 \
     FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID} \
-    QDRANT_URL=${QDRANT_URL}
+    QDRANT_URL=${QDRANT_URL} \
+    PYTHONPATH=/app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -52,4 +89,4 @@ RUN echo "Using ${APP_ENV} environment"
 
 # Command to run the application
 ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]
-CMD ["/app/.venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"] 
+CMD ["/app/.venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

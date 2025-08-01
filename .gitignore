@@ -238,16 +238,16 @@ cython_debug/
 .abstra/
 
 # Visual Studio Code
-#  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
+#  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore
 #  that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
-#  and can be added to the global gitignore or merged into this file. However, if you prefer, 
+#  and can be added to the global gitignore or merged into this file. However, if you prefer,
 #  you could uncomment the following to ignore the entire vscode folder
 # .vscode/
 
 # Ruff stuff:
 .ruff_cache/
 
-# PyPI configuration file
+# PyAPI configuration file
 .pypirc
 
 # Cursor
@@ -261,3 +261,38 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Additional IDE/Editor files
+.zed/
+*.swp
+*.swo
+*~
+
+# Additional virtual environments
+venv/
+
+# Firebase credentials and config
+firebase-credentials.json
+firebase-config.json
+.firebase/
+
+# Application specific logs and data
+server.log
+qdrant.log
+qdrant_data/
+snapshots/
+.qdrant-initialized
+
+# Development files
+pyvenv.cfg
+tasks.txt
+fix_*.py
+test_*.py
+
+# Vector database files
+qdrant/
+*.tar.gz
+
+# Runtime data
+storage/
+data/local/
