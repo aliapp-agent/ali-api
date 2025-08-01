@@ -13,19 +13,19 @@ from jose import (
     jwt,
 )
 
-from app.constants.auth import (
+from app.shared.constants.auth import (
     ACCESS_TOKEN_EXPIRE_DAYS_DEFAULT,
     JWT_ALGORITHM_DEFAULT,
     TOKEN_TYPE_BEARER,
 )
-from app.constants.validation import (
+from app.shared.constants.validation import (
     JWT_TOKEN_MAX_LENGTH,
     JWT_TOKEN_MIN_LENGTH,
 )
 from app.core.config import settings
 from app.core.logging import logger
 from app.schemas.auth import Token
-from app.utils.sanitization import (
+from app.shared.utils.sanitization import (
     sanitize_string,
     validate_jwt_token,
 )
@@ -134,14 +134,15 @@ def verify_token(token: str) -> Optional[str]:
         logger.warning("token_format_validation_failed", error=str(e))
         raise
 
-    try:
-        # Get JWT configuration
-        secret_key = getattr(settings, "JWT_SECRET_KEY", None)
-        algorithm = getattr(settings, "JWT_ALGORITHM", JWT_ALGORITHM_DEFAULT)
+    # Get JWT configuration
+    secret_key = getattr(settings, "JWT_SECRET_KEY", None)
+    algorithm = getattr(settings, "JWT_ALGORITHM", JWT_ALGORITHM_DEFAULT)
 
-        if not secret_key:
-            logger.error("jwt_secret_key_not_configured")
-            raise ValueError("JWT secret key is not configured")
+    if not secret_key:
+        logger.error("jwt_secret_key_not_configured")
+        raise ValueError("JWT secret key is not configured")
+
+    try:
 
         # Decode and verify the token
         payload = jwt.decode(
@@ -186,13 +187,10 @@ def verify_token(token: str) -> Optional[str]:
     except jwt.ExpiredSignatureError:
         logger.warning("token_expired", token_part=token[:20] + "...")
         return None
-    except jwt.InvalidTokenError as e:
+    except JWTError as e:
         logger.warning(
             "token_invalid", error=str(e), token_part=token[:20] + "..."
         )
-        return None
-    except JWTError as e:
-        logger.error("token_verification_failed", error=str(e), exc_info=True)
         return None
     except Exception as e:
         logger.error(
@@ -354,7 +352,7 @@ def verify_refresh_token(token: str) -> Optional[str]:
     except jwt.ExpiredSignatureError:
         logger.warning("refresh_token_expired")
         return None
-    except (jwt.InvalidTokenError, JWTError):
+    except JWTError:
         logger.warning("refresh_token_invalid")
         return None
     except Exception as e:

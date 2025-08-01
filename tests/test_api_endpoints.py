@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from app.schemas.chat import ChatMessage, ChatResponse
+from app.schemas.chat import Message, ChatResponse
 from app.schemas.rag import DocumentSearchResult
 
 

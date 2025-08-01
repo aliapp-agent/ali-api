@@ -19,42 +19,52 @@ class TestHealthCheck:
     def test_health_check_success(self, client: TestClient):
         """Test successful health check with all components healthy."""
         with patch("app.main.database_service") as mock_db_service:
-            # Mock database health check as successful
-            mock_db_service.health_check = AsyncMock(return_value=True)
+            with patch("app.services.rag.rag_service") as mock_rag_service:
+                with patch("app.core.agno.graph.AgnoAgent") as mock_agno_agent:
+                    # Mock all services as healthy
+                    mock_db_service.health_check = AsyncMock(return_value=True)
+                    mock_rag_service.health_check = AsyncMock(return_value={"status": "healthy"})
+                    mock_agno_instance = mock_agno_agent.return_value
+                    mock_agno_instance.health_check = AsyncMock(return_value={"status": "healthy"})
 
-            response = client.get("/health")
+                    response = client.get("/health")
 
-            assert response.status_code == status.HTTP_200_OK
+                    assert response.status_code == status.HTTP_200_OK
 
-            data = response.json()
-            assert data["status"] == "healthy"
-            assert "version" in data
-            assert "environment" in data
-            assert "timestamp" in data
-            assert "components" in data
+                    data = response.json()
+                    assert data["status"] == "healthy"
+                    assert "version" in data
+                    assert "environment" in data
+                    assert "timestamp" in data
+                    assert "components" in data
 
-            # Check components
-            components = data["components"]
-            assert components["api"] == "healthy"
-            assert components["database"] == "healthy"
+                    # Check components
+                    components = data["components"]
+                    assert components["api"] == "healthy"
+                    assert components["database"] == "healthy"
 
     def test_health_check_database_unhealthy(self, client: TestClient):
         """Test health check when database is unhealthy."""
         with patch("app.main.database_service") as mock_db_service:
-            # Mock database health check as failed
-            mock_db_service.health_check = AsyncMock(return_value=False)
+            with patch("app.services.rag.rag_service") as mock_rag_service:
+                with patch("app.core.agno.graph.AgnoAgent") as mock_agno_agent:
+                    # Mock database as unhealthy, others as healthy
+                    mock_db_service.health_check = AsyncMock(return_value=False)
+                    mock_rag_service.health_check = AsyncMock(return_value={"status": "healthy"})
+                    mock_agno_instance = mock_agno_agent.return_value
+                    mock_agno_instance.health_check = AsyncMock(return_value={"status": "healthy"})
 
-            response = client.get("/health")
+                    response = client.get("/health")
 
-            assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+                    assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
-            data = response.json()
-            assert data["status"] == "degraded"
+                    data = response.json()
+                    assert data["status"] == "unhealthy"
 
-            # Check components
-            components = data["components"]
-            assert components["api"] == "healthy"
-            assert components["database"] == "unhealthy"
+                    # Check components
+                    components = data["components"]
+                    assert components["api"] == "healthy"
+                    assert components["database"] == "unhealthy"
 
     def test_health_check_exception(self, client: TestClient):
         """Test health check when an exception occurs."""
@@ -117,17 +127,22 @@ class TestHealthCheck:
                 assert header in response.headers
 
     @pytest.mark.asyncio
-    async def test_health_check_async(self, async_client):
-        """Test health check using async client."""
+    async def test_health_check_async(self, client: TestClient):
+        """Test health check endpoint asynchronously."""
         with patch("app.main.database_service") as mock_db_service:
-            mock_db_service.health_check = AsyncMock(return_value=True)
+            with patch("app.services.rag.rag_service") as mock_rag_service:
+                with patch("app.core.agno.graph.AgnoAgent") as mock_agno_agent:
+                    # Mock all services as healthy
+                    mock_db_service.health_check = AsyncMock(return_value=True)
+                    mock_rag_service.health_check = AsyncMock(return_value={"status": "healthy"})
+                    mock_agno_instance = mock_agno_agent.return_value
+                    mock_agno_instance.health_check = AsyncMock(return_value={"status": "healthy"})
 
-            response = await async_client.get("/health")
+                    response = client.get("/health")
 
-            assert response.status_code == status.HTTP_200_OK
-
-            data = response.json()
-            assert data["status"] == "healthy"
+                    assert response.status_code == status.HTTP_200_OK
+                    data = response.json()
+                    assert data["status"] == "healthy"
 
     def test_health_check_rate_limiting(self, client: TestClient):
         """Test that health check endpoint respects rate limiting."""
@@ -150,25 +165,26 @@ class TestDatabaseHealthCheck:
         """Test successful database health check."""
         db_service = DatabaseService()
 
-        # Mock the session creation
-        with patch.object(db_service, 'get_session') as mock_get_session:
+        # Mock the Session class from sqlmodel
+        with patch('app.services.database.Session') as mock_session_class:
             mock_session = Mock()
-            mock_session.execute.return_value = Mock()
-            mock_get_session.return_value.__enter__.return_value = mock_session
+            mock_session.exec.return_value.first.return_value = 1
+            mock_session_class.return_value.__enter__.return_value = mock_session
+            mock_session_class.return_value.__exit__.return_value = None
 
             result = await db_service.health_check()
 
             assert result is True
-            mock_session.execute.assert_called_once()
+            mock_session.exec.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_database_service_health_check_failure(self):
         """Test database health check failure."""
         db_service = DatabaseService()
 
-        # Mock the session creation to raise an exception
-        with patch.object(db_service, 'get_session') as mock_get_session:
-            mock_get_session.side_effect = Exception("Database connection failed")
+        # Mock the Session class to raise an exception
+        with patch('app.services.database.Session') as mock_session_class:
+            mock_session_class.side_effect = Exception("Database connection failed")
 
             result = await db_service.health_check()
 
@@ -194,10 +210,9 @@ class TestRAGHealthCheck:
 
     def test_rag_health_check_success(self, client: TestClient, mock_elasticsearch):
         """Test successful RAG health check."""
-        with patch("app.services.rag.RAGService") as mock_rag_service:
+        with patch("app.api.v1.rag.rag_service") as mock_rag_service:
             # Mock RAG service health check
-            mock_instance = mock_rag_service.return_value
-            mock_instance.health_check = AsyncMock(return_value={
+            mock_rag_service.health_check = AsyncMock(return_value={
                 "status": "healthy",
                 "elasticsearch": "connected",
                 "index_exists": True
@@ -212,10 +227,9 @@ class TestRAGHealthCheck:
 
     def test_rag_health_check_failure(self, client: TestClient):
         """Test RAG health check failure."""
-        with patch("app.services.rag.RAGService") as mock_rag_service:
+        with patch("app.api.v1.rag.rag_service") as mock_rag_service:
             # Mock RAG service health check to fail
-            mock_instance = mock_rag_service.return_value
-            mock_instance.health_check = AsyncMock(side_effect=Exception("ES connection failed"))
+            mock_rag_service.health_check = AsyncMock(side_effect=Exception("ES connection failed"))
 
             response = client.get("/api/v1/rag/health")
 

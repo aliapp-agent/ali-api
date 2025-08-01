@@ -36,7 +36,7 @@ from app.schemas.auth import (
     UserResponse,
 )
 from app.services.database import DatabaseService
-from app.utils.auth import (
+from app.shared.utils.auth import (
     create_access_token,
     create_password_reset_token,
     create_refresh_token,
@@ -44,7 +44,7 @@ from app.utils.auth import (
     verify_refresh_token,
     verify_token,
 )
-from app.utils.sanitization import (
+from app.shared.utils.sanitization import (
     sanitize_email,
     sanitize_string,
     validate_password_strength,

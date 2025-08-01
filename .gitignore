@@ -72,6 +72,58 @@ instance/
 # Sphinx documentation
 docs/_build/
 
+# Application specific
+# Environment files
+.env.*
+!.env.example
+
+# Application logs
+logs/
+*.log
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache directories
+cache/
+.cache/
+
+# Temporary files
+temp/
+tmp/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Monitoring and observability
+prometheus_data/
+grafana_data/
+
+# AI/ML specific
+models/
+checkpoints/
+vector_store/
+embeddings/
+
 # PyBuilder
 .pybuilder/
 target/

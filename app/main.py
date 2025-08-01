@@ -19,7 +19,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app.api.v1.api import api_router
-from app.constants.http import (
+from app.shared.constants.http import (
     HTTP_422_UNPROCESSABLE_ENTITY,
     HTTP_500_INTERNAL_SERVER_ERROR,
     HTTP_503_SERVICE_UNAVAILABLE,
@@ -30,7 +30,7 @@ from app.core.limiter import limiter
 from app.core.logging import logger
 from app.core.metrics import setup_metrics
 from app.core.middleware import MetricsMiddleware
-from app.exceptions import (
+from app.shared.exceptions import (
     APIError,
     AuthenticationError,
     DatabaseError,
@@ -448,7 +448,7 @@ async def root(request: Request):
         "name": settings.PROJECT_NAME,
         "version": settings.VERSION,
         "status": "healthy",
-        "environment": settings.ENVIRONMENT.value,
+        "environment": settings.APP_ENV.value,
         "swagger_url": "/docs",
         "redoc_url": "/redoc",
     }
@@ -525,7 +525,7 @@ async def health_check(request: Request) -> JSONResponse:
         response_data = {
             "status": overall_status,
             "version": settings.VERSION,
-            "environment": settings.ENVIRONMENT.value,
+            "environment": settings.APP_ENV.value,
             "components": components,
             "component_details": component_details,
             "timestamp": datetime.now().isoformat(),

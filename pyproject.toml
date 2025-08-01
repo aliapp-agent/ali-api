@@ -5,46 +5,55 @@ description = "Agno FastAPI Template"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "fastapi>=0.115.12",
+    "fastapi>=0.116.1",
     "passlib[bcrypt]>=1.7.4",
     "psycopg2-binary>=2.9.10",
     "pydantic[email]>=2.11.1",
-    "pydantic-settings>=2.8.1",
-    "python-dotenv>=1.1.0",
+    "pydantic-settings>=2.10.1",
+    "python-dotenv>=1.1.1",
     "python-jose[cryptography]>=3.4.0",
     "python-multipart>=0.0.20",
     "sqlmodel>=0.0.24",
-    "structlog>=25.2.0",
-    "supabase>=2.15.0",
-    "uvicorn>=0.34.0",
+    "structlog>=25.4.0",
+    "supabase>=2.17.0",
+    "uvicorn>=0.35.0",
     "bcrypt>=4.3.0",
     "slowapi>=0.1.9",
     "email-validator>=2.2.0",
-    "prometheus-client>=0.19.0",
-    "starlette-prometheus>=0.7.0",
-    "asgiref>=3.8.1",
-    "duckduckgo-search>=3.9.0",
+    "prometheus-client>=0.22.1",
+    "starlette-prometheus>=0.10.0",
+    "asgiref>=3.9.1",
+    "duckduckgo-search>=8.1.1",
     "tqdm>=4.67.1",
     "colorama>=0.4.6",
-    "agno>=1.7.2",
-    "openai>=1.70.0",
-    "anthropic>=0.40.0",
-    "multidict>=6.1.0,!=6.3.0",
-    "elasticsearch>=8.11.0",
-    "sentence-transformers>=2.2.2",
-    "langchain>=0.1.0",
-    "langchain-elasticsearch>=0.1.0",
-    "pypdf>=3.17.0",
-    "python-docx>=1.1.0",
-    "beautifulsoup4>=4.12.0",
-    "tiktoken>=0.5.0",
-    "langchain-community>=0.0.20",
-    "alembic>=1.13.0",
-    "psutil>=5.9.0",
+    "agno>=1.7.6",
+    "openai>=1.98.0",
+    "anthropic>=0.60.0",
+    "multidict>=6.6.3",
+    "elasticsearch>=8.19.0,<9.0.0",
+    "sentence-transformers>=5.0.0",
+    "langchain>=0.3.27",
+    "langchain-elasticsearch>=0.3.2",
+    "pypdf>=5.9.0",
+    "python-docx>=1.2.0",
+    "beautifulsoup4>=4.13.4",
+    "tiktoken>=0.9.0",
+    "langchain-community>=0.3.27",
+    "alembic>=1.16.4",
+    "psutil>=7.0.0",
+    "langfuse>=2.56.0",
 ]
 
 [project.optional-dependencies]
-dev = ["black", "isort", "flake8", "ruff", "djlint==1.36.4"]
+dev = [
+    "black>=24.0.0",
+    "isort>=5.13.0",
+    "flake8>=7.0.0",
+    "ruff>=0.8.0",
+    "djlint>=1.36.4",
+    "mypy>=1.13.0",
+    "pre-commit>=4.0.0",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -55,9 +64,12 @@ packages = ["app"]
 
 [tool.uv]
 dev-dependencies = [
-    "pytest>=7.0.0",
-    "pytest-asyncio>=0.21.0",
-    "httpx>=0.24.0",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
+    "httpx>=0.28.1",
+    "black>=24.0.0",
+    "ruff>=0.8.0",
+    "isort>=5.13.0",
 ]
 
 [dependency-groups]
@@ -65,7 +77,23 @@ test = ["httpx>=0.28.1", "pytest>=8.3.5"]
 
 
 [tool.pytest.ini_options]
-markers = ["slow: marks tests as slow (deselect with '-m \"not slow\"')"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+    "e2e: marks tests as end-to-end tests",
+]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--disable-warnings",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+    "ignore::UserWarning",
+]
 python_files = ["test_*.py", "*_test.py", "tests.py"]
 
 [tool.black]

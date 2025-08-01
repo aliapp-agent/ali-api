@@ -19,7 +19,8 @@ from sqlalchemy.pool import StaticPool
 
 from app.core.config import settings
 from app.main import app as fastapi_app
-from app.models.base import SQLModel
+from app.models.base import BaseModel
+from sqlmodel import SQLModel
 from app.services.database import DatabaseService
 
 
@@ -34,11 +35,18 @@ def event_loop():
 @pytest.fixture
 def settings():
     """Test settings with overrides."""
+    # Load test environment variables
+    from dotenv import load_dotenv
+    load_dotenv(".env.test")
+    
     # Override settings for testing
     os.environ["APP_ENV"] = "test"
-    os.environ["POSTGRES_URL"] = "sqlite:///test.db"
+    os.environ["POSTGRES_URL"] = "sqlite:///:memory:"
     os.environ["JWT_SECRET_KEY"] = "test-secret-key"
     os.environ["LLM_API_KEY"] = "test-llm-key"
+    os.environ["RATE_LIMIT_ENABLED"] = "false"
+    os.environ["METRICS_ENABLED"] = "false"
+    os.environ["PROMETHEUS_ENABLED"] = "false"
 
     return settings
 
@@ -100,8 +108,10 @@ def client(settings, mock_database_service) -> Generator[TestClient, None, None]
 async def async_client(settings) -> AsyncGenerator[AsyncClient, None]:
     """Create an async test client for the FastAPI app."""
     # Settings already configured globally
-
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    from httpx import ASGITransport
+    
+    transport = ASGITransport(app=fastapi_app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         yield client
 
     # Clean up

@@ -8,7 +8,7 @@ from typing import (
     List,
 )
 
-from app.constants.validation import (
+from app.shared.constants.validation import (
     DANGEROUS_PATTERNS,
     EMAIL_REGEX,
     PASSWORD_REGEX,
@@ -156,7 +156,7 @@ def validate_password_strength(password: str) -> bool:
     Raises:
         ValueError: If the password is not strong enough with detailed reason
     """
-    from app.constants.validation import (
+    from app.shared.constants.validation import (
         PASSWORD_DIGIT_REGEX,
         PASSWORD_LOWERCASE_REGEX,
         PASSWORD_MAX_LENGTH,
@@ -219,7 +219,7 @@ def validate_session_id(session_id: str) -> str:
     Raises:
         ValueError: If the session ID format is invalid
     """
-    from app.constants.validation import SESSION_ID_REGEX
+    from app.shared.constants.validation import SESSION_ID_REGEX
 
     # Sanitize the session ID
     session_id = sanitize_string(session_id, max_length=36, strict=True)
@@ -243,7 +243,7 @@ def validate_jwt_token(token: str) -> str:
     Raises:
         ValueError: If the token format is invalid
     """
-    from app.constants.validation import (
+    from app.shared.constants.validation import (
         JWT_TOKEN_MAX_LENGTH,
         JWT_TOKEN_MIN_LENGTH,
         JWT_TOKEN_REGEX,
