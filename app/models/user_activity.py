@@ -16,7 +16,7 @@ class UserActivity(BaseModel, table=True):
         user_id: ID of the user who performed the activity
         activity_type: Type of activity (login, logout, document_create, etc.)
         description: Human-readable description of the activity
-        metadata: Additional metadata as JSON object
+        activity_metadata: Additional metadata as JSON object
         ip_address: IP address from which the activity was performed
         user_agent: User agent string
         session_id: Session ID if applicable
@@ -34,7 +34,7 @@ class UserActivity(BaseModel, table=True):
     description: str = Field(description="Human-readable description")
     
     # Additional data
-    metadata: Optional[dict] = Field(default=None, sa_column=Column(JSON))
+    activity_metadata: Optional[dict] = Field(default=None, sa_column=Column(JSON))
     ip_address: Optional[str] = Field(default=None, max_length=45)  # IPv6 support
     user_agent: Optional[str] = Field(default=None, max_length=500)
     session_id: Optional[str] = Field(default=None, index=True)

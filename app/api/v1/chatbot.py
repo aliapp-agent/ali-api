@@ -4,6 +4,7 @@ This module provides endpoints for chat interactions, including regular chat,
 message history management, and chat history clearing.
 """
 
+from typing import List
 from fastapi import (
     APIRouter,
     Depends,
@@ -40,8 +41,8 @@ agent = AgnoAgent()
 async def chat(
     request: Request,
     chat_request: ChatRequest,
+    message_service: MessageServiceDep,
     session: Session = Depends(get_current_session),
-    message_service: MessageServiceDep = Depends(),
 ):
     """Process a chat request using Agno with proper message management.
 
@@ -107,8 +108,8 @@ async def chat(
 @limiter.limit(settings.RATE_LIMIT_ENDPOINTS["messages"][0])
 async def get_session_messages(
     request: Request,
+    message_service: MessageServiceDep,
     session: Session = Depends(get_current_session),
-    message_service: MessageServiceDep = Depends(),
 ):
     """Get all messages for a session using domain service.
 
@@ -157,8 +158,8 @@ async def get_session_messages(
 @limiter.limit(settings.RATE_LIMIT_ENDPOINTS["messages"][0])
 async def clear_chat_history(
     request: Request,
+    message_service: MessageServiceDep,
     session: Session = Depends(get_current_session),
-    message_service: MessageServiceDep = Depends(),
 ):
     """Clear all messages for a session using domain service.
 

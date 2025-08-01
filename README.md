@@ -1,208 +1,60 @@
-# Ali API - FastAPI Agno Agent Template
+# Ali API
 
-A production-ready FastAPI template for building AI agent applications with Agno integration. This template provides a robust foundation for building scalable, secure, and maintainable AI agent services with RAG capabilities.
+Uma API FastAPI robusta e pronta para produção com integração Agno e Langfuse.
 
-## 🌟 Features
-
-- **Production-Ready Architecture**
-
-  - FastAPI for high-performance async API endpoints
-  - Agno integration for AI agent workflows with memory and storage
-  - RAG (Retrieval-Augmented Generation) with Elasticsearch
-  - Langfuse for LLM observability and monitoring
-  - Structured logging with environment-specific formatting
-  - Rate limiting with configurable rules
-  - PostgreSQL for data persistence
-  - Docker and Docker Compose support
-  - Prometheus metrics and Grafana dashboards for monitoring
-
-- **Security**
-
-  - JWT-based authentication
-  - Session management
-  - Input sanitization
-  - CORS configuration
-  - Rate limiting protection
-
-- **Developer Experience**
-
-  - Environment-specific configuration
-  - Comprehensive logging system
-  - Clear project structure
-  - Type hints throughout
-  - Easy local development setup
-
-- **Model Evaluation Framework**
-  - Automated metric-based evaluation of model outputs
-  - Integration with Langfuse for trace analysis
-  - Detailed JSON reports with success/failure metrics
-  - Interactive command-line interface
-  - Customizable evaluation metrics
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Python 3.13+
-- PostgreSQL ([see Database setup](#database-setup))
-- Docker and Docker Compose (optional)
-
-### Environment Setup
-
-1. Clone the repository:
+## 🚀 Início Rápido
 
 ```bash
-git clone <repository-url>
-cd <project-directory>
-```
-
-2. Create and activate a virtual environment:
-
-```bash
+# Instalar dependências
 uv sync
+
+# Configurar ambiente
+cp .env.example .env.development
+
+# Executar aplicação
+uv run python -m app.main
 ```
 
-3. Copy the example environment file:
+## 📚 Documentação
+
+Toda a documentação detalhada está disponível na pasta [`docs/`](./docs/):
+
+- **[Arquitetura](./docs/ARCHITECTURE.md)** - Visão geral da arquitetura do sistema
+- **[Deploy](./docs/DEPLOY.md)** - Guia de deployment e configuração
+- **[Integração Frontend](./docs/FRONTEND_INTEGRATION.md)** - Como integrar com frontend
+- **[TODO Produção](./docs/PRODUCTION_TODO.md)** - Lista de tarefas críticas para deploy
+
+## 🛠️ Desenvolvimento
 
 ```bash
-cp .env.example .env.[development|staging|production] # e.g. .env.development
+# Executar testes
+uv run pytest
+
+# Executar com hot reload
+uv run uvicorn app.main:app --reload
+
+# Verificar saúde da aplicação
+curl http://localhost:8000/health
 ```
 
-4. Update the `.env` file with your configuration (see `.env.example` for reference)
+## 📋 Funcionalidades
 
-### Database setup
+- ✅ FastAPI com documentação automática
+- ✅ Integração com Agno para agentes de IA
+- ✅ Sistema RAG com Elasticsearch
+- ✅ Observabilidade com Langfuse
+- ✅ Autenticação JWT
+- ✅ Rate limiting
+- ✅ Métricas e monitoramento
+- ✅ Testes automatizados
+- ✅ Docker e CI/CD
 
-1. Create a PostgreSQL database (e.g Supabase or local PostgreSQL)
-2. Update the database connection string in your `.env` file:
+## 🔗 Links Úteis
 
-```bash
-POSTGRES_URL="postgresql://:your-db-password@POSTGRES_HOST:POSTGRES_PORT/POSTGRES_DB"
-```
+- **API Docs**: http://localhost:8000/docs
+- **Health Check**: http://localhost:8000/health
+- **Metrics**: http://localhost:8000/metrics
 
-- Database tables are managed by Alembic migrations. Run `alembic upgrade head` to create/update tables.
+---
 
-### Running the Application
-
-#### Local Development
-
-1. Install dependencies:
-
-```bash
-uv sync
-```
-
-2. Run database migrations:
-
-```bash
-alembic upgrade head
-```
-
-3. Run the application:
-
-```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-4. Go to Swagger UI:
-
-```bash
-http://localhost:8000/docs
-```
-
-#### Using Docker
-
-1. Set your environment:
-
-```bash
-export APP_ENV=development # or staging/production
-```
-
-2. Build and run with Docker Compose:
-
-```bash
-make docker-build-env ENV=[development|staging|production] # e.g. make docker-build-env ENV=development
-make docker-run-env ENV=[development|staging|production] # e.g. make docker-run-env ENV=development
-```
-
-2. Access the monitoring stack:
-
-```bash
-# Prometheus metrics
-http://localhost:9090
-
-# Grafana dashboards
-http://localhost:3000
-Default credentials:
-- Username: admin
-- Password: admin
-```
-
-The Docker setup includes:
-
-- FastAPI application
-- PostgreSQL database
-- Prometheus for metrics collection
-- Grafana for metrics visualization
-- Pre-configured dashboards for:
-  - API performance metrics
-  - Rate limiting statistics
-  - Database performance
-  - System resource usage
-
-## 📊 Model Evaluation
-
-The project includes a robust evaluation framework for measuring and tracking model performance over time. The evaluator automatically fetches traces from Langfuse, applies evaluation metrics, and generates detailed reports.
-
-### Running Evaluations
-
-You can run evaluations with different options using the provided Makefile commands:
-
-```bash
-# Interactive mode with step-by-step prompts
-make eval [ENV=development|staging|production]
-
-# Quick mode with default settings (no prompts)
-make eval-quick [ENV=development|staging|production]
-
-# Evaluation without report generation
-make eval-no-report [ENV=development|staging|production]
-```
-
-### Evaluation Features
-
-- **Interactive CLI**: User-friendly interface with colored output and progress bars
-- **Flexible Configuration**: Set default values or customize at runtime
-- **Detailed Reports**: JSON reports with comprehensive metrics including:
-  - Overall success rate
-  - Metric-specific performance
-  - Duration and timing information
-  - Trace-level success/failure details
-
-### Customizing Metrics
-
-Evaluation metrics are defined in `evals/metrics/prompts/` as markdown files:
-
-1. Create a new markdown file (e.g., `my_metric.md`) in the prompts directory
-2. Define the evaluation criteria and scoring logic
-3. The evaluator will automatically discover and apply your new metric
-
-### Viewing Reports
-
-Reports are automatically generated in the `evals/reports/` directory with timestamps in the filename:
-
-```
-evals/reports/evaluation_report_YYYYMMDD_HHMMSS.json
-```
-
-Each report includes:
-
-- High-level statistics (total trace count, success rate, etc.)
-- Per-metric performance metrics
-- Detailed trace-level information for debugging
-
-## 🔧 Configuration
-
-The application uses a flexible configuration system with environment-specific settings:
-
-- `.env.development`
--
+**Versão**: 1.0.0 | **Licença**: MIT

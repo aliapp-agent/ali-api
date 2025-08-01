@@ -9,8 +9,9 @@ import asyncio
 import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.pool import StaticPool
+from sqlmodel import SQLModel
 
-from app.models.base import Base
+from app.models.base import BaseModel
 from app.services.database import DatabaseService
 
 
@@ -27,12 +28,12 @@ class TestDatabaseIntegration:
         )
 
         # Create all tables
-        Base.metadata.create_all(bind=engine)
+        SQLModel.metadata.create_all(bind=engine)
 
         yield engine
 
         # Cleanup
-        Base.metadata.drop_all(bind=engine)
+        SQLModel.metadata.drop_all(bind=engine)
 
     @pytest.mark.integration
     @pytest.mark.asyncio

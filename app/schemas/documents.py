@@ -285,7 +285,7 @@ class DocumentStats(BaseModel):
     updated_today: int = Field(..., description="Documents updated today")
 
 
-class DocumentCategory(BaseModel):
+class DocumentCategoryInfo(BaseModel):
     """Schema for document categories."""
     
     id: str = Field(..., description="Category ID")

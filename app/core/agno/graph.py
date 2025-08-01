@@ -16,7 +16,7 @@ from app.core.metrics import llm_inference_duration_seconds
 from app.core.prompts import SYSTEM_PROMPT
 from app.schemas import Message
 from app.services.rag import RAGService
-from app.utils import dump_messages
+from app.shared.utils.graph import dump_messages
 
 # Usar configuração do .env para o caminho do banco
 db_file = settings.AGNO_MEMORY_PATH or "tmp/agent.db"
