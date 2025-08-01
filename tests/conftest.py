@@ -1,11 +1,12 @@
 """Configuration for pytest tests.
 
 This file contains fixtures and setup configuration for all tests.
-Firebase-enabled testing configuration.
+Firebase-enabled testing configuration with integrated Firebase mocks.
 """
 
 import asyncio
 import os
+import sys
 import tempfile
 from typing import AsyncGenerator, Generator
 from unittest.mock import Mock, AsyncMock, patch
@@ -15,11 +16,176 @@ import pytest_asyncio
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
 
-# Import Firebase mocks BEFORE importing the app
-from tests.firebase_mocks import setup_test_environment, patch_firebase_imports
 
-# Setup test environment with Firebase mocks
-setup_test_environment()
+# ============================================================================
+# FIREBASE MOCKS - Integrated into conftest.py
+# ============================================================================
+
+class MockFirebaseAdmin:
+    """Mock Firebase Admin SDK."""
+    
+    def __init__(self):
+        self.auth = MockFirebaseAuth()
+        self.firestore = MockFirestore()
+        self.storage = MockFirebaseStorage()
+    
+    def initialize_app(self, *args, **kwargs):
+        return Mock()
+    
+    def credentials(self):
+        class Certificate:
+            def __init__(self, *args, **kwargs):
+                pass
+        return Certificate
+
+
+class MockFirebaseAuth:
+    """Mock Firebase Auth."""
+    
+    def create_user(self, *args, **kwargs):
+        return Mock(uid="test-uid")
+    
+    def get_user(self, uid):
+        return Mock(uid=uid, email="test@example.com")
+    
+    def verify_id_token(self, token):
+        return {"uid": "test-uid", "email": "test@example.com"}
+    
+    def update_user(self, uid, **kwargs):
+        return True
+    
+    def delete_user(self, uid):
+        return True
+
+
+class MockFirestore:
+    """Mock Firestore client."""
+    
+    def client(self):
+        return MockFirestoreClient()
+
+
+class MockFirestoreClient:
+    """Mock Firestore client."""
+    
+    def collection(self, name):
+        return MockCollection()
+    
+    def document(self, path):
+        return MockDocument()
+
+
+class MockCollection:
+    """Mock Firestore collection."""
+    
+    def document(self, doc_id):
+        return MockDocument()
+    
+    def add(self, data):
+        return Mock(), Mock()
+    
+    def get(self):
+        return []
+    
+    def where(self, *args):
+        return self
+    
+    def order_by(self, *args):
+        return self
+    
+    def limit(self, *args):
+        return self
+
+
+class MockDocument:
+    """Mock Firestore document."""
+    
+    def get(self):
+        return Mock(exists=True, to_dict=lambda: {"test": "data"})
+    
+    def set(self, data):
+        return Mock()
+    
+    def update(self, data):
+        return Mock()
+    
+    def delete(self):
+        return Mock()
+
+
+class MockFirebaseStorage:
+    """Mock Firebase Storage."""
+    
+    def bucket(self, name=None):
+        return MockBucket()
+
+
+class MockBucket:
+    """Mock Storage bucket."""
+    
+    def blob(self, name):
+        return MockBlob()
+
+
+class MockBlob:
+    """Mock Storage blob."""
+    
+    def upload_from_string(self, data):
+        return Mock()
+    
+    def download_as_text(self):
+        return "mock file content"
+    
+    def delete(self):
+        return Mock()
+
+
+def patch_firebase_imports():
+    """Patch Firebase imports globally for testing."""
+    # Mock Firebase Admin
+    mock_admin = MockFirebaseAdmin()
+    
+    # Apply patches
+    patches = [
+        patch('firebase_admin.initialize_app', mock_admin.initialize_app),
+        patch('firebase_admin.credentials.Certificate', Mock),
+        patch('firebase_admin.auth', mock_admin.auth),
+        patch('firebase_admin.firestore.client', mock_admin.firestore.client),
+        patch('firebase_admin.storage.bucket', mock_admin.storage.bucket),
+    ]
+    
+    # Start all patches
+    for p in patches:
+        p.start()
+    
+    return patches
+
+
+def setup_test_environment():
+    """Setup test environment with Firebase mocks."""
+    # Set test environment variables
+    os.environ.update({
+        "APP_ENV": "test",
+        "FIREBASE_PROJECT_ID": "test-project",
+        "FIREBASE_CREDENTIALS_PATH": "/tmp/test-firebase-credentials.json",
+        "FIREBASE_STORAGE_BUCKET": "test-project.appspot.com",
+        "FIREBASE_REGION": "us-central1",
+        "QDRANT_URL": "http://localhost:6333",
+        "JWT_SECRET_KEY": "test-secret-key",
+        "LLM_API_KEY": "test-llm-key",
+    })
+    
+    # Patch Firebase imports
+    return patch_firebase_imports()
+
+
+# Apply patches immediately when this module is imported
+if "pytest" in sys.modules or os.environ.get("APP_ENV") == "test":
+    setup_test_environment()
+
+# ============================================================================
+# END FIREBASE MOCKS
+# ============================================================================
 
 from app.core.config import settings
 from app.main import app as fastapi_app
