@@ -13,11 +13,11 @@ services:
       - QDRANT__SERVICE__HTTP_PORT=6333
       - QDRANT__SERVICE__GRPC_PORT=6334
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6333/readyz"]
+      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
       interval: 10s
       timeout: 10s
       retries: 12
-      start_period: 60s
+      start_period: 90s
     restart: unless-stopped
 
   # API service with Firebase + Qdrant

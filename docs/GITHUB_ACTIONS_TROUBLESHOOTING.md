@@ -16,7 +16,7 @@ O problema estava relacionado a:
 
 2. **Endpoint de Health Check Incorreto**
    - Estava usando endpoint raiz `/` em vez do endpoint dedicado de saúde
-   - Solução: Usar endpoint `/readyz` que é o padrão Kubernetes para readiness checks
+   - Solução: Usar endpoint `/healthz` que é mais confiável para ambientes CI/CD
 
 3. **Tempo de Inicialização Insuficiente**
    - Start period de 30s era muito curto para inicialização do Qdrant no ambiente CI
@@ -54,7 +54,7 @@ options: >
 
 # DEPOIS (corrigido)
 options: >-
-  --health-cmd "curl -f http://localhost:6333/readyz || exit 1"
+  --health-cmd "curl -f http://localhost:6333/healthz || exit 1"
   --health-interval 10s
   --health-timeout 10s
   --health-retries 12
@@ -74,6 +74,24 @@ options: >-
 
 **Explicação**: O operador `>` em YAML preserva a quebra de linha final, enquanto `>-` a remove. Docker interpreta `30s\n` como uma unidade de tempo inválida.
 
+## 🏥 Health Check: /healthz vs /readyz
+
+### Diferenças dos Endpoints
+
+- **`/healthz`**: Verifica se o serviço está rodando e respondendo
+  - ✅ Mais tolerante e confiável para CI/CD
+  - ✅ Retorna 200 se o Qdrant iniciou com sucesso
+  - ✅ Não falha por questões de inicialização de shards
+
+- **`/readyz`**: Verifica se o serviço está completamente pronto
+  - ⚠️ Mais rigoroso, pode falhar mesmo com serviço funcional
+  - ⚠️ Pode retornar erro se shards não estão inicializados
+  - ⚠️ Problemático em ambientes CI/CD com timing restrito
+
+### Por que mudamos para /healthz?
+
+O endpoint `/readyz` é muito rigoroso para ambientes de teste, podendo falhar com "some shards are not ready" mesmo quando o Qdrant está funcionalmente operacional. Para CI/CD, precisamos apenas verificar se o serviço está rodando, não se está em estado de produção completo.
+
 #### 2. Logs de Debug Adicionados
 ```bash
 echo "Checking docker version"
@@ -83,7 +101,7 @@ echo "Clean up resources from previous jobs"
 docker system prune -f || true
 
 echo "Testing Qdrant readiness endpoint..."
-curl -v http://localhost:6333/readyz || echo "⚠️ Qdrant readyz endpoint failed"
+curl -v http://localhost:6333/healthz || echo "⚠️ Qdrant healthz endpoint failed"
 ```
 
 #### 3. Timeouts Aumentados
@@ -99,7 +117,7 @@ docker run --rm -d --name test-qdrant -p 6333:6333 qdrant/qdrant:latest
 
 # Verificar se está respondendo
 curl http://localhost:6333/
-curl http://localhost:6333/readyz
+curl http://localhost:6333/healthz
 
 # Limpar
 docker stop test-qdrant
@@ -139,7 +157,7 @@ docker stop test-qdrant
 
 ### 📋 Checklist de Verificação
 
-- [ ] Health check usa endpoint correto (`/readyz` em vez de `/` ou `/health`)
+- [ ] Health check usa endpoint correto (`/healthz` em vez de `/` ou `/readyz`)
 - [ ] Timeouts são adequados (≥30s start period)
 - [ ] Logs de debug estão habilitados
 - [ ] Versão do Qdrant é compatível
@@ -159,7 +177,7 @@ Após essas correções, o workflow deve:
 
 1. ✅ Usar versão estável do Qdrant (v1.7.4)
 2. ✅ Inicializar o container Qdrant com sucesso
-3. ✅ Passar no health check `/readyz` dentro de 60s
+3. ✅ Passar no health check `/healthz` dentro de 90s
 4. ✅ Detectar rapidamente quando o serviço fica disponível (10s interval)
 5. ✅ Executar os testes sem falhas de conectividade
 6. ✅ Completar o deploy sem erros
@@ -174,7 +192,7 @@ Testing Qdrant readiness endpoint...
 ### Melhorias Implementadas
 
 - **Estabilidade**: Versão fixa elimina surpresas de breaking changes
-- **Confiabilidade**: Endpoint `/readyz` é mais confiável que `/` ou `/health`
+- **Confiabilidade**: Endpoint `/healthz` é mais confiável para CI/CD que `/readyz`
 - **Performance**: Detecção mais rápida (10s vs 30s) quando serviço fica disponível
 - **Robustez**: Mais tempo para inicialização (60s) e mais tentativas (12)
 
