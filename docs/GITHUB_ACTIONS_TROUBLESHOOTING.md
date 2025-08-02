@@ -16,7 +16,7 @@ O problema estava relacionado a:
 
 2. **Endpoint de Health Check Incorreto**
    - Estava usando endpoint raiz `/` em vez do endpoint dedicado de saúde
-   - Solução: Usar endpoint `/health` que é especificamente projetado para health checks
+   - Solução: Usar endpoint `/readyz` que é o padrão Kubernetes para readiness checks
 
 3. **Tempo de Inicialização Insuficiente**
    - Start period de 30s era muito curto para inicialização do Qdrant no ambiente CI
@@ -54,7 +54,7 @@ options: >
 
 # DEPOIS (corrigido)
 options: >-
-  --health-cmd "curl -f http://localhost:6333/health || exit 1"
+  --health-cmd "curl -f http://localhost:6333/readyz || exit 1"
   --health-interval 10s
   --health-timeout 10s
   --health-retries 12
@@ -82,9 +82,8 @@ docker --version
 echo "Clean up resources from previous jobs"
 docker system prune -f || true
 
-echo "Testing Qdrant health endpoint..."
-curl -v http://localhost:6333/ || echo "⚠️ Qdrant root endpoint failed"
-curl -v http://localhost:6333/health || echo "⚠️ Qdrant health endpoint failed"
+echo "Testing Qdrant readiness endpoint..."
+curl -v http://localhost:6333/readyz || echo "⚠️ Qdrant readyz endpoint failed"
 ```
 
 #### 3. Timeouts Aumentados
@@ -100,7 +99,7 @@ docker run --rm -d --name test-qdrant -p 6333:6333 qdrant/qdrant:latest
 
 # Verificar se está respondendo
 curl http://localhost:6333/
-curl http://localhost:6333/health
+curl http://localhost:6333/readyz
 
 # Limpar
 docker stop test-qdrant
@@ -140,7 +139,7 @@ docker stop test-qdrant
 
 ### 📋 Checklist de Verificação
 
-- [ ] Health check usa endpoint correto (`/` em vez de `/health`)
+- [ ] Health check usa endpoint correto (`/readyz` em vez de `/` ou `/health`)
 - [ ] Timeouts são adequados (≥30s start period)
 - [ ] Logs de debug estão habilitados
 - [ ] Versão do Qdrant é compatível
@@ -160,7 +159,7 @@ Após essas correções, o workflow deve:
 
 1. ✅ Usar versão estável do Qdrant (v1.7.4)
 2. ✅ Inicializar o container Qdrant com sucesso
-3. ✅ Passar no health check `/health` dentro de 60s
+3. ✅ Passar no health check `/readyz` dentro de 60s
 4. ✅ Detectar rapidamente quando o serviço fica disponível (10s interval)
 5. ✅ Executar os testes sem falhas de conectividade
 6. ✅ Completar o deploy sem erros
@@ -169,13 +168,13 @@ Os logs devem mostrar:
 ```
 ✅ PostgreSQL is ready
 ✅ Qdrant is ready
-Testing Qdrant health endpoint...
+Testing Qdrant readiness endpoint...
 ```
 
 ### Melhorias Implementadas
 
 - **Estabilidade**: Versão fixa elimina surpresas de breaking changes
-- **Confiabilidade**: Endpoint `/health` é mais confiável que `/`
+- **Confiabilidade**: Endpoint `/readyz` é mais confiável que `/` ou `/health`
 - **Performance**: Detecção mais rápida (10s vs 30s) quando serviço fica disponível
 - **Robustez**: Mais tempo para inicialização (60s) e mais tentativas (12)
 
