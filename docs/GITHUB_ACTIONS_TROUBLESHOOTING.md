@@ -1,13 +1,30 @@
 # GitHub Actions - Solução de Problemas
 
-## 🚨 Problema: Container Qdrant Falhando no GitHub Actions
+## ⚠️ ATUALIZAÇÃO: Qdrant Removido dos Containers
 
-### Sintomas
-- Erro: "Service container qdrant failed"
-- Mensagem: "One or more containers failed to start"
-- Health check do Qdrant não passa
+### Status Atual
+- ✅ Qdrant foi removido do docker-compose.yml e workflows do GitHub Actions
+- ✅ Aplicação agora roda sem dependência de container Qdrant
+- ✅ Qdrant deve ser executado separadamente quando necessário
+- ✅ Configuração via variável de ambiente QDRANT_URL
 
-### 🔍 Causa Raiz
+### 🚀 Como Executar Qdrant Separadamente
+
+```bash
+# Executar Qdrant em container separado
+docker run -d --name qdrant \
+  -p 6333:6333 -p 6334:6334 \
+  -v qdrant_data:/qdrant/storage \
+  qdrant/qdrant:v1.7.4
+
+# Verificar se está rodando
+curl http://localhost:6333/healthz
+
+# Configurar variável de ambiente
+export QDRANT_URL=http://localhost:6333
+```
+
+### 🔍 Causa Raiz (Histórico)
 O problema estava relacionado a:
 
 1. **Versão Instável do Qdrant**

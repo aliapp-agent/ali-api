@@ -1,33 +1,13 @@
 version: '3.8'
 
 services:
-  # Qdrant vector database
-  qdrant:
-    image: qdrant/qdrant:v1.7.4
-    ports:
-      - "6333:6333"
-      - "6334:6334"
-    volumes:
-      - qdrant_data:/qdrant/storage
-    environment:
-      - QDRANT__SERVICE__HTTP_PORT=6333
-      - QDRANT__SERVICE__GRPC_PORT=6334
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
-      interval: 10s
-      timeout: 10s
-      retries: 12
-      start_period: 90s
-    restart: unless-stopped
-
-  # API service with Firebase + Qdrant
+  # API service with Firebase
   app:
     build:
       context: .
       args:
         APP_ENV: ${APP_ENV:-development}
         FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-}
-        QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
     ports:
       - "8000:8000"
     volumes:
@@ -38,7 +18,6 @@ services:
       - .env.${APP_ENV:-development}
     environment:
       - APP_ENV=${APP_ENV:-development}
-      - QDRANT_URL=http://qdrant:6333
       # Firebase
       - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID:-}
       - FIREBASE_CREDENTIALS_PATH=/app/firebase-credentials.json
@@ -49,9 +28,7 @@ services:
       - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
       - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-supersecretkeythatshouldbechangedforproduction}
-    depends_on:
-      qdrant:
-        condition: service_healthy
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -59,6 +36,3 @@ services:
       retries: 3
       start_period: 60s
     restart: on-failure
-
-volumes:
-  qdrant_data:

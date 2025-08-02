@@ -43,7 +43,6 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Set environment variables
 ARG APP_ENV=production
 ARG FIREBASE_PROJECT_ID
-ARG QDRANT_URL
 
 ENV APP_ENV=${APP_ENV} \
     PYTHONFAULTHANDLER=1 \
@@ -52,7 +51,6 @@ ENV APP_ENV=${APP_ENV} \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
     FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID} \
-    QDRANT_URL=${QDRANT_URL} \
     PYTHONPATH=/app
 
 # Install system dependencies
