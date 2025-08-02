@@ -4,7 +4,11 @@ This module contains tests for the DatabaseService class,
 including user management, session management, and health checks.
 """
 
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import (
+    MagicMock,
+    Mock,
+    patch,
+)
 
 import pytest
 from fastapi import HTTPException
@@ -69,8 +73,7 @@ class TestUserOperations:
 
         # Create user first
         created_user = await db_service.create_user(
-            sample_user_data["email"],
-            sample_user_data["hashed_password"]
+            sample_user_data["email"], sample_user_data["hashed_password"]
         )
 
         # Retrieve user
@@ -98,8 +101,7 @@ class TestUserOperations:
 
         # Create user first
         await db_service.create_user(
-            sample_user_data["email"],
-            sample_user_data["hashed_password"]
+            sample_user_data["email"], sample_user_data["hashed_password"]
         )
 
         # Retrieve user by email
@@ -126,8 +128,7 @@ class TestUserOperations:
 
         # Create user first
         await db_service.create_user(
-            sample_user_data["email"],
-            sample_user_data["hashed_password"]
+            sample_user_data["email"], sample_user_data["hashed_password"]
         )
 
         # Delete user
@@ -161,15 +162,12 @@ class TestSessionOperations:
 
         # Create user first
         user = await db_service.create_user(
-            sample_user_data["email"],
-            sample_user_data["hashed_password"]
+            sample_user_data["email"], sample_user_data["hashed_password"]
         )
 
         # Create session
         session = await db_service.create_session(
-            session_id="test_session_123",
-            user_id=user.id,
-            name="Test Session"
+            session_id="test_session_123", user_id=user.id, name="Test Session"
         )
 
         assert session.id == "test_session_123"
@@ -184,13 +182,10 @@ class TestSessionOperations:
 
         # Create user and session first
         user = await db_service.create_user(
-            sample_user_data["email"],
-            sample_user_data["hashed_password"]
+            sample_user_data["email"], sample_user_data["hashed_password"]
         )
         created_session = await db_service.create_session(
-            session_id="test_session_123",
-            user_id=user.id,
-            name="Test Session"
+            session_id="test_session_123", user_id=user.id, name="Test Session"
         )
 
         # Retrieve session
@@ -218,13 +213,10 @@ class TestSessionOperations:
 
         # Create user and session first
         user = await db_service.create_user(
-            sample_user_data["email"],
-            sample_user_data["hashed_password"]
+            sample_user_data["email"], sample_user_data["hashed_password"]
         )
         await db_service.create_session(
-            session_id="test_session_123",
-            user_id=user.id,
-            name="Test Session"
+            session_id="test_session_123", user_id=user.id, name="Test Session"
         )
 
         # Delete session
@@ -254,8 +246,7 @@ class TestSessionOperations:
 
         # Create user first
         user = await db_service.create_user(
-            sample_user_data["email"],
-            sample_user_data["hashed_password"]
+            sample_user_data["email"], sample_user_data["hashed_password"]
         )
 
         # Create multiple sessions
@@ -278,19 +269,15 @@ class TestSessionOperations:
 
         # Create user and session first
         user = await db_service.create_user(
-            sample_user_data["email"],
-            sample_user_data["hashed_password"]
+            sample_user_data["email"], sample_user_data["hashed_password"]
         )
         await db_service.create_session(
-            session_id="test_session_123",
-            user_id=user.id,
-            name="Original Name"
+            session_id="test_session_123", user_id=user.id, name="Original Name"
         )
 
         # Update session name
         updated_session = await db_service.update_session_name(
-            "test_session_123",
-            "Updated Name"
+            "test_session_123", "Updated Name"
         )
 
         assert updated_session.name == "Updated Name"

@@ -23,9 +23,7 @@ class Token(BaseModel):
 
     access_token: str = Field(..., description="The JWT access token")
     token_type: str = Field(default="bearer", description="The type of token")
-    expires_at: datetime = Field(
-        ..., description="The token expiration timestamp"
-    )
+    expires_at: datetime = Field(..., description="The token expiration timestamp")
 
 
 class TokenResponse(BaseModel):
@@ -76,22 +74,16 @@ class UserCreate(BaseModel):
             raise ValueError("Password must be at least 8 characters long")
 
         if not re.search(r"[A-Z]", password):
-            raise ValueError(
-                "Password must contain at least one uppercase letter"
-            )
+            raise ValueError("Password must contain at least one uppercase letter")
 
         if not re.search(r"[a-z]", password):
-            raise ValueError(
-                "Password must contain at least one lowercase letter"
-            )
+            raise ValueError("Password must contain at least one lowercase letter")
 
         if not re.search(r"[0-9]", password):
             raise ValueError("Password must contain at least one number")
 
         if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
-            raise ValueError(
-                "Password must contain at least one special character"
-            )
+            raise ValueError("Password must contain at least one special character")
 
         return v
 
@@ -122,12 +114,8 @@ class SessionResponse(BaseModel):
     session_id: str = Field(
         ..., description="The unique identifier for the chat session"
     )
-    name: str = Field(
-        default="", description="Name of the session", max_length=100
-    )
-    token: Token = Field(
-        ..., description="The authentication token for the session"
-    )
+    name: str = Field(default="", description="Name of the session", max_length=100)
+    token: Token = Field(..., description="The authentication token for the session")
 
     @field_validator("name")
     @classmethod
@@ -147,95 +135,91 @@ class SessionResponse(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     """Request model for token refresh.
-    
+
     Attributes:
         refresh_token: The refresh token to validate
     """
-    
+
     refresh_token: str = Field(..., description="The refresh token")
 
 
 class LogoutRequest(BaseModel):
     """Request model for logout.
-    
+
     Attributes:
         token: The access token to invalidate (optional, can use header)
     """
-    
+
     token: str | None = Field(None, description="The access token to invalidate")
 
 
 class ForgotPasswordRequest(BaseModel):
     """Request model for forgot password.
-    
+
     Attributes:
         email: User's email address
     """
-    
+
     email: EmailStr = Field(..., description="User's email address")
 
 
 class ResetPasswordRequest(BaseModel):
     """Request model for password reset.
-    
+
     Attributes:
         reset_token: The password reset token
         new_password: The new password
     """
-    
+
     reset_token: str = Field(..., description="The password reset token")
     new_password: SecretStr = Field(
         ..., description="The new password", min_length=8, max_length=64
     )
-    
+
     @field_validator("new_password")
     @classmethod
     def validate_new_password(cls, v: SecretStr) -> SecretStr:
         """Validate new password strength.
-        
+
         Args:
             v: The password to validate
-            
+
         Returns:
             SecretStr: The validated password
-            
+
         Raises:
             ValueError: If the password is not strong enough
         """
         password = v.get_secret_value()
-        
+
         # Check for common password requirements
         if len(password) < 8:
             raise ValueError("Password must be at least 8 characters long")
-            
+
         if not re.search(r"[A-Z]", password):
-            raise ValueError(
-                "Password must contain at least one uppercase letter"
-            )
-            
+            raise ValueError("Password must contain at least one uppercase letter")
+
         if not re.search(r"[a-z]", password):
-            raise ValueError(
-                "Password must contain at least one lowercase letter"
-            )
-            
+            raise ValueError("Password must contain at least one lowercase letter")
+
         if not re.search(r"[0-9]", password):
             raise ValueError("Password must contain at least one number")
-            
+
         if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
-            raise ValueError(
-                "Password must contain at least one special character"
-            )
-            
+            raise ValueError("Password must contain at least one special character")
+
         return v
 
 
 class MessageResponse(BaseModel):
     """Generic response model for simple messages.
-    
+
     Attributes:
         message: The response message
         success: Whether the operation was successful
     """
-    
+
     message: str = Field(..., description="The response message")
-    success: bool = Field(default=True, description="Whether the operation was successful")
+    success: bool = Field(
+        default=True, description="Whether the operation was successful"
+    )

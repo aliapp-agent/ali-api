@@ -17,9 +17,7 @@ from app.shared.constants.validation import (
 )
 
 
-def sanitize_string(
-    value: str, max_length: int = 1000, strict: bool = False
-) -> str:
+def sanitize_string(value: str, max_length: int = 1000, strict: bool = False) -> str:
     """Sanitize a string to prevent XSS and other injection attacks.
 
     Args:
@@ -39,8 +37,10 @@ def sanitize_string(
 
     # Check length limits
     if len(value) > max_length:
-        raise ValueError(f"String too long. Maximum length is {
-                         max_length} characters")
+        raise ValueError(
+            f"String too long. Maximum length is {
+                         max_length} characters"
+        )
 
     # Remove null bytes and control characters
     value = value.replace("\0", "").replace("\r", "").replace("\x1a", "")
@@ -49,9 +49,7 @@ def sanitize_string(
     for pattern in DANGEROUS_PATTERNS:
         if pattern.search(value):
             if strict:
-                raise ValueError(
-                    "String contains potentially dangerous content"
-                )
+                raise ValueError("String contains potentially dangerous content")
             else:
                 value = pattern.sub("", value)
 
@@ -59,9 +57,7 @@ def sanitize_string(
     for pattern in SQL_INJECTION_PATTERNS:
         if pattern.search(value):
             if strict:
-                raise ValueError(
-                    "String contains potentially harmful SQL patterns"
-                )
+                raise ValueError("String contains potentially harmful SQL patterns")
             else:
                 value = pattern.sub("", value)
 
@@ -200,9 +196,7 @@ def validate_password_strength(password: str) -> bool:
     }
 
     if password.lower() in common_weak_passwords:
-        raise ValueError(
-            "Password is too common. Please choose a stronger password"
-        )
+        raise ValueError("Password is too common. Please choose a stronger password")
 
     return True
 

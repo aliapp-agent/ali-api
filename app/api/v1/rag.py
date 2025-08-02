@@ -70,9 +70,7 @@ async def upload_document(
         )
     except Exception as e:
         logger.error(f"Erro no upload de documento: {str(e)}")
-        raise HTTPException(
-            status_code=500, detail=f"Erro no upload: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Erro no upload: {str(e)}")
 
 
 @router.post("/documents/upload")
@@ -119,9 +117,7 @@ async def upload_file(
         }
     except Exception as e:
         logger.error(f"Erro no upload de arquivo: {str(e)}")
-        raise HTTPException(
-            status_code=500, detail=f"Erro no processamento: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Erro no processamento: {str(e)}")
 
 
 @router.get("/search")

@@ -4,12 +4,19 @@ This module contains tests for the main API endpoints,
 including chatbot, RAG, and integration tests.
 """
 
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import (
+    AsyncMock,
+    Mock,
+    patch,
+)
 
 import pytest
 from fastapi.testclient import TestClient
 
-from app.schemas.chat import Message, ChatResponse
+from app.schemas.chat import (
+    ChatResponse,
+    Message,
+)
 from app.schemas.rag import DocumentSearchResult
 
 
@@ -27,20 +34,19 @@ class TestChatbotEndpoints:
 
                 # Mock agent response
                 mock_agent = Mock()
-                mock_agent.arun = AsyncMock(return_value={
-                    "content": "This is a test response from the agent",
-                    "role": "assistant"
-                })
+                mock_agent.arun = AsyncMock(
+                    return_value={
+                        "content": "This is a test response from the agent",
+                        "role": "assistant",
+                    }
+                )
                 mock_agent_class.return_value = mock_agent
 
                 # Make request with authorization header
                 response = client.post(
                     "/api/v1/chat/",
-                    json={
-                        "content": "Hello, how are you?",
-                        "role": "user"
-                    },
-                    headers={"Authorization": "Bearer test-token"}
+                    json={"content": "Hello, how are you?", "role": "user"},
+                    headers={"Authorization": "Bearer test-token"},
                 )
 
                 assert response.status_code == 200
@@ -53,11 +59,8 @@ class TestChatbotEndpoints:
         with patch("app.api.v1.chatbot.get_current_session"):
             response = client.post(
                 "/api/v1/chat/",
-                json={
-                    "content": "",  # Empty content
-                    "role": "user"
-                },
-                headers={"Authorization": "Bearer test-token"}
+                json={"content": "", "role": "user"},  # Empty content
+                headers={"Authorization": "Bearer test-token"},
             )
 
             # Should return validation error
@@ -66,11 +69,7 @@ class TestChatbotEndpoints:
     def test_chat_endpoint_unauthorized(self, client: TestClient):
         """Test chat endpoint without authorization."""
         response = client.post(
-            "/api/v1/chat/",
-            json={
-                "content": "Hello",
-                "role": "user"
-            }
+            "/api/v1/chat/", json={"content": "Hello", "role": "user"}
         )
 
         assert response.status_code == 403  # No auth header
@@ -96,11 +95,8 @@ class TestChatbotEndpoints:
 
                 response = client.post(
                     "/api/v1/chat/stream",
-                    json={
-                        "content": "Stream test",
-                        "role": "user"
-                    },
-                    headers={"Authorization": "Bearer test-token"}
+                    json={"content": "Stream test", "role": "user"},
+                    headers={"Authorization": "Bearer test-token"},
                 )
 
                 assert response.status_code == 200
@@ -130,17 +126,16 @@ class TestRAGEndpoints:
                     date="2024-01-01",
                     tokens=100,
                     file_path="/path/doc1.pdf",
-                    score=0.9
+                    score=0.9,
                 )
             ]
-            mock_rag_service.search_legislative_documents = AsyncMock(return_value=mock_results)
+            mock_rag_service.search_legislative_documents = AsyncMock(
+                return_value=mock_results
+            )
 
             response = client.post(
                 "/api/v1/rag/search",
-                json={
-                    "query": "test search query",
-                    "max_results": 5
-                }
+                json={"query": "test search query", "max_results": 5},
             )
 
             assert response.status_code == 200
@@ -160,8 +155,8 @@ class TestRAGEndpoints:
                     "query": "filtered search",
                     "max_results": 10,
                     "categoria": "municipal",
-                    "status": "aprovado"
-                }
+                    "status": "aprovado",
+                },
             )
 
             assert response.status_code == 200
@@ -173,17 +168,13 @@ class TestRAGEndpoints:
                 categoria="municipal",
                 source_type=None,
                 status="aprovado",
-                legislatura=None
+                legislatura=None,
             )
 
     def test_rag_search_invalid_query(self, client: TestClient):
         """Test RAG search with invalid query."""
         response = client.post(
-            "/api/v1/rag/search",
-            json={
-                "query": "",  # Empty query
-                "max_results": 5
-            }
+            "/api/v1/rag/search", json={"query": "", "max_results": 5}  # Empty query
         )
 
         # Should return validation error
@@ -192,11 +183,13 @@ class TestRAGEndpoints:
     def test_rag_health_check(self, client: TestClient):
         """Test RAG health check endpoint."""
         with patch("app.api.v1.rag.rag_service") as mock_rag_service:
-            mock_rag_service.health_check = AsyncMock(return_value={
-                "status": "healthy",
-                "elasticsearch": "connected",
-                "index": "exists"
-            })
+            mock_rag_service.health_check = AsyncMock(
+                return_value={
+                    "status": "healthy",
+                    "elasticsearch": "connected",
+                    "index": "exists",
+                }
+            )
 
             response = client.get("/api/v1/rag/health")
 
@@ -207,7 +200,9 @@ class TestRAGEndpoints:
     def test_rag_health_check_error(self, client: TestClient):
         """Test RAG health check when service fails."""
         with patch("app.api.v1.rag.rag_service") as mock_rag_service:
-            mock_rag_service.health_check = AsyncMock(side_effect=Exception("ES connection failed"))
+            mock_rag_service.health_check = AsyncMock(
+                side_effect=Exception("ES connection failed")
+            )
 
             response = client.get("/api/v1/rag/health")
 
@@ -233,8 +228,8 @@ class TestAuthEndpointsIntegration:
                 "/api/v1/auth/register",
                 json={
                     "email": "integration@example.com",
-                    "password": "StrongPassword123!"
-                }
+                    "password": "StrongPassword123!",
+                },
             )
 
             assert register_response.status_code == 200
@@ -249,8 +244,8 @@ class TestAuthEndpointsIntegration:
                 "/api/v1/auth/login",
                 data={
                     "username": "integration@example.com",
-                    "password": "StrongPassword123!"
-                }
+                    "password": "StrongPassword123!",
+                },
             )
 
             assert login_response.status_code == 200
@@ -267,7 +262,9 @@ class TestAuthEndpointsIntegration:
             with patch("app.api.v1.auth.get_current_user", return_value=mock_user):
                 session_response = client.post(
                     "/api/v1/auth/session",
-                    headers={"Authorization": f"Bearer {register_data['token']['access_token']}"}
+                    headers={
+                        "Authorization": f"Bearer {register_data['token']['access_token']}"
+                    },
                 )
 
                 assert session_response.status_code == 200
@@ -339,7 +336,7 @@ class TestErrorHandling:
         response = client.post(
             "/api/v1/rag/search",
             data="invalid json",
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
         assert response.status_code == 422
@@ -356,7 +353,7 @@ class TestCorsAndSecurityHeaders:
         expected_headers = [
             "X-Content-Type-Options",
             "X-Frame-Options",
-            "X-XSS-Protection"
+            "X-XSS-Protection",
         ]
 
         for header in expected_headers:
@@ -388,11 +385,7 @@ class TestInputSanitization:
 
         for malicious_input in malicious_inputs:
             response = client.post(
-                "/api/v1/rag/search",
-                json={
-                    "query": malicious_input,
-                    "max_results": 5
-                }
+                "/api/v1/rag/search", json={"query": malicious_input, "max_results": 5}
             )
 
             # Should either succeed (sanitized) or return validation error

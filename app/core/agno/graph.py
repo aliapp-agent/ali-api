@@ -1,4 +1,7 @@
-from typing import AsyncGenerator, Optional
+from typing import (
+    AsyncGenerator,
+    Optional,
+)
 
 from agno.agent import Agent
 from agno.memory.v2.db.sqlite import SqliteMemoryDb
@@ -86,9 +89,7 @@ class AgnoAgent:  # noqa: D101
             self._build_agent()
 
         try:
-            with llm_inference_duration_seconds.labels(
-                model=self.agent.model
-            ).time():
+            with llm_inference_duration_seconds.labels(model=self.agent.model).time():
                 response = await self.agent.arun(
                     messages=dump_messages(messages),
                     session_id=session_id,

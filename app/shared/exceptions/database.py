@@ -48,9 +48,7 @@ class DatabaseOperationError(DatabaseError):
 class RecordNotFoundError(DatabaseError):
     """Raised when a database record is not found."""
 
-    def __init__(
-        self, table: str, identifier: str, identifier_type: str = "ID"
-    ):
+    def __init__(self, table: str, identifier: str, identifier_type: str = "ID"):
         self.table = table
         self.identifier = identifier
         self.identifier_type = identifier_type

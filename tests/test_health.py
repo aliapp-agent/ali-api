@@ -4,7 +4,11 @@ This module contains tests for the health check functionality,
 including API health, database connectivity, and component status.
 """
 
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import (
+    AsyncMock,
+    Mock,
+    patch,
+)
 
 import pytest
 from fastapi import status
@@ -23,9 +27,13 @@ class TestHealthCheck:
                 with patch("app.core.agno.graph.AgnoAgent") as mock_agno_agent:
                     # Mock all services as healthy
                     mock_db_service.health_check = AsyncMock(return_value=True)
-                    mock_rag_service.health_check = AsyncMock(return_value={"status": "healthy"})
+                    mock_rag_service.health_check = AsyncMock(
+                        return_value={"status": "healthy"}
+                    )
                     mock_agno_instance = mock_agno_agent.return_value
-                    mock_agno_instance.health_check = AsyncMock(return_value={"status": "healthy"})
+                    mock_agno_instance.health_check = AsyncMock(
+                        return_value={"status": "healthy"}
+                    )
 
                     response = client.get("/health")
 
@@ -50,9 +58,13 @@ class TestHealthCheck:
                 with patch("app.core.agno.graph.AgnoAgent") as mock_agno_agent:
                     # Mock database as unhealthy, others as healthy
                     mock_db_service.health_check = AsyncMock(return_value=False)
-                    mock_rag_service.health_check = AsyncMock(return_value={"status": "healthy"})
+                    mock_rag_service.health_check = AsyncMock(
+                        return_value={"status": "healthy"}
+                    )
                     mock_agno_instance = mock_agno_agent.return_value
-                    mock_agno_instance.health_check = AsyncMock(return_value={"status": "healthy"})
+                    mock_agno_instance.health_check = AsyncMock(
+                        return_value={"status": "healthy"}
+                    )
 
                     response = client.get("/health")
 
@@ -96,7 +108,13 @@ class TestHealthCheck:
             data = response.json()
 
             # Required fields
-            required_fields = ["status", "version", "environment", "components", "timestamp"]
+            required_fields = [
+                "status",
+                "version",
+                "environment",
+                "components",
+                "timestamp",
+            ]
             for field in required_fields:
                 assert field in data, f"Missing required field: {field}"
 
@@ -120,7 +138,7 @@ class TestHealthCheck:
             expected_headers = [
                 "X-Content-Type-Options",
                 "X-Frame-Options",
-                "X-XSS-Protection"
+                "X-XSS-Protection",
             ]
 
             for header in expected_headers:
@@ -134,9 +152,13 @@ class TestHealthCheck:
                 with patch("app.core.agno.graph.AgnoAgent") as mock_agno_agent:
                     # Mock all services as healthy
                     mock_db_service.health_check = AsyncMock(return_value=True)
-                    mock_rag_service.health_check = AsyncMock(return_value={"status": "healthy"})
+                    mock_rag_service.health_check = AsyncMock(
+                        return_value={"status": "healthy"}
+                    )
                     mock_agno_instance = mock_agno_agent.return_value
-                    mock_agno_instance.health_check = AsyncMock(return_value={"status": "healthy"})
+                    mock_agno_instance.health_check = AsyncMock(
+                        return_value={"status": "healthy"}
+                    )
 
                     response = client.get("/health")
 
@@ -166,7 +188,7 @@ class TestDatabaseHealthCheck:
         db_service = DatabaseService()
 
         # Mock the Session class from sqlmodel
-        with patch('app.services.database.Session') as mock_session_class:
+        with patch("app.services.database.Session") as mock_session_class:
             mock_session = Mock()
             mock_session.exec.return_value.first.return_value = 1
             mock_session_class.return_value.__enter__.return_value = mock_session
@@ -183,7 +205,7 @@ class TestDatabaseHealthCheck:
         db_service = DatabaseService()
 
         # Mock the Session class to raise an exception
-        with patch('app.services.database.Session') as mock_session_class:
+        with patch("app.services.database.Session") as mock_session_class:
             mock_session_class.side_effect = Exception("Database connection failed")
 
             result = await db_service.health_check()
@@ -212,11 +234,13 @@ class TestRAGHealthCheck:
         """Test successful RAG health check."""
         with patch("app.api.v1.rag.rag_service") as mock_rag_service:
             # Mock RAG service health check
-            mock_rag_service.health_check = AsyncMock(return_value={
-                "status": "healthy",
-                "elasticsearch": "connected",
-                "index_exists": True
-            })
+            mock_rag_service.health_check = AsyncMock(
+                return_value={
+                    "status": "healthy",
+                    "elasticsearch": "connected",
+                    "index_exists": True,
+                }
+            )
 
             response = client.get("/api/v1/rag/health")
 
@@ -229,7 +253,9 @@ class TestRAGHealthCheck:
         """Test RAG health check failure."""
         with patch("app.api.v1.rag.rag_service") as mock_rag_service:
             # Mock RAG service health check to fail
-            mock_rag_service.health_check = AsyncMock(side_effect=Exception("ES connection failed"))
+            mock_rag_service.health_check = AsyncMock(
+                side_effect=Exception("ES connection failed")
+            )
 
             response = client.get("/api/v1/rag/health")
 

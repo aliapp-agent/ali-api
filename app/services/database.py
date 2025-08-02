@@ -57,7 +57,11 @@ class DatabaseService:
                 environment=settings.APP_ENV.value,
             )
         except SQLAlchemyError as e:
-            logger.error("database_initialization_error", error=str(e), environment=settings.APP_ENV.value)
+            logger.error(
+                "database_initialization_error",
+                error=str(e),
+                environment=settings.APP_ENV.value,
+            )
             if settings.APP_ENV != Environment.PRODUCTION:
                 raise
             # Configure environment-specific database connection pool settings
@@ -77,7 +81,6 @@ class DatabaseService:
 
             # Create tables (only if they don't exist)
             SQLModel.metadata.create_all(self.engine)
-
 
     async def create_user(self, email: str, password: str) -> User:
         """Create a new user.
@@ -143,7 +146,9 @@ class DatabaseService:
             logger.info("user_deleted", email=email)
             return True
 
-    async def create_session(self, session_id: str, user_id: int, name: str = "") -> ChatSession:
+    async def create_session(
+        self, session_id: str, user_id: int, name: str = ""
+    ) -> ChatSession:
         """Create a new chat session.
 
         Args:
@@ -159,7 +164,9 @@ class DatabaseService:
             session.add(chat_session)
             session.commit()
             session.refresh(chat_session)
-            logger.info("session_created", session_id=session_id, user_id=user_id, name=name)
+            logger.info(
+                "session_created", session_id=session_id, user_id=user_id, name=name
+            )
             return chat_session
 
     async def delete_session(self, session_id: str) -> bool:
@@ -204,7 +211,11 @@ class DatabaseService:
             List[ChatSession]: List of user's sessions
         """
         with Session(self.engine) as session:
-            statement = select(ChatSession).where(ChatSession.user_id == user_id).order_by(ChatSession.created_at)
+            statement = (
+                select(ChatSession)
+                .where(ChatSession.user_id == user_id)
+                .order_by(ChatSession.created_at)
+            )
             sessions = session.exec(statement).all()
             return sessions
 

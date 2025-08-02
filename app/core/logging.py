@@ -10,7 +10,10 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, List
+from typing import (
+    Any,
+    List,
+)
 
 import structlog
 
@@ -21,9 +24,7 @@ from app.core.config import (
 
 # Ensure log directory exists
 log_dir = (
-    Path(settings.LOG_DIR)
-    if isinstance(settings.LOG_DIR, str)
-    else settings.LOG_DIR
+    Path(settings.LOG_DIR) if isinstance(settings.LOG_DIR, str) else settings.LOG_DIR
 )
 log_dir.mkdir(parents=True, exist_ok=True)
 
@@ -40,9 +41,7 @@ def get_log_file_path() -> Path:
         else settings.LOG_DIR
     )
     env_prefix = settings.APP_ENV.value
-    return (
-        log_dir / f"{env_prefix}-{datetime.now().strftime('%Y-%m-%d')}.jsonl"
-    )
+    return log_dir / f"{env_prefix}-{datetime.now().strftime('%Y-%m-%d')}.jsonl"
 
 
 class JsonlFileHandler(logging.Handler):
@@ -61,9 +60,7 @@ class JsonlFileHandler(logging.Handler):
         """Emit a record to the JSONL file."""
         try:
             log_entry = {
-                "timestamp": datetime.fromtimestamp(
-                    record.created
-                ).isoformat(),
+                "timestamp": datetime.fromtimestamp(record.created).isoformat(),
                 "level": record.levelname,
                 "message": record.getMessage(),
                 "module": record.module,
@@ -196,10 +193,7 @@ def get_logger():
         setup_logging()
         _logger_initialized = True
         # Only log initialization in production or when explicitly requested
-        if (
-            settings.APP_ENV != Environment.DEVELOPMENT
-            or settings.LOG_LEVEL == "DEBUG"
-        ):
+        if settings.APP_ENV != Environment.DEVELOPMENT or settings.LOG_LEVEL == "DEBUG":
             logger = structlog.get_logger()
             logger.info(
                 "logging_initialized",

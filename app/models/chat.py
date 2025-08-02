@@ -3,19 +3,27 @@
 This module contains SQLModel models for chat messages and sessions.
 """
 
-from typing import Optional, Dict, Any
 from datetime import datetime
-from sqlmodel import Field, SQLModel
+from typing import (
+    Any,
+    Dict,
+    Optional,
+)
+
 from sqlalchemy import JSON
+from sqlmodel import (
+    Field,
+    SQLModel,
+)
 
 from app.models.base import BaseModel
 
 
 class ChatSession(BaseModel, table=True):
     """Chat session model (alias for Session for compatibility)."""
-    
+
     __tablename__ = "chat_sessions"
-    
+
     id: str = Field(primary_key=True)
     user_id: int = Field(foreign_key="user.id")
     name: str = Field(default="")
@@ -29,9 +37,9 @@ class ChatSession(BaseModel, table=True):
 
 class ChatMessage(BaseModel, table=True):
     """Chat message model for storing conversation history."""
-    
+
     __tablename__ = "chat_messages"
-    
+
     id: str = Field(primary_key=True)
     session_id: str = Field(foreign_key="chat_sessions.id")
     user_id: int = Field(foreign_key="user.id")

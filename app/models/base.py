@@ -1,9 +1,19 @@
 """Base models and common imports for all models."""
 
-from datetime import UTC, datetime
-from typing import List, Optional
+from datetime import (
+    UTC,
+    datetime,
+)
+from typing import (
+    List,
+    Optional,
+)
 
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import (
+    Field,
+    Relationship,
+    SQLModel,
+)
 
 
 class BaseModel(SQLModel):

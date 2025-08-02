@@ -76,9 +76,7 @@ class Settings(BaseSettings):
     """
 
     # Application Settings
-    APP_ENV: Environment = Field(
-        default=Environment.DEVELOPMENT, env="APP_ENV"
-    )
+    APP_ENV: Environment = Field(default=Environment.DEVELOPMENT, env="APP_ENV")
     PROJECT_NAME: str = Field(default="Ali API", env="PROJECT_NAME")
     VERSION: str = Field(default="1.0.0", env="VERSION")
     DESCRIPTION: str = Field(
@@ -106,9 +104,7 @@ class Settings(BaseSettings):
         default="http://localhost:9200", env="ELASTICSEARCH_URL"
     )
     ELASTICSEARCH_TIMEOUT: int = Field(default=30, env="ELASTICSEARCH_TIMEOUT")
-    ELASTICSEARCH_MAX_RETRIES: int = Field(
-        default=3, env="ELASTICSEARCH_MAX_RETRIES"
-    )
+    ELASTICSEARCH_MAX_RETRIES: int = Field(default=3, env="ELASTICSEARCH_MAX_RETRIES")
     ELASTICSEARCH_INDEX_NAME: str = Field(
         default="agua-clara-ms", env="ELASTICSEARCH_INDEX_NAME"
     )
@@ -135,26 +131,26 @@ class Settings(BaseSettings):
         """Parse ALLOWED_ORIGINS string into a list."""
         if not self.ALLOWED_ORIGINS:
             return ["*"]  # Allow all origins if none specified (dev only)
-        
+
         origins = [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
-        
+
         # Add environment-specific defaults
         if self.APP_ENV == Environment.STAGING:
             # Add staging frontend URLs
             default_staging = [
                 "https://ali-frontend-staging.vercel.app",
-                "https://staging.ali-app.com"  # Custom staging domain
+                "https://staging.ali-app.com",  # Custom staging domain
             ]
             origins.extend([url for url in default_staging if url not in origins])
         elif self.APP_ENV == Environment.PRODUCTION:
             # Add production frontend URLs
             default_production = [
-                "https://ali-frontend.vercel.app", 
+                "https://ali-frontend.vercel.app",
                 "https://app.ali.com",  # Custom production domain
-                "https://ali.com"
+                "https://ali.com",
             ]
             origins.extend([url for url in default_production if url not in origins])
-        
+
         return origins
 
     # Logging Configuration
@@ -166,27 +162,17 @@ class Settings(BaseSettings):
     RATE_LIMIT_DEFAULT: str = Field(
         default="1000 per day,200 per hour", env="RATE_LIMIT_DEFAULT"
     )
-    RATE_LIMIT_CHAT: str = Field(
-        default="100 per minute", env="RATE_LIMIT_CHAT"
-    )
+    RATE_LIMIT_CHAT: str = Field(default="100 per minute", env="RATE_LIMIT_CHAT")
     RATE_LIMIT_CHAT_STREAM: str = Field(
         default="50 per minute", env="RATE_LIMIT_CHAT_STREAM"
     )
     RATE_LIMIT_MESSAGES: str = Field(
         default="100 per minute", env="RATE_LIMIT_MESSAGES"
     )
-    RATE_LIMIT_REGISTER: str = Field(
-        default="20 per hour", env="RATE_LIMIT_REGISTER"
-    )
-    RATE_LIMIT_LOGIN: str = Field(
-        default="50 per minute", env="RATE_LIMIT_LOGIN"
-    )
-    RATE_LIMIT_ROOT: str = Field(
-        default="50 per minute", env="RATE_LIMIT_ROOT"
-    )
-    RATE_LIMIT_HEALTH: str = Field(
-        default="100 per minute", env="RATE_LIMIT_HEALTH"
-    )
+    RATE_LIMIT_REGISTER: str = Field(default="20 per hour", env="RATE_LIMIT_REGISTER")
+    RATE_LIMIT_LOGIN: str = Field(default="50 per minute", env="RATE_LIMIT_LOGIN")
+    RATE_LIMIT_ROOT: str = Field(default="50 per minute", env="RATE_LIMIT_ROOT")
+    RATE_LIMIT_HEALTH: str = Field(default="100 per minute", env="RATE_LIMIT_HEALTH")
 
     # Langfuse Configuration
     LANGFUSE_PUBLIC_KEY: str = Field(default="", env="LANGFUSE_PUBLIC_KEY")
@@ -198,9 +184,7 @@ class Settings(BaseSettings):
     # Agno Agent Configuration
     LLM_API_KEY: str = Field(default="", env="LLM_API_KEY")
     LLM_MODEL: str = Field(default="gpt-4o-mini", env="LLM_MODEL")
-    DEFAULT_LLM_TEMPERATURE: float = Field(
-        default=0.2, env="DEFAULT_LLM_TEMPERATURE"
-    )
+    DEFAULT_LLM_TEMPERATURE: float = Field(default=0.2, env="DEFAULT_LLM_TEMPERATURE")
     MAX_TOKENS: int = Field(default=2000, env="MAX_TOKENS")
     MAX_LLM_CALL_RETRIES: int = Field(default=3, env="MAX_LLM_CALL_RETRIES")
 
@@ -215,26 +199,14 @@ class Settings(BaseSettings):
     )
 
     # Firebase Configuration
-    FIREBASE_PROJECT_ID: str = Field(
-        default="", env="FIREBASE_PROJECT_ID"
-    )
-    FIREBASE_CREDENTIALS_PATH: str = Field(
-        default="", env="FIREBASE_CREDENTIALS_PATH"
-    )
-    FIREBASE_STORAGE_BUCKET: str = Field(
-        default="", env="FIREBASE_STORAGE_BUCKET"
-    )
-    FIREBASE_REGION: str = Field(
-        default="us-central1", env="FIREBASE_REGION"
-    )
+    FIREBASE_PROJECT_ID: str = Field(default="", env="FIREBASE_PROJECT_ID")
+    FIREBASE_CREDENTIALS_PATH: str = Field(default="", env="FIREBASE_CREDENTIALS_PATH")
+    FIREBASE_STORAGE_BUCKET: str = Field(default="", env="FIREBASE_STORAGE_BUCKET")
+    FIREBASE_REGION: str = Field(default="us-central1", env="FIREBASE_REGION")
 
     # Qdrant Configuration
-    QDRANT_URL: str = Field(
-        default="http://localhost:6333", env="QDRANT_URL"
-    )
-    QDRANT_API_KEY: str = Field(
-        default="", env="QDRANT_API_KEY"
-    )
+    QDRANT_URL: str = Field(default="http://localhost:6333", env="QDRANT_URL")
+    QDRANT_API_KEY: str = Field(default="", env="QDRANT_API_KEY")
     QDRANT_COLLECTION_NAME: str = Field(
         default="documents", env="QDRANT_COLLECTION_NAME"
     )

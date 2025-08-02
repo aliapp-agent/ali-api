@@ -10,14 +10,14 @@ from typing import Annotated
 from fastapi import Depends
 from sqlmodel import Session
 
-from app.services.database import DatabaseService
-from app.infrastructure.container import get_container
 from app.domain.services import (
+    DocumentDomainService,
     MessageDomainService,
     SessionDomainService,
     UserDomainService,
-    DocumentDomainService,
 )
+from app.infrastructure.container import get_container
+from app.services.database import DatabaseService
 
 # Singleton database service (keep existing simple approach)
 _db_service = DatabaseService()
@@ -25,7 +25,7 @@ _db_service = DatabaseService()
 
 def get_database_service() -> DatabaseService:
     """Get the database service singleton.
-    
+
     Returns:
         DatabaseService: The database service instance
     """
@@ -34,7 +34,7 @@ def get_database_service() -> DatabaseService:
 
 def get_db_session() -> Session:
     """Get database session for domain services.
-    
+
     Returns:
         Session: SQLModel database session
     """
@@ -43,13 +43,13 @@ def get_db_session() -> Session:
 
 # Simple domain service dependencies
 def get_message_service(
-    db_session: Session = Depends(get_db_session)
+    db_session: Session = Depends(get_db_session),
 ) -> MessageDomainService:
     """Get message domain service.
-    
+
     Args:
         db_session: Database session
-        
+
     Returns:
         MessageDomainService: Message service instance
     """
@@ -58,13 +58,13 @@ def get_message_service(
 
 
 def get_session_service(
-    db_session: Session = Depends(get_db_session)
+    db_session: Session = Depends(get_db_session),
 ) -> SessionDomainService:
     """Get session domain service.
-    
+
     Args:
         db_session: Database session
-        
+
     Returns:
         SessionDomainService: Session service instance
     """
@@ -73,13 +73,13 @@ def get_session_service(
 
 
 def get_user_service(
-    db_session: Session = Depends(get_db_session)
+    db_session: Session = Depends(get_db_session),
 ) -> UserDomainService:
     """Get user domain service.
-    
+
     Args:
         db_session: Database session
-        
+
     Returns:
         UserDomainService: User service instance
     """
@@ -88,13 +88,13 @@ def get_user_service(
 
 
 def get_document_service(
-    db_session: Session = Depends(get_db_session)
+    db_session: Session = Depends(get_db_session),
 ) -> DocumentDomainService:
     """Get document domain service.
-    
+
     Args:
         db_session: Database session
-        
+
     Returns:
         DocumentDomainService: Document service instance
     """

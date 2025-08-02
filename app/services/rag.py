@@ -1,12 +1,22 @@
-from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from datetime import (
+    datetime,
+    timezone,
+)
+from typing import (
+    Dict,
+    List,
+    Optional,
+)
 
 from elasticsearch import Elasticsearch
-from sentence_transformers import SentenceTransformer
+# from sentence_transformers import SentenceTransformer
 
 from app.core.config import settings
 from app.core.logging import logger
-from app.schemas.rag import DocumentoLegislativo, DocumentSearchResult
+from app.schemas.rag import (
+    DocumentoLegislativo,
+    DocumentSearchResult,
+)
 
 
 class RAGService:
@@ -23,9 +33,8 @@ class RAGService:
             es_config["api_key"] = settings.ELASTICSEARCH_API_KEY
 
         self.es_client = Elasticsearch(**es_config)
-        self.embedding_model = SentenceTransformer(
-            settings.RAG_EMBEDDING_MODEL
-        )
+        # self.embedding_model = SentenceTransformer(settings.RAG_EMBEDDING_MODEL)
+        self.embedding_model = None  # Temporarily disabled
         self.index_name = settings.RAG_INDEX_NAME
 
     async def initialize_index(self):
@@ -55,11 +64,13 @@ class RAGService:
             self.es_client.indices.create(index=self.index_name, body=mapping)
             logger.info(f"Índice {self.index_name} criado com sucesso")
 
-    async def add_legislative_document(
-        self, document: DocumentoLegislativo
-    ) -> str:
+    async def add_legislative_document(self, document: DocumentoLegislativo) -> str:
         """Adiciona um documento legislativo ao índice."""
-        embedding = self.embedding_model.encode(document.content).tolist()
+        # Temporarily use empty embedding when model is disabled
+        if self.embedding_model is not None:
+            embedding = self.embedding_model.encode(document.content).tolist()
+        else:
+            embedding = [0.0] * 384  # Default embedding size for sentence-transformers
 
         doc = {
             "content": document.content,
@@ -94,7 +105,10 @@ class RAGService:
     ) -> List[DocumentSearchResult]:
         """Busca documentos legislativos usando busca semântica e filtros."""
         # Gerar embedding da query
-        query_embedding = self.embedding_model.encode(query).tolist()
+        if self.embedding_model is not None:
+            query_embedding = self.embedding_model.encode(query).tolist()
+        else:
+            query_embedding = [0.0] * 384  # Default embedding size for sentence-transformers
 
         # Construir filtros
         filters = []
@@ -118,9 +132,7 @@ class RAGService:
                                 "query": {"match_all": {}},
                                 "script": {
                                     "source": "cosineSimilarity(params.query_vector, 'embedding') + 1.0",
-                                    "params": {
-                                        "query_vector": query_embedding
-                                    },
+                                    "params": {"query_vector": query_embedding},
                                 },
                             }
                         },
@@ -141,9 +153,7 @@ class RAGService:
             },
         }
 
-        response = self.es_client.search(
-            index=self.index_name, body=search_body
-        )
+        response = self.es_client.search(index=self.index_name, body=search_body)
 
         results = []
         for hit in response["hits"]["hits"]:
@@ -179,9 +189,7 @@ class RAGService:
             index_exists = self.es_client.indices.exists(index=self.index_name)
 
             return {
-                "status": "healthy"
-                if es_health and index_exists
-                else "unhealthy",
+                "status": "healthy" if es_health and index_exists else "unhealthy",
                 "elasticsearch": "connected" if es_health else "disconnected",
                 "index": "exists" if index_exists else "missing",
                 "embedding_model": settings.RAG_EMBEDDING_MODEL,

@@ -1,6 +1,10 @@
 """API-related exceptions."""
 
-from typing import Any, Dict, Optional
+from typing import (
+    Any,
+    Dict,
+    Optional,
+)
 
 
 class APIError(Exception):
@@ -57,9 +61,7 @@ class UnauthorizedError(APIError):
 class ForbiddenError(APIError):
     """Raised for HTTP 403 Forbidden errors."""
 
-    def __init__(
-        self, message: str = "Forbidden", resource: Optional[str] = None
-    ):
+    def __init__(self, message: str = "Forbidden", resource: Optional[str] = None):
         details = {"resource": resource} if resource else None
         super().__init__(message, 403, details)
 
@@ -114,9 +116,7 @@ class UnprocessableEntityError(APIError):
         validation_errors: Optional[Dict[str, Any]] = None,
     ):
         details = (
-            {"validation_errors": validation_errors}
-            if validation_errors
-            else None
+            {"validation_errors": validation_errors} if validation_errors else None
         )
         super().__init__(message, 422, details)
 
@@ -158,11 +158,7 @@ class BadGatewayError(APIError):
         message: str = "Bad gateway",
         upstream_service: Optional[str] = None,
     ):
-        details = (
-            {"upstream_service": upstream_service}
-            if upstream_service
-            else None
-        )
+        details = {"upstream_service": upstream_service} if upstream_service else None
         super().__init__(message, 502, details)
 
 
@@ -186,9 +182,7 @@ class ServiceUnavailableError(APIError):
 class GatewayTimeoutError(APIError):
     """Raised for HTTP 504 Gateway Timeout errors."""
 
-    def __init__(
-        self, message: str = "Gateway timeout", timeout: Optional[int] = None
-    ):
+    def __init__(self, message: str = "Gateway timeout", timeout: Optional[int] = None):
         details = {"timeout": timeout} if timeout else None
         super().__init__(message, 504, details)
 
@@ -213,9 +207,7 @@ class RequestTooLargeError(APIError):
 class UnsupportedMediaTypeError(APIError):
     """Raised for HTTP 415 Unsupported Media Type errors."""
 
-    def __init__(
-        self, media_type: str, supported_types: Optional[list] = None
-    ):
+    def __init__(self, media_type: str, supported_types: Optional[list] = None):
         message = f"Unsupported media type: {media_type}"
         details = {"media_type": media_type}
         if supported_types:
@@ -227,9 +219,7 @@ class UnsupportedMediaTypeError(APIError):
 class RequestTimeoutError(APIError):
     """Raised for HTTP 408 Request Timeout errors."""
 
-    def __init__(
-        self, message: str = "Request timeout", timeout: Optional[int] = None
-    ):
+    def __init__(self, message: str = "Request timeout", timeout: Optional[int] = None):
         details = {"timeout": timeout} if timeout else None
         super().__init__(message, 408, details)
 
@@ -285,9 +275,7 @@ class TooManyRequestsError(APIError):
 class InvalidAPIVersionError(APIError):
     """Raised when API version is invalid or unsupported."""
 
-    def __init__(
-        self, version: str, supported_versions: Optional[list] = None
-    ):
+    def __init__(self, version: str, supported_versions: Optional[list] = None):
         message = f"Invalid API version: {version}"
         details = {"version": version}
         if supported_versions:

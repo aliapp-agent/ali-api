@@ -4,16 +4,21 @@ This module contains the pure domain model for chat messages,
 independent of any external dependencies or frameworks.
 """
 
+import re
+import uuid
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional
-from dataclasses import dataclass
-import uuid
-import re
+from typing import (
+    Dict,
+    List,
+    Optional,
+)
 
 
 class MessageRole(str, Enum):
     """Message role in the conversation."""
+
     USER = "user"
     ASSISTANT = "assistant"
     SYSTEM = "system"
@@ -21,6 +26,7 @@ class MessageRole(str, Enum):
 
 class MessageStatus(str, Enum):
     """Message status in the system."""
+
     PENDING = "pending"
     PROCESSING = "processing"
     COMPLETED = "completed"
@@ -31,6 +37,7 @@ class MessageStatus(str, Enum):
 @dataclass
 class MessageMetadata:
     """Message metadata and processing information."""
+
     model_used: Optional[str] = None
     tokens_used: int = 0
     processing_time: Optional[float] = None
@@ -43,6 +50,7 @@ class MessageMetadata:
 @dataclass
 class MessageContext:
     """Additional context for message processing."""
+
     user_location: Optional[str] = None
     user_agent: Optional[str] = None
     session_context: Optional[Dict] = None
@@ -51,11 +59,11 @@ class MessageContext:
 
 class MessageEntity:
     """Pure domain entity for chat messages.
-    
+
     This class contains the core business logic for messages
     without any external dependencies.
     """
-    
+
     def __init__(
         self,
         session_id: str,
@@ -70,7 +78,7 @@ class MessageEntity:
         message_id: Optional[str] = None,
     ):
         """Initialize a Message entity.
-        
+
         Args:
             session_id: ID of the session this message belongs to
             user_id: ID of the user who created/received this message
@@ -98,31 +106,31 @@ class MessageEntity:
         """Validate and sanitize message content."""
         if not content or not content.strip():
             raise ValueError("Message content cannot be empty")
-        
+
         content = content.strip()
-        
+
         # Length validation
         if len(content) > 10000:  # 10K character limit
             raise ValueError("Message content exceeds maximum length")
-        
+
         # Check for potentially harmful content
         if re.search(r"<script.*?>.*?</script>", content, re.IGNORECASE | re.DOTALL):
             raise ValueError("Content contains potentially harmful script tags")
-        
+
         # Check for null bytes
         if "\0" in content:
             raise ValueError("Content contains null bytes")
-        
+
         return content
 
     def update_content(self, new_content: str) -> None:
         """Update message content (only for user messages)."""
         if self.role != MessageRole.USER:
             raise ValueError("Only user messages can be edited")
-        
+
         if self.status != MessageStatus.PENDING:
             raise ValueError("Cannot edit message that has been processed")
-        
+
         self.content = self._validate_and_sanitize_content(new_content)
         self.updated_at = datetime.utcnow()
 
@@ -130,7 +138,7 @@ class MessageEntity:
         """Mark message as being processed."""
         if self.status != MessageStatus.PENDING:
             raise ValueError(f"Cannot mark as processing from status: {self.status}")
-        
+
         self.status = MessageStatus.PROCESSING
         self.updated_at = datetime.utcnow()
 
@@ -138,12 +146,12 @@ class MessageEntity:
         """Mark message as completed with optional metadata."""
         if self.status not in [MessageStatus.PENDING, MessageStatus.PROCESSING]:
             raise ValueError(f"Cannot mark as completed from status: {self.status}")
-        
+
         self.status = MessageStatus.COMPLETED
-        
+
         if metadata_update:
             self.update_metadata(metadata_update)
-        
+
         self.updated_at = datetime.utcnow()
 
     def mark_error(self, error_details: str) -> None:
@@ -160,57 +168,51 @@ class MessageEntity:
 
     def update_metadata(self, metadata_update: Dict) -> None:
         """Update message metadata."""
-        if 'model_used' in metadata_update:
-            self.metadata.model_used = metadata_update['model_used']
-        if 'tokens_used' in metadata_update:
-            tokens = metadata_update['tokens_used']
+        if "model_used" in metadata_update:
+            self.metadata.model_used = metadata_update["model_used"]
+        if "tokens_used" in metadata_update:
+            tokens = metadata_update["tokens_used"]
             if tokens < 0:
                 raise ValueError("Tokens used cannot be negative")
             self.metadata.tokens_used = tokens
-        if 'processing_time' in metadata_update:
-            proc_time = metadata_update['processing_time']
+        if "processing_time" in metadata_update:
+            proc_time = metadata_update["processing_time"]
             if proc_time < 0:
                 raise ValueError("Processing time cannot be negative")
             self.metadata.processing_time = proc_time
-        if 'confidence_score' in metadata_update:
-            confidence = metadata_update['confidence_score']
+        if "confidence_score" in metadata_update:
+            confidence = metadata_update["confidence_score"]
             if not 0.0 <= confidence <= 1.0:
                 raise ValueError("Confidence score must be between 0.0 and 1.0")
             self.metadata.confidence_score = confidence
-        if 'context_documents' in metadata_update:
-            self.metadata.context_documents = metadata_update['context_documents']
-        
+        if "context_documents" in metadata_update:
+            self.metadata.context_documents = metadata_update["context_documents"]
+
         self.updated_at = datetime.utcnow()
 
     def update_context(self, context_update: Dict) -> None:
         """Update message context."""
-        if 'user_location' in context_update:
-            self.context.user_location = context_update['user_location']
-        if 'user_agent' in context_update:
-            self.context.user_agent = context_update['user_agent']
-        if 'session_context' in context_update:
-            self.context.session_context = context_update['session_context']
-        if 'previous_messages_count' in context_update:
-            count = context_update['previous_messages_count']
+        if "user_location" in context_update:
+            self.context.user_location = context_update["user_location"]
+        if "user_agent" in context_update:
+            self.context.user_agent = context_update["user_agent"]
+        if "session_context" in context_update:
+            self.context.session_context = context_update["session_context"]
+        if "previous_messages_count" in context_update:
+            count = context_update["previous_messages_count"]
             if count < 0:
                 raise ValueError("Previous messages count cannot be negative")
             self.context.previous_messages_count = count
-        
+
         self.updated_at = datetime.utcnow()
 
     def can_be_edited(self) -> bool:
         """Check if message can be edited."""
-        return (
-            self.role == MessageRole.USER and 
-            self.status == MessageStatus.PENDING
-        )
+        return self.role == MessageRole.USER and self.status == MessageStatus.PENDING
 
     def can_be_retried(self) -> bool:
         """Check if message can be retried."""
-        return (
-            self.status == MessageStatus.ERROR and 
-            self.metadata.retry_count < 3
-        )
+        return self.status == MessageStatus.ERROR and self.metadata.retry_count < 3
 
     def is_system_message(self) -> bool:
         """Check if this is a system message."""
@@ -236,7 +238,7 @@ class MessageEntity:
         """Get a preview of the message content."""
         if len(self.content) <= max_length:
             return self.content
-        return self.content[:max_length-3] + "..."
+        return self.content[: max_length - 3] + "..."
 
     def get_word_count(self) -> int:
         """Get the word count of the message."""

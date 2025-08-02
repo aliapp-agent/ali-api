@@ -67,9 +67,7 @@ class DocumentProcessor:
             # Se não é o último chunk, tenta encontrar um ponto de quebra natural
             if end < len(text):
                 # Procura por quebra de linha ou ponto final próximo
-                for i in range(
-                    end, max(start + self.chunk_size - 100, start), -1
-                ):
+                for i in range(end, max(start + self.chunk_size - 100, start), -1):
                     if text[i] in ".\n":
                         end = i + 1
                         break

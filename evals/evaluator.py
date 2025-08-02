@@ -91,9 +91,7 @@ class Evaluator:
             ):
                 metric_name = metric["name"]
                 input, output = get_input_output(trace)
-                score = await self._run_metric_evaluation(
-                    metric, input, output
-                )
+                score = await self._run_metric_evaluation(metric, input, output)
 
                 if score:
                     self._push_to_langfuse(trace, score, metric)
@@ -111,9 +109,7 @@ class Evaluator:
 
                 trace_results[trace_id]["metrics_evaluated"] += 1
 
-            process_trace_results(
-                self.report, trace_id, trace_results, len(metrics)
-            )
+            process_trace_results(self.report, trace_id, trace_results, len(metrics))
             sleep(settings.EVALUATION_SLEEP_TIME)
 
         self.report["duration_seconds"] = round(time.time() - start_time, 2)
@@ -234,9 +230,7 @@ class Evaluator:
                 order_by="timestamp.asc",
                 limit=100,
             ).data
-            traces_without_scores = [
-                trace for trace in traces if not trace.scores
-            ]
+            traces_without_scores = [trace for trace in traces if not trace.scores]
             return traces_without_scores
         except Exception as e:
             logger.error("Error fetching traces", error=str(e))

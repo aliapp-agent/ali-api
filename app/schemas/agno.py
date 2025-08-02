@@ -3,7 +3,11 @@
 import re
 import uuid
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    field_validator,
+)
 
 
 class AgnoState(BaseModel):

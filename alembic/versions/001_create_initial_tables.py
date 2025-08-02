@@ -6,7 +6,10 @@ Create Date: 2025-01-23 10:00:00.000000
 
 """
 
-from typing import Sequence, Union
+from typing import (
+    Sequence,
+    Union,
+)
 
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
@@ -45,9 +48,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_session_id"), "session", ["id"], unique=False)
-    op.create_index(
-        op.f("ix_session_user_id"), "session", ["user_id"], unique=False
-    )
+    op.create_index(op.f("ix_session_user_id"), "session", ["user_id"], unique=False)
 
     # Create thread table
     op.create_table(

@@ -17,7 +17,10 @@ from starlette.status import HTTP_503_SERVICE_UNAVAILABLE
 from app.core.config import settings
 from app.core.limiter import limiter
 from app.core.logging import logger
-from app.main import SECURITY_HEADERS, app
+from app.main import (
+    SECURITY_HEADERS,
+    app,
+)
 from app.services.database import database_service
 
 
@@ -25,14 +28,14 @@ from app.services.database import database_service
 @limiter.limit(settings.RATE_LIMIT_ENDPOINTS["health"][0])
 async def deep_health_check(request: Request) -> JSONResponse:
     """Deep health check endpoint with comprehensive system diagnostics.
-    
+
     This endpoint performs more thorough health checks including:
     - Database connection and query performance
     - Elasticsearch connectivity and index status
     - Agno agent functionality
     - Memory and resource usage
     - Service dependencies
-    
+
     Returns:
         JSONResponse: Detailed health status information
     """
@@ -48,26 +51,40 @@ async def deep_health_check(request: Request) -> JSONResponse:
             db_healthy = await database_service.health_check()
             db_response_time = (datetime.now() - db_start).total_seconds() * 1000
 
-            db_details.update({
-                "connected": db_healthy,
-                "response_time_ms": round(db_response_time, 2),
-            })
+            db_details.update(
+                {
+                    "connected": db_healthy,
+                    "response_time_ms": round(db_response_time, 2),
+                }
+            )
         except Exception as e:
             db_details["error"] = str(e)
 
         # RAG service deep health check
-        rag_details = {"status": "unknown", "elasticsearch": "unknown", "index": "unknown", "error": None}
+        rag_details = {
+            "status": "unknown",
+            "elasticsearch": "unknown",
+            "index": "unknown",
+            "error": None,
+        }
         try:
             from app.services.rag import rag_service
+
             rag_health = await rag_service.health_check()
             rag_details.update(rag_health)
         except Exception as e:
             rag_details["error"] = str(e)
 
         # Agno agent deep health check
-        agno_details = {"status": "unknown", "agent_ready": False, "tools_count": 0, "error": None}
+        agno_details = {
+            "status": "unknown",
+            "agent_ready": False,
+            "tools_count": 0,
+            "error": None,
+        }
         try:
             from app.core.agno.graph import AgnoAgent
+
             agent = AgnoAgent()
             agno_health = await agent.health_check()
             agno_details.update(agno_health)
@@ -77,7 +94,7 @@ async def deep_health_check(request: Request) -> JSONResponse:
         # System resource information
         try:
             memory_info = psutil.virtual_memory()
-            disk_info = psutil.disk_usage('/')
+            disk_info = psutil.disk_usage("/")
             cpu_percent = psutil.cpu_percent(interval=0.1)
 
             system_details = {
@@ -93,7 +110,9 @@ async def deep_health_check(request: Request) -> JSONResponse:
                 },
                 "cpu": {
                     "usage_percent": cpu_percent,
-                    "load_average": os.getloadavg() if hasattr(os, 'getloadavg') else None,
+                    "load_average": (
+                        os.getloadavg() if hasattr(os, "getloadavg") else None
+                    ),
                 },
                 "process": {
                     "pid": os.getpid(),
@@ -107,11 +126,17 @@ async def deep_health_check(request: Request) -> JSONResponse:
         components = {
             "api": "healthy",
             "database": "healthy" if db_details["connected"] else "unhealthy",
-            "rag_service": "healthy" if rag_details["status"] == "healthy" else "unhealthy",
-            "agno_agent": "healthy" if agno_details["status"] == "healthy" else "unhealthy",
+            "rag_service": (
+                "healthy" if rag_details["status"] == "healthy" else "unhealthy"
+            ),
+            "agno_agent": (
+                "healthy" if agno_details["status"] == "healthy" else "unhealthy"
+            ),
         }
 
-        critical_healthy = components["api"] == "healthy" and components["database"] == "healthy"
+        critical_healthy = (
+            components["api"] == "healthy" and components["database"] == "healthy"
+        )
         all_healthy = all(status == "healthy" for status in components.values())
 
         if all_healthy:
@@ -129,7 +154,11 @@ async def deep_health_check(request: Request) -> JSONResponse:
             "version": settings.VERSION,
             "environment": settings.ENVIRONMENT.value,
             "timestamp": datetime.now().isoformat(),
-            "uptime_seconds": (datetime.now() - app.state.start_time).total_seconds() if hasattr(app.state, 'start_time') else None,
+            "uptime_seconds": (
+                (datetime.now() - app.state.start_time).total_seconds()
+                if hasattr(app.state, "start_time")
+                else None
+            ),
             "health_check_duration_ms": round(total_response_time, 2),
             "components": components,
             "component_details": {

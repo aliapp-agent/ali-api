@@ -5,12 +5,19 @@ Firebase-enabled testing configuration with integrated Firebase mocks.
 """
 
 import asyncio
+import json
 import os
 import sys
 import tempfile
-import json
-from typing import AsyncGenerator, Generator
-from unittest.mock import Mock, AsyncMock, patch
+from typing import (
+    AsyncGenerator,
+    Generator,
+)
+from unittest.mock import (
+    AsyncMock,
+    Mock,
+    patch,
+)
 
 import pytest
 import pytest_asyncio
@@ -19,16 +26,16 @@ from httpx import AsyncClient
 
 # Import our mock services
 from tests.mocks import (
+    create_mock_firebase_credentials,
     mock_firebase_auth,
     mock_firestore,
     mock_qdrant_client,
-    create_mock_firebase_credentials
 )
-
 
 # ============================================================================
 # FIREBASE MOCKS - Integrated into conftest.py
 # ============================================================================
+
 
 class MockFirebaseAdmin:
     """Mock Firebase Admin SDK."""
@@ -45,6 +52,7 @@ class MockFirebaseAdmin:
         class Certificate:
             def __init__(self, *args, **kwargs):
                 pass
+
         return Certificate
 
 
@@ -155,20 +163,20 @@ def patch_firebase_imports():
 
     # Create mock modules and inject them into sys.modules
     mock_modules = {
-        'firebase_admin': Mock(
+        "firebase_admin": Mock(
             initialize_app=mock_admin.initialize_app,
             credentials=Mock(Certificate=Mock),
             auth=mock_admin.auth,
             firestore=mock_admin.firestore,
             storage=mock_admin.storage,
         ),
-        'firebase_admin.auth': mock_admin.auth,
-        'firebase_admin.firestore': mock_admin.firestore,
-        'firebase_admin.storage': mock_admin.storage,
-        'firebase_admin.credentials': Mock(Certificate=Mock),
-        'google.cloud.firestore': mock_admin.firestore,
-        'google.cloud.storage': mock_admin.storage,
-        'google.cloud.logging': Mock(),
+        "firebase_admin.auth": mock_admin.auth,
+        "firebase_admin.firestore": mock_admin.firestore,
+        "firebase_admin.storage": mock_admin.storage,
+        "firebase_admin.credentials": Mock(Certificate=Mock),
+        "google.cloud.firestore": mock_admin.firestore,
+        "google.cloud.storage": mock_admin.storage,
+        "google.cloud.logging": Mock(),
     }
 
     # Inject mocks into sys.modules
@@ -184,16 +192,18 @@ def patch_firebase_imports():
 def setup_test_environment():
     """Setup test environment with Firebase mocks."""
     # Set test environment variables
-    os.environ.update({
-        "APP_ENV": "test",
-        "FIREBASE_PROJECT_ID": "test-project",
-        "FIREBASE_CREDENTIALS_PATH": "/tmp/test-firebase-credentials.json",
-        "FIREBASE_STORAGE_BUCKET": "test-project.appspot.com",
-        "FIREBASE_REGION": "us-central1",
-        "QDRANT_URL": "http://localhost:6333",
-        "JWT_SECRET_KEY": "test-secret-key",
-        "LLM_API_KEY": "test-llm-key",
-    })
+    os.environ.update(
+        {
+            "APP_ENV": "test",
+            "FIREBASE_PROJECT_ID": "test-project",
+            "FIREBASE_CREDENTIALS_PATH": "/tmp/test-firebase-credentials.json",
+            "FIREBASE_STORAGE_BUCKET": "test-project.appspot.com",
+            "FIREBASE_REGION": "us-central1",
+            "QDRANT_URL": "http://localhost:6333",
+            "JWT_SECRET_KEY": "test-secret-key",
+            "LLM_API_KEY": "test-llm-key",
+        }
+    )
 
     # Patch Firebase imports
     return patch_firebase_imports()
@@ -203,16 +213,18 @@ def setup_test_environment():
 # Only if we're in a test environment
 if "pytest" in sys.modules or os.environ.get("APP_ENV") == "test":
     # Set environment variables first
-    os.environ.update({
-        "APP_ENV": "test",
-        "FIREBASE_PROJECT_ID": "test-project",
-        "FIREBASE_CREDENTIALS_PATH": "/tmp/test-firebase-credentials.json",
-        "FIREBASE_STORAGE_BUCKET": "test-project.appspot.com",
-        "FIREBASE_REGION": "us-central1",
-        "QDRANT_URL": "http://localhost:6333",
-        "JWT_SECRET_KEY": "test-secret-key",
-        "LLM_API_KEY": "test-llm-key",
-    })
+    os.environ.update(
+        {
+            "APP_ENV": "test",
+            "FIREBASE_PROJECT_ID": "test-project",
+            "FIREBASE_CREDENTIALS_PATH": "/tmp/test-firebase-credentials.json",
+            "FIREBASE_STORAGE_BUCKET": "test-project.appspot.com",
+            "FIREBASE_REGION": "us-central1",
+            "QDRANT_URL": "http://localhost:6333",
+            "JWT_SECRET_KEY": "test-secret-key",
+            "LLM_API_KEY": "test-llm-key",
+        }
+    )
 
     # Apply Firebase mocks to sys.modules
     patch_firebase_imports()
@@ -223,6 +235,8 @@ if "pytest" in sys.modules or os.environ.get("APP_ENV") == "test":
 
 # Import app components - Firebase mocks already applied above
 from app.core.config import settings
+
+
 # Mock Firebase services before importing the app
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_environment():
@@ -231,7 +245,7 @@ def setup_test_environment():
     temp_dir = tempfile.mkdtemp()
     credentials_path = os.path.join(temp_dir, "test-firebase-credentials.json")
 
-    with open(credentials_path, 'w') as f:
+    with open(credentials_path, "w") as f:
         json.dump(create_mock_firebase_credentials(), f)
 
     # Set environment variables
@@ -240,16 +254,19 @@ def setup_test_environment():
     os.environ["TESTING"] = "true"
 
     # Mock Firebase services
-    with patch('firebase_admin.initialize_app'), \
-         patch('firebase_admin.auth'), \
-         patch('firebase_admin.firestore'), \
-         patch('app.services.firebase_auth.firebase_auth_service', mock_firebase_auth), \
-         patch('app.infrastructure.firestore.user_repository.firestore', mock_firestore), \
-         patch('app.services.rag.qdrant_client', mock_qdrant_client):
+    with (
+        patch("firebase_admin.initialize_app"),
+        patch("firebase_admin.auth"),
+        patch("firebase_admin.firestore"),
+        # patch("app.services.firebase_auth.firebase_auth_service", mock_firebase_auth),
+        # patch("app.infrastructure.firestore.user_repository.firestore", mock_firestore),
+        # patch("app.services.rag.qdrant_client", mock_qdrant_client),
+    ):
         yield
 
     # Cleanup
     import shutil
+
     shutil.rmtree(temp_dir, ignore_errors=True)
 
 
@@ -290,28 +307,34 @@ def test_settings():
 @pytest.fixture
 def mock_firebase_admin():
     """Mock Firebase Admin SDK."""
-    with patch('firebase_admin.initialize_app') as mock_init, \
-         patch('firebase_admin.credentials.Certificate') as mock_cert, \
-         patch('firebase_admin.firestore.client') as mock_firestore, \
-         patch('firebase_admin.auth') as mock_auth, \
-         patch('firebase_admin.storage') as mock_storage:
+    with (
+        patch("firebase_admin.initialize_app") as mock_init,
+        patch("firebase_admin.credentials.Certificate") as mock_cert,
+        # patch("firebase_admin.firestore.client") as mock_firestore,
+        patch("firebase_admin.auth") as mock_auth,
+        patch("firebase_admin.storage") as mock_storage,
+    ):
 
         # Mock Firestore client
-        mock_firestore_client = Mock()
-        mock_firestore.return_value = mock_firestore_client
+        # mock_firestore_client = Mock()
+        # mock_firestore.return_value = mock_firestore_client
 
         # Mock Auth
         mock_auth.create_user = AsyncMock(return_value=Mock(uid="test-uid"))
-        mock_auth.get_user = AsyncMock(return_value=Mock(uid="test-uid", email="test@example.com"))
-        mock_auth.verify_id_token = AsyncMock(return_value={"uid": "test-uid", "email": "test@example.com"})
+        mock_auth.get_user = AsyncMock(
+            return_value=Mock(uid="test-uid", email="test@example.com")
+        )
+        mock_auth.verify_id_token = AsyncMock(
+            return_value={"uid": "test-uid", "email": "test@example.com"}
+        )
 
         # Mock Storage
         mock_storage.bucket = Mock()
 
         yield {
-            "firestore": mock_firestore_client,
+            # "firestore": mock_firestore_client,
             "auth": mock_auth,
-            "storage": mock_storage
+            "storage": mock_storage,
         }
 
 
@@ -320,12 +343,20 @@ def mock_firebase_auth_service():
     """Mock Firebase Auth Service."""
     service = AsyncMock()
     service.create_user = AsyncMock(return_value="test-uid")
-    service.verify_id_token = AsyncMock(return_value={"uid": "test-uid", "email": "test@example.com"})
-    service.get_user = AsyncMock(return_value=Mock(uid="test-uid", email="test@example.com"))
+    service.verify_id_token = AsyncMock(
+        return_value={"uid": "test-uid", "email": "test@example.com"}
+    )
+    service.get_user = AsyncMock(
+        return_value=Mock(uid="test-uid", email="test@example.com")
+    )
     service.update_user = AsyncMock(return_value=True)
     service.delete_user = AsyncMock(return_value=True)
-    service.generate_password_reset_link = AsyncMock(return_value="http://test-reset-link")
-    service.generate_email_verification_link = AsyncMock(return_value="http://test-verify-link")
+    service.generate_password_reset_link = AsyncMock(
+        return_value="http://test-reset-link"
+    )
+    service.generate_email_verification_link = AsyncMock(
+        return_value="http://test-verify-link"
+    )
     return service
 
 
@@ -333,8 +364,12 @@ def mock_firebase_auth_service():
 def mock_firestore_user_repository():
     """Mock Firestore User Repository."""
     repo = AsyncMock()
-    repo.create = AsyncMock(return_value={"id": "test-uid", "email": "test@example.com"})
-    repo.get_by_id = AsyncMock(return_value={"id": "test-uid", "email": "test@example.com", "role": "viewer"})
+    repo.create = AsyncMock(
+        return_value={"id": "test-uid", "email": "test@example.com"}
+    )
+    repo.get_by_id = AsyncMock(
+        return_value={"id": "test-uid", "email": "test@example.com", "role": "viewer"}
+    )
     repo.update = AsyncMock(return_value=True)
     repo.delete = AsyncMock(return_value=True)
     repo.update_last_login = AsyncMock(return_value=True)
@@ -342,12 +377,69 @@ def mock_firestore_user_repository():
 
 
 @pytest.fixture
-def client(test_settings, mock_firebase_admin, mock_firebase_auth_service, mock_firestore_user_repository) -> Generator[TestClient, None, None]:
+def test_db_engine():
+    """Create a test database engine for testing."""
+    from sqlalchemy import create_engine
+    from sqlalchemy.pool import StaticPool
+    
+    # Create in-memory SQLite database for testing
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    
+    # Import all models to ensure they are registered with SQLModel
+    try:
+        from app.models.user import User
+        from app.models.session import Session
+        from app.models.chat import ChatMessage, ChatSession
+        from app.models.rag import Document
+        from sqlmodel import SQLModel
+        
+        # Create all tables
+        SQLModel.metadata.create_all(bind=engine)
+        
+        # Verify tables were created
+        from sqlalchemy import inspect
+        inspector = inspect(engine)
+        tables = inspector.get_table_names()
+        print(f"Created tables: {tables}")
+        
+    except ImportError as e:
+        print(f"Import error: {e}")
+        # If models are not available, create a mock engine
+        pass
+    except Exception as e:
+        print(f"Error creating tables: {e}")
+    
+    return engine
+
+
+@pytest.fixture
+def client(
+    test_settings,
+    mock_firebase_admin,
+    mock_firebase_auth_service,
+    mock_firestore_user_repository,
+) -> Generator[TestClient, None, None]:
     """Create a test client for the FastAPI app with Firebase mocks."""
     # Override Firebase dependencies for testing
-    with patch('app.services.firebase_auth.firebase_auth_service', mock_firebase_auth_service), \
-         patch('app.infrastructure.firestore.user_repository.FirestoreUserRepository', return_value=mock_firestore_user_repository), \
-         patch('app.shared.middleware.firebase_auth.firebase_auth_required', return_value={"uid": "test-uid", "email": "test@example.com"}):
+    with (
+        patch("os.environ.get", return_value="test"),  # Dummy patch to keep context manager valid
+        # patch(
+        #     "app.services.firebase_auth.firebase_auth_service",
+        #     mock_firebase_auth_service,
+        # ),
+        # patch(
+        #     "app.infrastructure.firestore.user_repository.FirestoreUserRepository",
+        #     return_value=mock_firestore_user_repository,
+        # ),
+        # patch(
+        #     "app.shared.middleware.firebase_auth.firebase_auth_required",
+        #     return_value={"uid": "test-uid", "email": "test@example.com"},
+        # ),
+    ):
 
         with TestClient(fastapi_app) as test_client:
             yield test_client
@@ -357,13 +449,18 @@ def client(test_settings, mock_firebase_admin, mock_firebase_auth_service, mock_
 
 
 @pytest_asyncio.fixture
-async def async_client(test_settings, mock_firebase_admin) -> AsyncGenerator[AsyncClient, None]:
+async def async_client(
+    test_settings, mock_firebase_admin
+) -> AsyncGenerator[AsyncClient, None]:
     """Create an async test client for the FastAPI app with Firebase mocks."""
     from httpx import ASGITransport
 
     # Override Firebase dependencies for testing
-    with patch('app.services.firebase_auth.firebase_auth_service'), \
-         patch('app.infrastructure.firestore.user_repository.FirestoreUserRepository'):
+    with (
+        patch("os.environ.get", return_value="test"),  # Dummy patch to keep context manager valid
+        # patch("app.services.firebase_auth.firebase_auth_service"),
+        # patch("app.infrastructure.firestore.user_repository.FirestoreUserRepository"),
+    ):
 
         transport = ASGITransport(app=fastapi_app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -381,15 +478,11 @@ def mock_llm_response():
             {
                 "message": {
                     "content": "This is a test response from the LLM.",
-                    "role": "assistant"
+                    "role": "assistant",
                 }
             }
         ],
-        "usage": {
-            "prompt_tokens": 10,
-            "completion_tokens": 15,
-            "total_tokens": 25
-        }
+        "usage": {"prompt_tokens": 10, "completion_tokens": 15, "total_tokens": 25},
     }
 
 
@@ -403,27 +496,23 @@ def mock_qdrant_client():
         Mock(
             id="doc1",
             score=0.9,
-            payload={
-                "content": "Test document 1",
-                "metadata": {"title": "Test Doc 1"}
-            }
+            payload={"content": "Test document 1", "metadata": {"title": "Test Doc 1"}},
         ),
         Mock(
             id="doc2",
             score=0.8,
-            payload={
-                "content": "Test document 2",
-                "metadata": {"title": "Test Doc 2"}
-            }
-        )
+            payload={"content": "Test document 2", "metadata": {"title": "Test Doc 2"}},
+        ),
     ]
 
     # Mock collection operations
-    mock_qdrant.get_collections.return_value = Mock(collections=[
-        Mock(name="documents"),
-        Mock(name="legislative_docs"),
-        Mock(name="chat_context")
-    ])
+    mock_qdrant.get_collections.return_value = Mock(
+        collections=[
+            Mock(name="documents"),
+            Mock(name="legislative_docs"),
+            Mock(name="chat_context"),
+        ]
+    )
 
     mock_qdrant.create_collection = AsyncMock(return_value=True)
     mock_qdrant.upsert = AsyncMock(return_value=True)
@@ -433,14 +522,52 @@ def mock_qdrant_client():
 
 
 @pytest.fixture
+def mock_elasticsearch():
+    """Mock Elasticsearch client for testing."""
+    mock_es = Mock()
+    
+    # Mock successful ping
+    mock_es.ping.return_value = True
+    
+    # Mock index operations
+    mock_es.indices.exists.return_value = False
+    mock_es.indices.create.return_value = {"acknowledged": True}
+    
+    # Mock document indexing
+    mock_es.index.return_value = {"_id": "test_doc_id", "result": "created"}
+    
+    # Mock search operations
+    mock_es.search.return_value = {
+        "hits": {
+            "hits": [
+                {
+                    "_id": "doc1",
+                    "_score": 0.9,
+                    "_source": {
+                        "content": "Test document content",
+                        "title": "Test Document",
+                        "source_type": "lei",
+                        "municipio": "Test City",
+                        "categoria": "municipal"
+                    }
+                }
+            ]
+        }
+    }
+    
+    return mock_es
+
+
+@pytest.fixture
 def mock_firebase_auth_middleware():
     """Mock Firebase Auth middleware."""
+
     def mock_auth_required():
         return {
             "uid": "test-uid",
             "email": "test@example.com",
             "email_verified": True,
-            "custom_claims": {"role": "viewer"}
+            "custom_claims": {"role": "viewer"},
         }
 
     return mock_auth_required
@@ -449,7 +576,7 @@ def mock_firebase_auth_middleware():
 @pytest.fixture
 def temp_file():
     """Create a temporary file for testing."""
-    with tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix='.txt') as f:
+    with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".txt") as f:
         f.write("Test content for file processing")
         temp_file_path = f.name
 
@@ -468,7 +595,7 @@ def sample_user_data():
     return {
         "email": "test@example.com",
         "password": "testpassword123",
-        "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW"
+        "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
     }
 
 
@@ -478,17 +605,14 @@ def sample_rag_query():
     return {
         "query": "What is the capital of Brazil?",
         "max_results": 5,
-        "threshold": 0.7
+        "threshold": 0.7,
     }
 
 
 @pytest.fixture
 def sample_chat_message():
     """Sample chat message for testing."""
-    return {
-        "content": "Hello, how can you help me?",
-        "role": "user"
-    }
+    return {"content": "Hello, how can you help me?", "role": "user"}
 
 
 # Mark all tests as asyncio

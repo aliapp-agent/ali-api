@@ -4,14 +4,26 @@ This module contains tests for authentication utilities,
 JWT token management, and auth endpoints.
 """
 
-from datetime import UTC, datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from datetime import (
+    UTC,
+    datetime,
+    timedelta,
+)
+from unittest.mock import (
+    AsyncMock,
+    MagicMock,
+    Mock,
+    patch,
+)
 
 import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
-from app.api.v1.auth import get_current_session, get_current_user
+from app.api.v1.auth import (
+    get_current_session,
+    get_current_user,
+)
 from app.schemas.auth import Token
 from app.shared.utils.auth import (
     create_access_token,
@@ -116,8 +128,7 @@ class TestTokenVerification:
 
             # Create token with negative expiry (already expired)
             expired_token = create_access_token(
-                "test-session-123",
-                timedelta(seconds=-1)
+                "test-session-123", timedelta(seconds=-1)
             )
 
             # Verify expired token returns None
@@ -150,12 +161,12 @@ class TestTokenVerification:
                 elif attr == "JWT_ALGORITHM":
                     return "HS256"
                 return default
-            
+
             mock_getattr.side_effect = side_effect
-            
+
             # Use a properly formatted JWT token
             valid_jwt_format = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
-            
+
             with pytest.raises(ValueError, match="JWT secret key is not configured"):
                 verify_token(valid_jwt_format)
 
@@ -171,10 +182,13 @@ class TestTokenVerification:
                     "sub": "test-session-123",
                     "type": "refresh_token",  # Wrong type
                     "exp": (datetime.now(UTC) + timedelta(hours=1)).timestamp(),
-                    "iat": datetime.now(UTC).timestamp()
+                    "iat": datetime.now(UTC).timestamp(),
                 }
 
-                with patch("app.shared.utils.auth.validate_jwt_token", return_value="valid.jwt.token"):
+                with patch(
+                    "app.shared.utils.auth.validate_jwt_token",
+                    return_value="valid.jwt.token",
+                ):
                     session_id = verify_token("valid.jwt.token")
                     assert session_id is None
 
@@ -188,7 +202,7 @@ class TestSecureTokenGeneration:
 
         # Default length is 32 bytes, hex encoded = 64 characters
         assert len(token) == 64
-        assert all(c in '0123456789abcdef' for c in token)
+        assert all(c in "0123456789abcdef" for c in token)
 
     def test_generate_secure_token_custom_length(self):
         """Test secure token generation with custom length."""
@@ -196,14 +210,18 @@ class TestSecureTokenGeneration:
 
         # 16 bytes, hex encoded = 32 characters
         assert len(token) == 32
-        assert all(c in '0123456789abcdef' for c in token)
+        assert all(c in "0123456789abcdef" for c in token)
 
     def test_generate_secure_token_invalid_length(self):
         """Test secure token generation with invalid length."""
-        with pytest.raises(ValueError, match="Token length must be between 16 and 128 bytes"):
+        with pytest.raises(
+            ValueError, match="Token length must be between 16 and 128 bytes"
+        ):
             generate_secure_token(8)  # Too short
 
-        with pytest.raises(ValueError, match="Token length must be between 16 and 128 bytes"):
+        with pytest.raises(
+            ValueError, match="Token length must be between 16 and 128 bytes"
+        ):
             generate_secure_token(256)  # Too long
 
 
@@ -218,7 +236,7 @@ class TestTokenClaimsValidation:
         payload = {
             "sub": "test-session-123",
             "exp": future_time.timestamp(),
-            "iat": past_time.timestamp()
+            "iat": past_time.timestamp(),
         }
 
         assert validate_token_claims(payload) is True
@@ -240,7 +258,7 @@ class TestTokenClaimsValidation:
         payload = {
             "sub": "test-session-123",
             "exp": past_time.timestamp(),
-            "iat": (datetime.now(UTC) - timedelta(hours=2)).timestamp()
+            "iat": (datetime.now(UTC) - timedelta(hours=2)).timestamp(),
         }
 
         assert validate_token_claims(payload) is False
@@ -252,7 +270,7 @@ class TestTokenClaimsValidation:
         payload = {
             "sub": "test-session-123",
             "exp": (datetime.now(UTC) + timedelta(hours=3)).timestamp(),
-            "iat": future_time.timestamp()
+            "iat": future_time.timestamp(),
         }
 
         assert validate_token_claims(payload) is False
@@ -275,10 +293,7 @@ class TestAuthEndpoints:
 
             response = client.post(
                 "/api/v1/auth/register",
-                json={
-                    "email": "test@example.com",
-                    "password": "StrongPassword123!"
-                }
+                json={"email": "test@example.com", "password": "StrongPassword123!"},
             )
 
             assert response.status_code == 200
@@ -297,8 +312,8 @@ class TestAuthEndpoints:
                 "/api/v1/auth/register",
                 json={
                     "email": "existing@example.com",
-                    "password": "StrongPassword123!"
-                }
+                    "password": "StrongPassword123!",
+                },
             )
 
             assert response.status_code == 400
@@ -320,10 +335,7 @@ class TestAuthEndpoints:
 
             response = client.post(
                 "/api/v1/auth/login",
-                data={
-                    "username": "test@example.com",
-                    "password": "correct_password"
-                }
+                data={"username": "test@example.com", "password": "correct_password"},
             )
 
             assert response.status_code == 200
@@ -341,8 +353,8 @@ class TestAuthEndpoints:
                 "/api/v1/auth/login",
                 data={
                     "username": "nonexistent@example.com",
-                    "password": "wrong_password"
-                }
+                    "password": "wrong_password",
+                },
             )
 
             assert response.status_code == 401
@@ -363,10 +375,7 @@ class TestAuthEndpoints:
 
             response = client.post(
                 "/api/v1/auth/login",
-                data={
-                    "username": "test@example.com",
-                    "password": "wrong_password"
-                }
+                data={"username": "test@example.com", "password": "wrong_password"},
             )
 
             assert response.status_code == 401
@@ -447,7 +456,9 @@ class TestAuthDependencies:
     async def test_get_current_session_not_found(self):
         """Test current session retrieval when session doesn't exist."""
         with patch("app.api.v1.auth.db_service") as mock_db:
-            with patch("app.api.v1.auth.verify_token", return_value="nonexistent-session"):
+            with patch(
+                "app.api.v1.auth.verify_token", return_value="nonexistent-session"
+            ):
                 # Mock session doesn't exist
                 mock_db.get_session = AsyncMock(return_value=None)
 

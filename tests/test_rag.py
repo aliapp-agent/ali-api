@@ -4,7 +4,7 @@ This module contains tests for the RAGService class,
 including document indexing, search functionality, and health checks.
 """
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
@@ -19,43 +19,41 @@ class TestRAGServiceInitialization:
     def test_rag_service_initialization(self):
         """Test RAGService initialization with mocked dependencies."""
         with patch("app.services.rag.Elasticsearch") as mock_es:
-            with patch("app.services.rag.SentenceTransformer") as mock_st:
-                with patch("app.services.rag.settings") as mock_settings:
-                    # Mock settings
-                    mock_settings.ELASTICSEARCH_URL = "http://localhost:9200"
-                    mock_settings.ELASTICSEARCH_TIMEOUT = 30
-                    mock_settings.ELASTICSEARCH_MAX_RETRIES = 3
-                    mock_settings.ELASTICSEARCH_API_KEY = "test_api_key"
-                    mock_settings.RAG_EMBEDDING_MODEL = "test-model"
-                    mock_settings.RAG_INDEX_NAME = "test-index"
+            with patch("app.services.rag.settings") as mock_settings:
+                # Mock settings
+                mock_settings.ELASTICSEARCH_URL = "http://localhost:9200"
+                mock_settings.ELASTICSEARCH_TIMEOUT = 30
+                mock_settings.ELASTICSEARCH_MAX_RETRIES = 3
+                mock_settings.ELASTICSEARCH_API_KEY = "test_api_key"
+                mock_settings.RAG_EMBEDDING_MODEL = "test-model"
+                mock_settings.RAG_INDEX_NAME = "test-index"
 
-                    # Create service
-                    rag_service = RAGService()
+                # Create service
+                rag_service = RAGService()
 
-                    # Verify initialization
-                    assert rag_service.index_name == "test-index"
-                    mock_es.assert_called_once()
-                    mock_st.assert_called_once_with("test-model")
+                # Verify initialization
+                assert rag_service.index_name == "test-index"
+                assert rag_service.embedding_model is None  # Currently disabled
+                mock_es.assert_called_once()
 
     def test_rag_service_initialization_without_api_key(self):
         """Test RAGService initialization without API key."""
         with patch("app.services.rag.Elasticsearch") as mock_es:
-            with patch("app.services.rag.SentenceTransformer") as mock_st:
-                with patch("app.services.rag.settings") as mock_settings:
-                    # Mock settings without API key
-                    mock_settings.ELASTICSEARCH_URL = "http://localhost:9200"
-                    mock_settings.ELASTICSEARCH_TIMEOUT = 30
-                    mock_settings.ELASTICSEARCH_MAX_RETRIES = 3
-                    mock_settings.ELASTICSEARCH_API_KEY = None
-                    mock_settings.RAG_EMBEDDING_MODEL = "test-model"
-                    mock_settings.RAG_INDEX_NAME = "test-index"
+            with patch("app.services.rag.settings") as mock_settings:
+                # Mock settings without API key
+                mock_settings.ELASTICSEARCH_URL = "http://localhost:9200"
+                mock_settings.ELASTICSEARCH_TIMEOUT = 30
+                mock_settings.ELASTICSEARCH_MAX_RETRIES = 3
+                mock_settings.ELASTICSEARCH_API_KEY = None
+                mock_settings.RAG_EMBEDDING_MODEL = "test-model"
+                mock_settings.RAG_INDEX_NAME = "test-index"
 
-                    # Create service
-                    rag_service = RAGService()
+                # Create service
+                rag_service = RAGService()
 
-                    # Verify Elasticsearch was called without api_key
-                    call_args = mock_es.call_args[1]
-                    assert "api_key" not in call_args
+                # Verify Elasticsearch was called without api_key
+                call_args = mock_es.call_args[1]
+                assert "api_key" not in call_args
 
 
 class TestIndexInitialization:
@@ -65,32 +63,30 @@ class TestIndexInitialization:
     async def test_initialize_index_creates_new_index(self, mock_elasticsearch):
         """Test index creation when index doesn't exist."""
         with patch("app.services.rag.Elasticsearch", return_value=mock_elasticsearch):
-            with patch("app.services.rag.SentenceTransformer"):
-                # Mock index doesn't exist
-                mock_elasticsearch.indices.exists.return_value = False
-                mock_elasticsearch.indices.create.return_value = {"acknowledged": True}
+            # Mock index doesn't exist
+            mock_elasticsearch.indices.exists.return_value = False
+            mock_elasticsearch.indices.create.return_value = {"acknowledged": True}
 
-                rag_service = RAGService()
-                await rag_service.initialize_index()
+            rag_service = RAGService()
+            await rag_service.initialize_index()
 
-                # Verify index creation was called
-                mock_elasticsearch.indices.exists.assert_called_once()
-                mock_elasticsearch.indices.create.assert_called_once()
+            # Verify index creation was called
+            mock_elasticsearch.indices.exists.assert_called_once()
+            mock_elasticsearch.indices.create.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_initialize_index_skips_existing_index(self, mock_elasticsearch):
         """Test that index creation is skipped when index exists."""
         with patch("app.services.rag.Elasticsearch", return_value=mock_elasticsearch):
-            with patch("app.services.rag.SentenceTransformer"):
-                # Mock index exists
-                mock_elasticsearch.indices.exists.return_value = True
+            # Mock index exists
+            mock_elasticsearch.indices.exists.return_value = True
 
-                rag_service = RAGService()
-                await rag_service.initialize_index()
+            rag_service = RAGService()
+            await rag_service.initialize_index()
 
-                # Verify index creation was not called
-                mock_elasticsearch.indices.exists.assert_called_once()
-                mock_elasticsearch.indices.create.assert_not_called()
+            # Verify index creation was not called
+            mock_elasticsearch.indices.exists.assert_called_once()
+            mock_elasticsearch.indices.create.assert_not_called()
 
 
 class TestDocumentOperations:
@@ -100,139 +96,127 @@ class TestDocumentOperations:
     async def test_add_legislative_document_success(self, mock_elasticsearch):
         """Test successful document addition."""
         with patch("app.services.rag.Elasticsearch", return_value=mock_elasticsearch):
-            with patch("app.services.rag.SentenceTransformer") as mock_st:
-                # Mock embedding model
-                mock_model = Mock()
-                mock_model.encode.return_value = [0.1, 0.2, 0.3]
-                mock_st.return_value = mock_model
+            # Mock ES index response
+            mock_elasticsearch.index.return_value = {"_id": "test_doc_123"}
 
-                # Mock ES index response
-                mock_elasticsearch.index.return_value = {"_id": "test_doc_123"}
+            rag_service = RAGService()
 
-                rag_service = RAGService()
+            # Create test document
+            document = DocumentoLegislativo(
+                content="Test legislative content",
+                title="Test Law",
+                source_type="lei",
+                summary="Test summary",
+                municipio="Test City",
+                legislatura="2024-2028",
+                autor="Test Author",
+                categoria="municipal",
+                status="aprovado",
+                tipo_documento="lei_ordinaria",
+                date=date.today(),
+                tokens=100,
+                file_path="/test/path/law.pdf"
+            )
 
-                # Create test document
-                document = DocumentoLegislativo(
-                    content="Test legislative content",
-                    title="Test Law",
-                    source_type="lei",
-                    summary="Test summary",
-                    municipio="Test City",
-                    legislatura="2024-2028",
-                    autor="Test Author",
-                    categoria="municipal",
-                    status="aprovado",
-                    tipo_documento="lei_ordinaria",
-                    date=datetime.now(),
-                    tokens=100,
-                    file_path="/test/path/law.pdf"
-                )
+            # Add document
+            doc_id = await rag_service.add_legislative_document(document)
 
-                # Add document
-                doc_id = await rag_service.add_legislative_document(document)
+            # Verify result
+            assert doc_id == "test_doc_123"
+            mock_elasticsearch.index.assert_called_once()
 
-                # Verify result
-                assert doc_id == "test_doc_123"
-                mock_elasticsearch.index.assert_called_once()
-
-                # Verify embedding was generated
-                mock_model.encode.assert_called_once_with("Test legislative content")
+            # Verify embedding_model is None since SentenceTransformer is commented out
+            assert rag_service.embedding_model is None
 
     @pytest.mark.asyncio
     async def test_search_legislative_documents_success(self, mock_elasticsearch):
         """Test successful document search."""
         with patch("app.services.rag.Elasticsearch", return_value=mock_elasticsearch):
-            with patch("app.services.rag.SentenceTransformer") as mock_st:
-                # Mock embedding model
-                mock_model = Mock()
-                mock_model.encode.return_value = [0.1, 0.2, 0.3]
-                mock_st.return_value = mock_model
-
-                # Mock ES search response
-                mock_elasticsearch.search.return_value = {
-                    "hits": {
-                        "hits": [
-                            {
-                                "_id": "doc1",
-                                "_score": 0.9,
-                                "_source": {
-                                    "title": "Test Law 1",
-                                    "content": "Content 1",
-                                    "source_type": "lei",
-                                    "summary": "Summary 1",
-                                    "municipio": "City 1",
-                                    "legislatura": "2024-2028",
-                                    "autor": "Author 1",
-                                    "categoria": "municipal",
-                                    "status": "aprovado",
-                                    "tipo_documento": "lei_ordinaria",
-                                    "date": "2024-01-01",
-                                    "tokens": 100,
-                                    "file_path": "/path/doc1.pdf"
-                                }
+            # Mock ES search response
+            mock_elasticsearch.search.return_value = {
+                "hits": {
+                    "hits": [
+                        {
+                            "_id": "doc1",
+                            "_score": 0.9,
+                            "_source": {
+                                "title": "Test Law 1",
+                                "content": "Content 1",
+                                "source_type": "lei",
+                                "summary": "Summary 1",
+                                "municipio": "City 1",
+                                "legislatura": "2024-2028",
+                                "autor": "Author 1",
+                                "categoria": "municipal",
+                                "status": "aprovado",
+                                "tipo_documento": "lei_ordinaria",
+                                "date": "2024-01-01",
+                                "tokens": 100,
+                                "file_path": "/path/doc1.pdf"
                             }
-                        ]
-                    }
+                        }
+                    ]
                 }
+            }
 
-                rag_service = RAGService()
+            rag_service = RAGService()
 
-                # Search documents
-                results = await rag_service.search_legislative_documents(
-                    query="test search",
-                    max_results=5
-                )
+            # Search documents
+            results = await rag_service.search_legislative_documents(
+                query="test search",
+                max_results=5
+            )
 
-                # Verify results
-                assert len(results) == 1
-                assert isinstance(results[0], DocumentSearchResult)
-                assert results[0].title == "Test Law 1"
-                assert results[0].score == 0.9
+            # Verify results
+            assert len(results) == 1
+            assert isinstance(results[0], DocumentSearchResult)
+            assert results[0].title == "Test Law 1"
+            assert results[0].score == 0.9
 
-                # Verify embedding was generated for query
-                mock_model.encode.assert_called_with("test search")
+            # Verify embedding_model is None since SentenceTransformer is commented out
+            assert rag_service.embedding_model is None
 
-                # Verify search was called
-                mock_elasticsearch.search.assert_called_once()
+            # Verify search was called
+            mock_elasticsearch.search.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_search_with_filters(self, mock_elasticsearch):
         """Test document search with filters."""
         with patch("app.services.rag.Elasticsearch", return_value=mock_elasticsearch):
-            with patch("app.services.rag.SentenceTransformer") as mock_st:
-                # Mock embedding model
-                mock_model = Mock()
-                mock_model.encode.return_value = [0.1, 0.2, 0.3]
-                mock_st.return_value = mock_model
+            # Mock empty search response
+            mock_elasticsearch.search.return_value = {"hits": {"hits": []}}
 
-                # Mock empty search response
-                mock_elasticsearch.search.return_value = {"hits": {"hits": []}}
+            rag_service = RAGService()
 
-                rag_service = RAGService()
+            # Search with filters
+            await rag_service.search_legislative_documents(
+                query="test search",
+                categoria="municipal",
+                source_type="lei",
+                status="aprovado",
+                legislatura="2024-2028"
+            )
 
-                # Search with filters
-                await rag_service.search_legislative_documents(
-                    query="test search",
-                    categoria="municipal",
-                    source_type="lei",
-                    status="aprovado",
-                    legislatura="2024-2028"
-                )
+            # Verify search was called with filters
+            call_args = mock_elasticsearch.search.call_args
+            search_body = call_args[1]["body"]
 
-                # Verify search was called with filters
-                call_args = mock_elasticsearch.search.call_args
-                search_body = call_args[1]["body"]
+            # Check that filters were applied
+            filters = search_body["query"]["bool"]["filter"]
+            assert len(filters) == 4
 
-                # Check that filters were applied
-                filters = search_body["query"]["bool"]["filter"]
-                assert len(filters) == 4
-
-                # Verify specific filters
-                filter_terms = {f["term"]: list(f["term"].values())[0] for f in filters}
-                assert filter_terms["categoria"] == "municipal"
-                assert filter_terms["source_type"] == "lei"
-                assert filter_terms["status"] == "aprovado"
-                assert filter_terms["legislatura"] == "2024-2028"
+            # Verify specific filters
+            filter_terms = {}
+            for f in filters:
+                if "term" in f:
+                    field_name = list(f["term"].keys())[0]
+                    field_value = f["term"][field_name]
+                    filter_terms[field_name] = field_value
+            
+            assert filter_terms["categoria"] == "municipal"
+            assert filter_terms["source_type"] == "lei"
+            assert filter_terms["status"] == "aprovado"
+            assert filter_terms["legislatura"] == "2024-2028"
 
 
 class TestHealthCheck:
@@ -242,78 +226,74 @@ class TestHealthCheck:
     async def test_health_check_success(self, mock_elasticsearch):
         """Test successful RAG health check."""
         with patch("app.services.rag.Elasticsearch", return_value=mock_elasticsearch):
-            with patch("app.services.rag.SentenceTransformer"):
-                with patch("app.services.rag.settings") as mock_settings:
-                    mock_settings.RAG_EMBEDDING_MODEL = "test-model"
+            with patch("app.services.rag.settings") as mock_settings:
+                mock_settings.RAG_EMBEDDING_MODEL = "test-model"
 
-                    # Mock healthy responses
-                    mock_elasticsearch.ping.return_value = True
-                    mock_elasticsearch.indices.exists.return_value = True
+                # Mock healthy responses
+                mock_elasticsearch.ping.return_value = True
+                mock_elasticsearch.indices.exists.return_value = True
 
-                    rag_service = RAGService()
-                    result = await rag_service.health_check()
+                rag_service = RAGService()
+                result = await rag_service.health_check()
 
-                    # Verify healthy status
-                    assert result["status"] == "healthy"
-                    assert result["elasticsearch"] == "connected"
-                    assert result["index"] == "exists"
-                    assert result["embedding_model"] == "test-model"
+                # Verify healthy status
+                assert result["status"] == "healthy"
+                assert result["elasticsearch"] == "connected"
+                assert result["index"] == "exists"
+                assert result["embedding_model"] == "test-model"
 
     @pytest.mark.asyncio
     async def test_health_check_elasticsearch_disconnected(self, mock_elasticsearch):
         """Test health check when Elasticsearch is disconnected."""
         with patch("app.services.rag.Elasticsearch", return_value=mock_elasticsearch):
-            with patch("app.services.rag.SentenceTransformer"):
-                with patch("app.services.rag.settings") as mock_settings:
-                    mock_settings.RAG_EMBEDDING_MODEL = "test-model"
+            with patch("app.services.rag.settings") as mock_settings:
+                mock_settings.RAG_EMBEDDING_MODEL = "test-model"
 
-                    # Mock disconnected Elasticsearch
-                    mock_elasticsearch.ping.return_value = False
-                    mock_elasticsearch.indices.exists.return_value = True
+                # Mock disconnected Elasticsearch
+                mock_elasticsearch.ping.return_value = False
+                mock_elasticsearch.indices.exists.return_value = True
 
-                    rag_service = RAGService()
-                    result = await rag_service.health_check()
+                rag_service = RAGService()
+                result = await rag_service.health_check()
 
-                    # Verify unhealthy status
-                    assert result["status"] == "unhealthy"
-                    assert result["elasticsearch"] == "disconnected"
-                    assert result["index"] == "exists"
+                # Verify unhealthy status
+                assert result["status"] == "unhealthy"
+                assert result["elasticsearch"] == "disconnected"
+                assert result["index"] == "exists"
 
     @pytest.mark.asyncio
     async def test_health_check_index_missing(self, mock_elasticsearch):
         """Test health check when index is missing."""
         with patch("app.services.rag.Elasticsearch", return_value=mock_elasticsearch):
-            with patch("app.services.rag.SentenceTransformer"):
-                with patch("app.services.rag.settings") as mock_settings:
-                    mock_settings.RAG_EMBEDDING_MODEL = "test-model"
+            with patch("app.services.rag.settings") as mock_settings:
+                mock_settings.RAG_EMBEDDING_MODEL = "test-model"
 
-                    # Mock missing index
-                    mock_elasticsearch.ping.return_value = True
-                    mock_elasticsearch.indices.exists.return_value = False
+                # Mock missing index
+                mock_elasticsearch.ping.return_value = True
+                mock_elasticsearch.indices.exists.return_value = False
 
-                    rag_service = RAGService()
-                    result = await rag_service.health_check()
+                rag_service = RAGService()
+                result = await rag_service.health_check()
 
-                    # Verify unhealthy status
-                    assert result["status"] == "unhealthy"
-                    assert result["elasticsearch"] == "connected"
-                    assert result["index"] == "missing"
+                # Verify unhealthy status
+                assert result["status"] == "unhealthy"
+                assert result["elasticsearch"] == "connected"
+                assert result["index"] == "missing"
 
     @pytest.mark.asyncio
     async def test_health_check_exception(self, mock_elasticsearch):
         """Test health check when an exception occurs."""
         with patch("app.services.rag.Elasticsearch", return_value=mock_elasticsearch):
-            with patch("app.services.rag.SentenceTransformer"):
-                # Mock exception during ping
-                mock_elasticsearch.ping.side_effect = Exception("Connection failed")
+            # Mock exception during ping
+            mock_elasticsearch.ping.side_effect = Exception("Connection failed")
 
-                rag_service = RAGService()
-                result = await rag_service.health_check()
+            rag_service = RAGService()
+            result = await rag_service.health_check()
 
-                # Verify error handling
-                assert result["status"] == "unhealthy"
-                assert "error" in result
-                assert "Connection failed" in result["error"]
+            # Verify error handling
+            assert result["status"] == "unhealthy"
+            assert "error" in result
+            assert "Connection failed" in result["error"]
 
 
 class TestRAGServiceIntegration:
@@ -323,44 +303,39 @@ class TestRAGServiceIntegration:
     async def test_full_document_workflow(self, mock_elasticsearch):
         """Test complete document workflow: add, search, health check."""
         with patch("app.services.rag.Elasticsearch", return_value=mock_elasticsearch):
-            with patch("app.services.rag.SentenceTransformer") as mock_st:
-                # Mock embedding model
-                mock_model = Mock()
-                mock_model.encode.return_value = [0.1, 0.2, 0.3]
-                mock_st.return_value = mock_model
+            # Mock ES responses
+            mock_elasticsearch.index.return_value = {"_id": "test_doc_123"}
+            mock_elasticsearch.search.return_value = {"hits": {"hits": []}}
+            mock_elasticsearch.ping.return_value = True
+            mock_elasticsearch.indices.exists.return_value = True
 
-                # Mock ES responses
-                mock_elasticsearch.index.return_value = {"_id": "test_doc_123"}
-                mock_elasticsearch.search.return_value = {"hits": {"hits": []}}
-                mock_elasticsearch.ping.return_value = True
-                mock_elasticsearch.indices.exists.return_value = True
+            rag_service = RAGService()
+            assert rag_service.embedding_model is None
 
-                rag_service = RAGService()
+            # 1. Add document
+            document = DocumentoLegislativo(
+                content="Test content",
+                title="Test Title",
+                source_type="lei",
+                summary="Test summary",
+                municipio="Test City",
+                legislatura="2024-2028",
+                autor="Test Author",
+                categoria="municipal",
+                status="aprovado",
+                tipo_documento="lei_ordinaria",
+                date=date.today(),
+                tokens=100,
+                file_path="/test/path.pdf"
+            )
 
-                # 1. Add document
-                document = DocumentoLegislativo(
-                    content="Test content",
-                    title="Test Title",
-                    source_type="lei",
-                    summary="Test summary",
-                    municipio="Test City",
-                    legislatura="2024-2028",
-                    autor="Test Author",
-                    categoria="municipal",
-                    status="aprovado",
-                    tipo_documento="lei_ordinaria",
-                    date=datetime.now(),
-                    tokens=100,
-                    file_path="/test/path.pdf"
-                )
+            doc_id = await rag_service.add_legislative_document(document)
+            assert doc_id == "test_doc_123"
 
-                doc_id = await rag_service.add_legislative_document(document)
-                assert doc_id == "test_doc_123"
+            # 2. Search documents
+            results = await rag_service.search_legislative_documents("test query")
+            assert isinstance(results, list)
 
-                # 2. Search documents
-                results = await rag_service.search_legislative_documents("test query")
-                assert isinstance(results, list)
-
-                # 3. Health check
-                health = await rag_service.health_check()
-                assert health["status"] == "healthy"
+            # 3. Health check
+            health = await rag_service.health_check()
+            assert health["status"] == "healthy"

@@ -7,7 +7,10 @@ operations work correctly with real database connections.
 import asyncio
 
 import pytest
-from sqlalchemy import create_engine, text
+from sqlalchemy import (
+    create_engine,
+    text,
+)
 from sqlalchemy.pool import StaticPool
 from sqlmodel import SQLModel
 
@@ -45,8 +48,7 @@ class TestDatabaseIntegration:
 
         # 1. Create user
         user = await db_service.create_user(
-            "integration@example.com",
-            "hashed_password_123"
+            "integration@example.com", "hashed_password_123"
         )
         assert user.id is not None
         assert user.email == "integration@example.com"
@@ -60,7 +62,7 @@ class TestDatabaseIntegration:
         session = await db_service.create_session(
             session_id="integration-session-123",
             user_id=user.id,
-            name="Integration Test Session"
+            name="Integration Test Session",
         )
         assert session.id == "integration-session-123"
         assert session.user_id == user.id
@@ -72,8 +74,7 @@ class TestDatabaseIntegration:
 
         # 5. Update session name
         updated_session = await db_service.update_session_name(
-            session.id,
-            "Updated Integration Session"
+            session.id, "Updated Integration Session"
         )
         assert updated_session.name == "Updated Integration Session"
 
@@ -99,10 +100,7 @@ class TestDatabaseIntegration:
         # Create multiple users in sequence
         users = []
         for i in range(5):
-            user = await db_service.create_user(
-                f"user{i}@example.com",
-                f"password{i}"
-            )
+            user = await db_service.create_user(f"user{i}@example.com", f"password{i}")
             users.append(user)
 
         # Verify all users were created
@@ -114,9 +112,7 @@ class TestDatabaseIntegration:
         sessions = []
         for i, user in enumerate(users):
             session = await db_service.create_session(
-                f"session-{i}",
-                user.id,
-                f"Session {i}"
+                f"session-{i}", user.id, f"Session {i}"
             )
             sessions.append(session)
 
@@ -162,8 +158,7 @@ class TestDatabaseIntegration:
         # Test multiple concurrent sessions
         async def create_test_user(suffix):
             return await db_service.create_user(
-                f"pool_test_{suffix}@example.com",
-                f"password_{suffix}"
+                f"pool_test_{suffix}@example.com", f"password_{suffix}"
             )
 
         async def test_concurrent_operations():
@@ -187,4 +182,6 @@ class TestDatabaseIntegration:
         successful_count = asyncio.run(test_concurrent_operations())
 
         # Should have created most or all users successfully
-        assert successful_count >= 8  # Allow for some potential failures in high concurrency
+        assert (
+            successful_count >= 8
+        )  # Allow for some potential failures in high concurrency

@@ -5,14 +5,15 @@ functionality, including RAG service integration.
 """
 
 from datetime import datetime
-from unittest.mock import Mock, patch
+from unittest.mock import (
+    Mock,
+    patch,
+)
 
 import pytest
 
 from app.schemas.rag import DocumentoLegislativo
 from app.services.rag import RAGService
-
-
 class TestElasticsearchIntegration:
     """Integration tests for Elasticsearch functionality."""
 
@@ -52,10 +53,10 @@ class TestElasticsearchIntegration:
                             "tipo_documento": "lei_ordinaria",
                             "date": "2024-01-01T00:00:00Z",
                             "tokens": 150,
-                            "file_path": "/test/documents/law.pdf"
-                        }
+                            "file_path": "/test/documents/law.pdf",
+                        },
                     }
-                ]
+                ],
             }
         }
 
@@ -65,9 +66,7 @@ class TestElasticsearchIntegration:
     @pytest.mark.asyncio
     async def test_rag_service_full_workflow(self, mock_es_client):
         """Test complete RAG service workflow."""
-        with patch("app.services.rag.Elasticsearch", return_value=mock_es_client):
-            with patch("app.services.rag.SentenceTransformer") as mock_st:
-                # Mock sentence transformer
+        with patch("app.services.rag.Elasticsearch", return_value=mock_es_client):                # Mock sentence transformer
                 mock_model = Mock()
                 mock_model.encode.return_value = [0.1, 0.2, 0.3] * 128  # 384 dimensions
                 mock_st.return_value = mock_model
@@ -93,7 +92,7 @@ class TestElasticsearchIntegration:
                     tipo_documento="lei_ordinaria",
                     date=datetime.now(),
                     tokens=200,
-                    file_path="/integration/test/doc.pdf"
+                    file_path="/integration/test/doc.pdf",
                 )
 
                 document_id = await rag_service.add_legislative_document(test_document)
@@ -102,8 +101,7 @@ class TestElasticsearchIntegration:
 
                 # 3. Search documents
                 results = await rag_service.search_legislative_documents(
-                    query="municipal regulations",
-                    max_results=5
+                    query="municipal regulations", max_results=5
                 )
 
                 assert len(results) == 1
@@ -120,9 +118,7 @@ class TestElasticsearchIntegration:
     @pytest.mark.asyncio
     async def test_rag_search_with_multiple_filters(self, mock_es_client):
         """Test RAG search with complex filtering."""
-        with patch("app.services.rag.Elasticsearch", return_value=mock_es_client):
-            with patch("app.services.rag.SentenceTransformer") as mock_st:
-                mock_model = Mock()
+        with patch("app.services.rag.Elasticsearch", return_value=mock_es_client):                mock_model = Mock()
                 mock_model.encode.return_value = [0.1] * 384
                 mock_st.return_value = mock_model
 
@@ -135,7 +131,7 @@ class TestElasticsearchIntegration:
                     categoria="municipal",
                     source_type="lei",
                     status="aprovado",
-                    legislatura="2024-2028"
+                    legislatura="2024-2028",
                 )
 
                 # Verify search was called with correct parameters
@@ -161,9 +157,7 @@ class TestElasticsearchIntegration:
     @pytest.mark.asyncio
     async def test_rag_service_error_scenarios(self, mock_es_client):
         """Test RAG service behavior in error scenarios."""
-        with patch("app.services.rag.Elasticsearch", return_value=mock_es_client):
-            with patch("app.services.rag.SentenceTransformer") as mock_st:
-                mock_model = Mock()
+        with patch("app.services.rag.Elasticsearch", return_value=mock_es_client):                mock_model = Mock()
                 mock_model.encode.return_value = [0.1] * 384
                 mock_st.return_value = mock_model
 
@@ -200,7 +194,7 @@ class TestElasticsearchIntegration:
                     tipo_documento="lei_ordinaria",
                     date=datetime.now(),
                     tokens=100,
-                    file_path="/test/path.pdf"
+                    file_path="/test/path.pdf",
                 )
 
                 try:
@@ -213,9 +207,7 @@ class TestElasticsearchIntegration:
     @pytest.mark.asyncio
     async def test_embedding_model_integration(self):
         """Test sentence transformer integration."""
-        with patch("app.services.rag.Elasticsearch") as mock_es_class:
-            with patch("app.services.rag.SentenceTransformer") as mock_st_class:
-                # Create a more realistic mock for sentence transformer
+        with patch("app.services.rag.Elasticsearch") as mock_es_class:                # Create a more realistic mock for sentence transformer
                 mock_model = Mock()
 
                 # Test different text inputs produce different embeddings
@@ -236,15 +228,21 @@ class TestElasticsearchIntegration:
                 rag_service = RAGService()
 
                 # Test that different queries produce different embeddings
-                with patch.object(rag_service, 'es_client') as mock_es:
+                with patch.object(rag_service, "es_client") as mock_es:
                     mock_es.search.return_value = {"hits": {"hits": []}}
 
                     # Search with different queries
                     await rag_service.search_legislative_documents("urban planning")
-                    first_call_embedding = mock_es.search.call_args[1]["body"]["query"]["bool"]["should"][0]["script_score"]["script"]["params"]["query_vector"]
+                    first_call_embedding = mock_es.search.call_args[1]["body"]["query"][
+                        "bool"
+                    ]["should"][0]["script_score"]["script"]["params"]["query_vector"]
 
                     await rag_service.search_legislative_documents("environmental law")
-                    second_call_embedding = mock_es.search.call_args[1]["body"]["query"]["bool"]["should"][0]["script_score"]["script"]["params"]["query_vector"]
+                    second_call_embedding = mock_es.search.call_args[1]["body"][
+                        "query"
+                    ]["bool"]["should"][0]["script_score"]["script"]["params"][
+                        "query_vector"
+                    ]
 
                     # Embeddings should be different for different texts
                     assert first_call_embedding != second_call_embedding
@@ -253,9 +251,7 @@ class TestElasticsearchIntegration:
     @pytest.mark.slow
     async def test_large_document_handling(self, mock_es_client):
         """Test handling of large documents."""
-        with patch("app.services.rag.Elasticsearch", return_value=mock_es_client):
-            with patch("app.services.rag.SentenceTransformer") as mock_st:
-                mock_model = Mock()
+        with patch("app.services.rag.Elasticsearch", return_value=mock_es_client):                mock_model = Mock()
                 mock_model.encode.return_value = [0.1] * 384
                 mock_st.return_value = mock_model
 
@@ -277,7 +273,7 @@ class TestElasticsearchIntegration:
                     tipo_documento="lei_ordinaria",
                     date=datetime.now(),
                     tokens=5000,
-                    file_path="/test/large_doc.pdf"
+                    file_path="/test/large_doc.pdf",
                 )
 
                 # Should handle large documents without issues

@@ -19,23 +19,24 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app.api.v1.api import api_router
+from app.core.config import settings
+from app.core.limiter import limiter
+from app.core.logging import logger
+from app.core.metrics import setup_metrics
+from app.core.middleware import MetricsMiddleware
 from app.shared.constants.http import (
     HTTP_422_UNPROCESSABLE_ENTITY,
     HTTP_500_INTERNAL_SERVER_ERROR,
     HTTP_503_SERVICE_UNAVAILABLE,
     SECURITY_HEADERS,
 )
-from app.core.config import settings
-from app.core.limiter import limiter
-from app.core.logging import logger
-from app.core.metrics import setup_metrics
-from app.core.middleware import MetricsMiddleware
 from app.shared.exceptions import (
     APIError,
     AuthenticationError,
     DatabaseError,
     ValidationError,
 )
+
 # Firebase mode - PostgreSQL not needed
 try:
     from app.services.database import database_service
@@ -84,9 +85,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Exception handlers
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(
-    request: Request, exc: RequestValidationError
-):
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Handle validation errors from request data.
 
     Args:
@@ -192,9 +191,7 @@ async def api_exception_handler(request: Request, exc: APIError):
 
 
 @app.exception_handler(AuthenticationError)
-async def authentication_exception_handler(
-    request: Request, exc: AuthenticationError
-):
+async def authentication_exception_handler(request: Request, exc: AuthenticationError):
     """Handle authentication errors.
 
     Args:
@@ -431,7 +428,7 @@ app.add_middleware(
         "Authorization",
         "X-Requested-With",
         "X-API-Key",
-        "Cache-Control"
+        "Cache-Control",
     ],
     expose_headers=["X-Total-Count", "X-Rate-Limit-Remaining"],
 )
@@ -479,6 +476,7 @@ async def health_check(request: Request) -> JSONResponse:
         rag_health = {}
         try:
             from app.services.rag import rag_service
+
             rag_health = await rag_service.health_check()
             rag_healthy = rag_health.get("status") == "healthy"
         except Exception as e:
@@ -491,6 +489,7 @@ async def health_check(request: Request) -> JSONResponse:
         agno_health = {}
         try:
             from app.core.agno.graph import AgnoAgent
+
             agent = AgnoAgent()
             agno_health = await agent.health_check()
             agno_healthy = agno_health.get("status") == "healthy"
@@ -536,7 +535,11 @@ async def health_check(request: Request) -> JSONResponse:
             "components": components,
             "component_details": component_details,
             "timestamp": datetime.now().isoformat(),
-            "uptime_seconds": (datetime.now() - app.state.start_time).total_seconds() if hasattr(app.state, 'start_time') else None,
+            "uptime_seconds": (
+                (datetime.now() - app.state.start_time).total_seconds()
+                if hasattr(app.state, "start_time")
+                else None
+            ),
         }
 
         # Set appropriate status code based on health

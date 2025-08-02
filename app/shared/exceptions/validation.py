@@ -1,6 +1,10 @@
 """Validation-related exceptions."""
 
-from typing import Any, List, Optional
+from typing import (
+    Any,
+    List,
+    Optional,
+)
 
 
 class ValidationError(Exception):
@@ -164,9 +168,7 @@ class FileTooLargeError(ValidationError):
 class UnsupportedFileTypeError(ValidationError):
     """Raised when file type is not supported."""
 
-    def __init__(
-        self, filename: str, file_type: str, supported_types: List[str]
-    ):
+    def __init__(self, filename: str, file_type: str, supported_types: List[str]):
         self.filename = filename
         self.file_type = file_type
         self.supported_types = supported_types

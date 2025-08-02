@@ -4,15 +4,20 @@ This module contains the pure domain model for chat sessions,
 independent of any external dependencies or frameworks.
 """
 
+import uuid
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional
-from dataclasses import dataclass
-import uuid
+from typing import (
+    Dict,
+    List,
+    Optional,
+)
 
 
 class SessionStatus(str, Enum):
     """Session status in the system."""
+
     ACTIVE = "active"
     INACTIVE = "inactive"
     ARCHIVED = "archived"
@@ -21,6 +26,7 @@ class SessionStatus(str, Enum):
 
 class SessionType(str, Enum):
     """Type of chat session."""
+
     CHAT = "chat"
     DOCUMENT_ANALYSIS = "document_analysis"
     RAG_QUERY = "rag_query"
@@ -30,6 +36,7 @@ class SessionType(str, Enum):
 @dataclass
 class SessionMetadata:
     """Session metadata and configuration."""
+
     model_used: Optional[str] = None
     temperature: float = 0.7
     max_tokens: int = 2000
@@ -41,6 +48,7 @@ class SessionMetadata:
 @dataclass
 class SessionStats:
     """Session statistics."""
+
     message_count: int = 0
     total_tokens_used: int = 0
     avg_response_time: float = 0.0
@@ -49,11 +57,11 @@ class SessionStats:
 
 class SessionEntity:
     """Pure domain entity for chat sessions.
-    
+
     This class contains the core business logic for sessions
     without any external dependencies.
     """
-    
+
     def __init__(
         self,
         user_id: int,
@@ -67,7 +75,7 @@ class SessionEntity:
         session_id: Optional[str] = None,
     ):
         """Initialize a Session entity.
-        
+
         Args:
             user_id: ID of the user who owns this session
             name: Human-readable name for the session
@@ -93,7 +101,7 @@ class SessionEntity:
         """Update session name."""
         if not new_name or not new_name.strip():
             raise ValueError("Session name cannot be empty")
-        
+
         self.name = new_name.strip()
         self.updated_at = datetime.utcnow()
 
@@ -119,43 +127,43 @@ class SessionEntity:
 
     def update_metadata(self, metadata_update: Dict) -> None:
         """Update session metadata."""
-        if 'model_used' in metadata_update:
-            self.metadata.model_used = metadata_update['model_used']
-        if 'temperature' in metadata_update:
-            temp = metadata_update['temperature']
+        if "model_used" in metadata_update:
+            self.metadata.model_used = metadata_update["model_used"]
+        if "temperature" in metadata_update:
+            temp = metadata_update["temperature"]
             if not 0.0 <= temp <= 2.0:
                 raise ValueError("Temperature must be between 0.0 and 2.0")
             self.metadata.temperature = temp
-        if 'max_tokens' in metadata_update:
-            max_tokens = metadata_update['max_tokens']
+        if "max_tokens" in metadata_update:
+            max_tokens = metadata_update["max_tokens"]
             if max_tokens <= 0:
                 raise ValueError("Max tokens must be positive")
             self.metadata.max_tokens = max_tokens
-        if 'system_prompt' in metadata_update:
-            self.metadata.system_prompt = metadata_update['system_prompt']
-        if 'context_window' in metadata_update:
-            context = metadata_update['context_window']
+        if "system_prompt" in metadata_update:
+            self.metadata.system_prompt = metadata_update["system_prompt"]
+        if "context_window" in metadata_update:
+            context = metadata_update["context_window"]
             if context <= 0:
                 raise ValueError("Context window must be positive")
             self.metadata.context_window = context
-        if 'language' in metadata_update:
-            self.metadata.language = metadata_update['language']
-        
+        if "language" in metadata_update:
+            self.metadata.language = metadata_update["language"]
+
         self.updated_at = datetime.utcnow()
 
     def record_message(self, tokens_used: int = 0, response_time: float = 0.0) -> None:
         """Record a new message in the session."""
         self.stats.message_count += 1
         self.stats.total_tokens_used += tokens_used
-        
+
         # Update average response time
         if response_time > 0:
             current_avg = self.stats.avg_response_time
             count = self.stats.message_count
             self.stats.avg_response_time = (
-                (current_avg * (count - 1) + response_time) / count
-            )
-        
+                current_avg * (count - 1) + response_time
+            ) / count
+
         self.stats.last_activity = datetime.utcnow()
         self.updated_at = datetime.utcnow()
 
@@ -172,11 +180,11 @@ class SessionEntity:
         # Owner can always access
         if self.is_owned_by(user_id):
             return True
-        
+
         # Admin can access any session
         if user_role == "admin":
             return True
-        
+
         # Others cannot access
         return False
 

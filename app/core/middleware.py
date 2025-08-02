@@ -17,9 +17,7 @@ from app.core.metrics import (
 class MetricsMiddleware(BaseHTTPMiddleware):
     """Middleware for tracking HTTP request metrics."""
 
-    async def dispatch(
-        self, request: Request, call_next: Callable
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Track metrics for each request.
 
         Args:

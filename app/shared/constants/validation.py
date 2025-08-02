@@ -27,9 +27,7 @@ SESSION_ID_REGEX = re.compile(
 SESSION_ID_LENGTH = 36
 
 # JWT Token Validation
-JWT_TOKEN_REGEX = re.compile(
-    r"^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$"
-)
+JWT_TOKEN_REGEX = re.compile(r"^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$")
 JWT_TOKEN_MIN_LENGTH = 10
 JWT_TOKEN_MAX_LENGTH = 2048
 

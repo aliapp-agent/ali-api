@@ -4,31 +4,35 @@ This package contains the core business logic and domain models.
 It is independent of any external dependencies like databases or APIs.
 """
 
-from . import entities, repositories, services
+from . import (
+    entities,
+    repositories,
+    services,
+)
 from .exceptions import (
-    DomainError,
-    RepositoryError,
-    UserError,
-    UserNotFoundError,
-    UserAlreadyExistsError,
-    SessionError,
-    SessionNotFoundError,
-    MessageError,
-    MessageNotFoundError,
+    BusinessRuleViolationError,
     DocumentError,
     DocumentNotFoundError,
-    BusinessRuleViolationError,
+    DomainError,
+    MessageError,
+    MessageNotFoundError,
+    RepositoryError,
+    SessionError,
+    SessionNotFoundError,
+    UserAlreadyExistsError,
+    UserError,
+    UserNotFoundError,
 )
 
 __all__ = [
     "entities",
-    "repositories", 
+    "repositories",
     "services",
     # Exceptions
     "DomainError",
     "RepositoryError",
     "UserError",
-    "UserNotFoundError", 
+    "UserNotFoundError",
     "UserAlreadyExistsError",
     "SessionError",
     "SessionNotFoundError",

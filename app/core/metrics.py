@@ -3,8 +3,15 @@
 This module sets up and configures Prometheus metrics for monitoring the application.
 """
 
-from prometheus_client import Counter, Gauge, Histogram
-from starlette_prometheus import PrometheusMiddleware, metrics
+from prometheus_client import (
+    Counter,
+    Gauge,
+    Histogram,
+)
+from starlette_prometheus import (
+    PrometheusMiddleware,
+    metrics,
+)
 
 # Request metrics
 http_requests_total = Counter(
@@ -20,14 +27,10 @@ http_request_duration_seconds = Histogram(
 )
 
 # Database metrics
-db_connections = Gauge(
-    "db_connections", "Number of active database connections"
-)
+db_connections = Gauge("db_connections", "Number of active database connections")
 
 # Custom business metrics
-orders_processed = Counter(
-    "orders_processed_total", "Total number of orders processed"
-)
+orders_processed = Counter("orders_processed_total", "Total number of orders processed")
 
 llm_inference_duration_seconds = Histogram(
     "llm_inference_duration_seconds",

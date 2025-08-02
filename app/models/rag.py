@@ -3,18 +3,27 @@
 This module contains SQLModel models for documents and RAG functionality.
 """
 
-from typing import Optional, Dict, Any, List
 from datetime import datetime
-from sqlmodel import Field, SQLModel
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+)
+
+from sqlmodel import (
+    Field,
+    SQLModel,
+)
 
 from app.models.base import BaseModel
 
 
 class Document(BaseModel, table=True):
     """Document model for RAG system."""
-    
+
     __tablename__ = "documents"
-    
+
     id: str = Field(primary_key=True)
     title: str = Field()
     content: str = Field()

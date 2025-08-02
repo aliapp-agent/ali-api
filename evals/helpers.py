@@ -38,9 +38,7 @@ def format_messages(messages: list[dict]) -> str:
                 else f"tool {message.get('name')}: {message.get('content')}"
             )
         elif message["content"]:
-            formatted_messages.append(
-                f"{message['type']}: {message['content']}"
-            )
+            formatted_messages.append(f"{message['type']}: {message['content']}")
     return "\n".join(formatted_messages)
 
 
@@ -141,9 +139,7 @@ def update_failure_metrics(
         metric_name: Name of the metric.
         trace_results: Dictionary to store trace results.
     """
-    trace_results[trace_id]["metrics_results"][metric_name] = {
-        "success": False
-    }
+    trace_results[trace_id]["metrics_results"][metric_name] = {"success": False}
     report["metrics_summary"][metric_name]["failure_count"] += 1
 
 
@@ -175,12 +171,8 @@ def process_trace_results(
         report["failed_traces_details"].append(
             {
                 "trace_id": trace_id,
-                "metrics_evaluated": trace_results[trace_id][
-                    "metrics_evaluated"
-                ],
-                "metrics_succeeded": trace_results[trace_id][
-                    "metrics_succeeded"
-                ],
+                "metrics_evaluated": trace_results[trace_id]["metrics_evaluated"],
+                "metrics_succeeded": trace_results[trace_id]["metrics_succeeded"],
                 "metrics_results": trace_results[trace_id]["metrics_results"],
             }
         )
@@ -194,9 +186,7 @@ def calculate_avg_scores(report: Dict[str, Any]) -> None:
     """
     for _, data in report["metrics_summary"].items():
         if data["success_count"] > 0:
-            data["avg_score"] = round(
-                data["avg_score"] / data["success_count"], 2
-            )
+            data["avg_score"] = round(data["avg_score"] / data["success_count"], 2)
 
 
 def generate_report(report: Dict[str, Any]) -> str:
@@ -208,15 +198,11 @@ def generate_report(report: Dict[str, Any]) -> str:
     Returns:
         str: Path to the generated report file.
     """
-    report_dir = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "reports"
-    )
+    report_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "reports")
     os.makedirs(report_dir, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    report_path = os.path.join(
-        report_dir, f"evaluation_report_{timestamp}.json"
-    )
+    report_path = os.path.join(report_dir, f"evaluation_report_{timestamp}.json")
 
     with open(report_path, "w") as f:
         json.dump(report, f, indent=2)

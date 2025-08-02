@@ -24,9 +24,7 @@ class AuthenticationError(Exception):
 class AuthorizationError(AuthenticationError):
     """Raised when user lacks permission for an action."""
 
-    def __init__(
-        self, message: str = "Access denied", resource: Optional[str] = None
-    ):
+    def __init__(self, message: str = "Access denied", resource: Optional[str] = None):
         self.resource = resource
         if resource:
             message = f"{message}: insufficient permissions for {resource}"
@@ -43,9 +41,7 @@ class TokenExpiredError(AuthenticationError):
 class TokenInvalidError(AuthenticationError):
     """Raised when a JWT token is invalid or malformed."""
 
-    def __init__(
-        self, message: str = "Invalid token", reason: Optional[str] = None
-    ):
+    def __init__(self, message: str = "Invalid token", reason: Optional[str] = None):
         if reason:
             message = f"{message}: {reason}"
         super().__init__(message)

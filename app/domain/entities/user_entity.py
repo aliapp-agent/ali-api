@@ -4,17 +4,22 @@ This module contains the pure domain model for User,
 independent of any external dependencies or frameworks.
 """
 
+import re
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional
-from dataclasses import dataclass
-import re
+from typing import (
+    Dict,
+    List,
+    Optional,
+)
 
 import bcrypt
 
 
 class UserRole(str, Enum):
     """User roles in the system."""
+
     ADMIN = "admin"
     EDITOR = "editor"
     VIEWER = "viewer"
@@ -23,6 +28,7 @@ class UserRole(str, Enum):
 
 class UserStatus(str, Enum):
     """User status in the system."""
+
     ACTIVE = "active"
     INACTIVE = "inactive"
     SUSPENDED = "suspended"
@@ -33,6 +39,7 @@ class UserStatus(str, Enum):
 @dataclass
 class UserProfile:
     """User profile information."""
+
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     avatar_url: Optional[str] = None
@@ -45,6 +52,7 @@ class UserProfile:
 @dataclass
 class UserPreferences:
     """User preferences configuration."""
+
     theme: str = "light"
     notifications_enabled: bool = True
     email_notifications: bool = True
@@ -54,11 +62,11 @@ class UserPreferences:
 
 class UserEntity:
     """Pure domain entity for User.
-    
+
     This class contains the core business logic for users
     without any external dependencies.
     """
-    
+
     def __init__(
         self,
         email: str,
@@ -77,7 +85,7 @@ class UserEntity:
         user_id: Optional[int] = None,
     ):
         """Initialize a User entity.
-        
+
         Args:
             email: User's email address
             hashed_password: Bcrypt hashed password
@@ -113,7 +121,7 @@ class UserEntity:
     def _validate_email(email: str) -> str:
         """Validate email format."""
         email = email.lower().strip()
-        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         if not re.match(pattern, email):
             raise ValueError(f"Invalid email format: {email}")
         return email
@@ -123,19 +131,18 @@ class UserEntity:
         """Hash a password using bcrypt."""
         if not password or len(password) < 8:
             raise ValueError("Password must be at least 8 characters long")
-        
+
         salt = bcrypt.gensalt()
-        return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+        return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
 
     def verify_password(self, password: str) -> bool:
         """Verify a password against the stored hash."""
         if not password:
             return False
-        
+
         try:
             return bcrypt.checkpw(
-                password.encode('utf-8'),
-                self.hashed_password.encode('utf-8')
+                password.encode("utf-8"), self.hashed_password.encode("utf-8")
             )
         except Exception:
             return False
@@ -144,27 +151,32 @@ class UserEntity:
         """Check if user can perform a specific action."""
         if not self.is_active or self.status != UserStatus.ACTIVE:
             return False
-        
+
         # Admin can do everything
         if self.role == UserRole.ADMIN:
             return True
-        
+
         # Role-based permissions
         role_permissions = {
             UserRole.EDITOR: [
-                "read", "write", "edit", "create_document", 
-                "delete_own", "chat", "upload"
+                "read",
+                "write",
+                "edit",
+                "create_document",
+                "delete_own",
+                "chat",
+                "upload",
             ],
             UserRole.VIEWER: ["read", "chat"],
-            UserRole.GUEST: ["read"]
+            UserRole.GUEST: ["read"],
         }
-        
+
         allowed_actions = role_permissions.get(self.role, [])
-        
+
         # Check explicit permissions
         if action in self.permissions:
             return True
-        
+
         # Check role-based permissions
         return action in allowed_actions
 
@@ -201,36 +213,40 @@ class UserEntity:
 
     def update_profile(self, profile_data: Dict) -> None:
         """Update user profile information."""
-        if 'first_name' in profile_data:
-            self.profile.first_name = profile_data['first_name']
-        if 'last_name' in profile_data:
-            self.profile.last_name = profile_data['last_name']
-        if 'avatar_url' in profile_data:
-            self.profile.avatar_url = profile_data['avatar_url']
-        if 'bio' in profile_data:
-            self.profile.bio = profile_data['bio']
-        if 'phone' in profile_data:
-            self.profile.phone = profile_data['phone']
-        if 'timezone' in profile_data:
-            self.profile.timezone = profile_data['timezone']
-        if 'language' in profile_data:
-            self.profile.language = profile_data['language']
-        
+        if "first_name" in profile_data:
+            self.profile.first_name = profile_data["first_name"]
+        if "last_name" in profile_data:
+            self.profile.last_name = profile_data["last_name"]
+        if "avatar_url" in profile_data:
+            self.profile.avatar_url = profile_data["avatar_url"]
+        if "bio" in profile_data:
+            self.profile.bio = profile_data["bio"]
+        if "phone" in profile_data:
+            self.profile.phone = profile_data["phone"]
+        if "timezone" in profile_data:
+            self.profile.timezone = profile_data["timezone"]
+        if "language" in profile_data:
+            self.profile.language = profile_data["language"]
+
         self.updated_at = datetime.utcnow()
 
     def update_preferences(self, preferences_data: Dict) -> None:
         """Update user preferences."""
-        if 'theme' in preferences_data:
-            self.preferences.theme = preferences_data['theme']
-        if 'notifications_enabled' in preferences_data:
-            self.preferences.notifications_enabled = preferences_data['notifications_enabled']
-        if 'email_notifications' in preferences_data:
-            self.preferences.email_notifications = preferences_data['email_notifications']
-        if 'auto_save' in preferences_data:
-            self.preferences.auto_save = preferences_data['auto_save']
-        if 'default_language' in preferences_data:
-            self.preferences.default_language = preferences_data['default_language']
-        
+        if "theme" in preferences_data:
+            self.preferences.theme = preferences_data["theme"]
+        if "notifications_enabled" in preferences_data:
+            self.preferences.notifications_enabled = preferences_data[
+                "notifications_enabled"
+            ]
+        if "email_notifications" in preferences_data:
+            self.preferences.email_notifications = preferences_data[
+                "email_notifications"
+            ]
+        if "auto_save" in preferences_data:
+            self.preferences.auto_save = preferences_data["auto_save"]
+        if "default_language" in preferences_data:
+            self.preferences.default_language = preferences_data["default_language"]
+
         self.updated_at = datetime.utcnow()
 
     def add_permission(self, permission: str) -> None:
