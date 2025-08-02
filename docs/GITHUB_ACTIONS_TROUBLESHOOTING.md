@@ -10,42 +10,55 @@
 ### 🔍 Causa Raiz
 O problema estava relacionado a:
 
-1. **Endpoint de Health Check Incorreto**
-   - Estava usando `/health` que pode não existir na versão latest
-   - Solução: Usar endpoint raiz `/` que sempre responde
+1. **Versão Instável do Qdrant**
+   - Estava usando `qdrant/qdrant:latest` que pode introduzir mudanças incompatíveis
+   - Solução: Fixar versão estável `qdrant/qdrant:v1.7.4`
 
-2. **Timeouts Muito Agressivos**
-   - Health check com apenas 5s de timeout
-   - Apenas 5 tentativas de retry
-   - Solução: Aumentar para 10s timeout, 10 retries, 30s start period
+2. **Endpoint de Health Check Incorreto**
+   - Estava usando endpoint raiz `/` em vez do endpoint dedicado de saúde
+   - Solução: Usar endpoint `/health` que é especificamente projetado para health checks
 
-3. **Formatação YAML Incorreta**
+3. **Tempo de Inicialização Insuficiente**
+   - Start period de 30s era muito curto para inicialização do Qdrant no ambiente CI
+   - Solução: Aumentar start period para 60s
+
+4. **Timing de Health Check Subótimo**
+   - Intervalo de 30s era muito longo para detectar quando o serviço fica disponível
+   - Solução: Reduzir intervalo para 10s com mais tentativas (12)
+
+5. **Falta de Logs de Debug**
+   - Difícil identificar onde exatamente falha
+   - Solução: Adicionar logs detalhados e testes de conectividade
+
+6. **Formatação YAML Incorreta**
    - Uso de `>` em vez de `>-` causava quebra de linha extra
    - Erro: `time: unknown unit "s\x0a"` no parâmetro `--health-start-period`
    - Solução: Usar `>-` para remover quebra de linha final
 
-4. **Falta de Logs de Debug**
-   - Difícil identificar onde exatamente falha
-   - Solução: Adicionar logs detalhados e testes de conectividade
-
 ### ✅ Correções Aplicadas
 
-#### 1. Health Check Melhorado
+#### 1. Versão Qdrant Fixada
+```yaml
+qdrant:
+  image: qdrant/qdrant:v1.7.4  # Era: qdrant/qdrant:latest
+```
+
+#### 2. Health Check Otimizado
 ```yaml
 # ANTES (problemático)
 options: >
-  --health-cmd "curl -f http://localhost:6333/health || exit 1"
-  --health-interval 10s
-  --health-timeout 5s
-  --health-retries 5
-
-# DEPOIS (corrigido)
-options: >-
   --health-cmd "curl -f http://localhost:6333/ || exit 1"
   --health-interval 30s
   --health-timeout 10s
   --health-retries 10
-  --health-start-period 30s
+
+# DEPOIS (corrigido)
+options: >-
+  --health-cmd "curl -f http://localhost:6333/health || exit 1"
+  --health-interval 10s
+  --health-timeout 10s
+  --health-retries 12
+  --health-start-period 60s
 ```
 
 #### 🚨 **Problema Crítico: Formatação YAML**
@@ -140,6 +153,31 @@ docker stop test-qdrant
 2. **Alertas**: Configurar notificações para falhas de CI/CD
 3. **Cache**: Implementar cache de imagens Docker para acelerar builds
 4. **Testes**: Adicionar testes de integração específicos para Qdrant
+
+## Resultado Esperado
+
+Após essas correções, o workflow deve:
+
+1. ✅ Usar versão estável do Qdrant (v1.7.4)
+2. ✅ Inicializar o container Qdrant com sucesso
+3. ✅ Passar no health check `/health` dentro de 60s
+4. ✅ Detectar rapidamente quando o serviço fica disponível (10s interval)
+5. ✅ Executar os testes sem falhas de conectividade
+6. ✅ Completar o deploy sem erros
+
+Os logs devem mostrar:
+```
+✅ PostgreSQL is ready
+✅ Qdrant is ready
+Testing Qdrant health endpoint...
+```
+
+### Melhorias Implementadas
+
+- **Estabilidade**: Versão fixa elimina surpresas de breaking changes
+- **Confiabilidade**: Endpoint `/health` é mais confiável que `/`
+- **Performance**: Detecção mais rápida (10s vs 30s) quando serviço fica disponível
+- **Robustez**: Mais tempo para inicialização (60s) e mais tentativas (12)
 
 ---
 
