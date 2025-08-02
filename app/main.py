@@ -39,9 +39,11 @@ from app.shared.exceptions import (
 
 # Firebase mode - PostgreSQL not needed
 try:
-    from app.services.database import database_service
+    from app.services.database import get_database_service
+    _database_available = True
 except Exception:
-    database_service = None
+    _database_available = False
+    get_database_service = None
 
 # Load environment variables
 load_dotenv()
@@ -467,7 +469,8 @@ async def health_check(request: Request) -> JSONResponse:
 
     try:
         # Check database connectivity
-        if database_service:
+        if _database_available:
+            database_service = get_database_service()
             db_healthy = await database_service.health_check()
         else:
             db_healthy = True  # Firebase mode - no PostgreSQL needed

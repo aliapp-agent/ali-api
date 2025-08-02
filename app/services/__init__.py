@@ -2,13 +2,13 @@
 
 from app.services.rag import rag_service
 
-# Database service is only imported when explicitly needed
-# to avoid PostgreSQL connection during Firebase-only usage
+# Database service uses lazy initialization to avoid connection issues during imports
 try:
-    from app.services.database import database_service
-
-    __all__ = ["database_service", "rag_service"]
+    from app.services.database import get_database_service
+    _database_available = True
+    __all__ = ["get_database_service", "rag_service"]
 except Exception:
     # Firebase-only mode - PostgreSQL not available
-    database_service = None
+    _database_available = False
+    get_database_service = None
     __all__ = ["rag_service"]

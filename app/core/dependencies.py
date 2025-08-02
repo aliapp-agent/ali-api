@@ -17,10 +17,7 @@ from app.domain.services import (
     UserDomainService,
 )
 from app.infrastructure.container import get_container
-from app.services.database import DatabaseService
-
-# Singleton database service (keep existing simple approach)
-_db_service = DatabaseService()
+from app.services.database import DatabaseService, get_database_service as _get_database_service
 
 
 def get_database_service() -> DatabaseService:
@@ -29,7 +26,7 @@ def get_database_service() -> DatabaseService:
     Returns:
         DatabaseService: The database service instance
     """
-    return _db_service
+    return _get_database_service()
 
 
 def get_db_session() -> Session:

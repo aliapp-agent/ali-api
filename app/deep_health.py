@@ -21,7 +21,7 @@ from app.main import (
     SECURITY_HEADERS,
     app,
 )
-from app.services.database import database_service
+from app.services.database import get_database_service
 
 
 @app.get("/health/deep")
@@ -48,6 +48,7 @@ async def deep_health_check(request: Request) -> JSONResponse:
         db_details = {"connected": False, "response_time_ms": None, "error": None}
         try:
             db_start = datetime.now()
+            database_service = get_database_service()
             db_healthy = await database_service.health_check()
             db_response_time = (datetime.now() - db_start).total_seconds() * 1000
 

@@ -1,5 +1,6 @@
 """This file contains the database service for the application."""
 
+import os
 from typing import (
     List,
     Optional,
@@ -33,6 +34,15 @@ class DatabaseService:
 
     def __init__(self):
         """Initialize database service with connection pool."""
+        # Skip database initialization during testing if USE_MOCK_SERVICES is set
+        if os.getenv("USE_MOCK_SERVICES") == "true" or os.getenv("TESTING") == "true":
+            self.engine = None
+            logger.info(
+                "database_mock_mode",
+                environment=settings.APP_ENV.value,
+            )
+            return
+            
         try:
             # Configure environment-specific database connection pool settings
             pool_size = settings.POSTGRES_POOL_SIZE
@@ -268,5 +278,16 @@ class DatabaseService:
             return False
 
 
-# Create a singleton instance
-database_service = DatabaseService()
+# Create a singleton instance (lazy initialization for tests)
+database_service = None
+
+def get_database_service() -> DatabaseService:
+    """Get or create the database service singleton.
+    
+    This function provides lazy initialization to avoid database
+    connection issues during test imports.
+    """
+    global database_service
+    if database_service is None:
+        database_service = DatabaseService()
+    return database_service

@@ -202,6 +202,7 @@ def setup_test_environment():
             "QDRANT_URL": "http://localhost:6333",
             "JWT_SECRET_KEY": "test-secret-key",
             "LLM_API_KEY": "test-llm-key",
+            "POSTGRES_URL": "postgresql://postgres:postgres@localhost:5432/test_db",
         }
     )
 
@@ -223,11 +224,34 @@ if "pytest" in sys.modules or os.environ.get("APP_ENV") == "test":
             "QDRANT_URL": "http://localhost:6333",
             "JWT_SECRET_KEY": "test-secret-key",
             "LLM_API_KEY": "test-llm-key",
+            "POSTGRES_URL": "postgresql://postgres:postgres@localhost:5432/test_db",
         }
     )
 
     # Apply Firebase mocks to sys.modules
     patch_firebase_imports()
+    
+    # Mock DatabaseService to avoid PostgreSQL connection during tests
+    from unittest.mock import Mock, AsyncMock, patch
+    
+    # Create a mock DatabaseService
+    mock_db_service = Mock()
+    mock_db_service.health_check = AsyncMock(return_value=True)
+    mock_db_service.get_user_by_email = AsyncMock(return_value=None)
+    mock_db_service.create_user = AsyncMock()
+    mock_db_service.get_user_sessions = AsyncMock(return_value=[])
+    mock_db_service.create_session = AsyncMock()
+    mock_db_service.get_session = AsyncMock(return_value=None)
+    mock_db_service.update_session = AsyncMock()
+    mock_db_service.delete_session = AsyncMock()
+    
+    # Patch the get_database_service function before any imports
+    def mock_get_database_service():
+        return mock_db_service
+    
+    # Apply the patch globally
+    patch('app.services.database.get_database_service', mock_get_database_service).start()
+    patch('app.core.dependencies.get_database_service', mock_get_database_service).start()
 
 # ============================================================================
 # END FIREBASE MOCKS
