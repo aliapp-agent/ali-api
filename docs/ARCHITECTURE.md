@@ -380,7 +380,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 **Solução**: Migrar schema para sintaxe PostgreSQL padrão
 
 ### 5. PostgreSQL Ausente no Docker
-**Problema**: docker-compose.yml não inclui serviço PostgreSQL
+**Solução**: Criado docker-compose.postgres.yml para desenvolvimento local com PostgreSQL
 **Solução**: Adicionar serviço postgres com volumes persistentes
 
 ## Roadmap de Melhorias

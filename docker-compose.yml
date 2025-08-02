@@ -5,34 +5,36 @@ services:
   app:
     build:
       context: .
-      args:
-        APP_ENV: ${APP_ENV:-development}
-        FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-}
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     volumes:
-      - ./app:/app/app
+      - .:/app
       - ./logs:/app/logs
       - ./firebase-credentials.json:/app/firebase-credentials.json:ro
-    env_file:
-      - .env.${APP_ENV:-development}
     environment:
-      - APP_ENV=${APP_ENV:-development}
-      # Firebase
-      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID:-}
+      - APP_ENV=development
       - FIREBASE_CREDENTIALS_PATH=/app/firebase-credentials.json
-      - FIREBASE_STORAGE_BUCKET=${FIREBASE_STORAGE_BUCKET:-}
-      - FIREBASE_REGION=${FIREBASE_REGION:-us-central1}
-      # LLM & Auth
-      - LLM_API_KEY=${LLM_API_KEY:-dummy-key-for-development}
-      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
-      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-supersecretkeythatshouldbechangedforproduction}
-
+      - LLM_API_KEY=${LLM_API_KEY}
+      - LLM_MODEL=${LLM_MODEL:-gpt-4o-mini}
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY}
+      - LANGFUSE_HOST=${LANGFUSE_HOST:-https://cloud.langfuse.com}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - POSTGRES_URL=${POSTGRES_URL:-postgresql://ali_user:ali_password@postgres:5432/ali_db}
+      - DEBUG=${DEBUG:-true}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 40s
+    networks:
+      - ali-network
+    depends_on:
+      - postgres
     restart: on-failure
+
+networks:
+  ali-network:
+    driver: bridge
