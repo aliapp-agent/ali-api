@@ -63,7 +63,7 @@ jobs:
       - name: Verify Deployment
         run: |
           echo "⏳ Waiting for service to be ready..."
-          sleep 30
+          sleep 60
           
           SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
             --region=${{ env.GCP_REGION }} \
@@ -71,9 +71,26 @@ jobs:
           
           echo "🚀 Service deployed at: $SERVICE_URL"
           
-          # Test health endpoint
-          curl -f "$SERVICE_URL/health" || exit 1
-          echo "✅ Health check passed"
+          # Test health endpoint with retry logic
+          MAX_RETRIES=5
+          RETRY_COUNT=0
           
-          echo "🎉 Production deployment successful!"
-          echo "Commit: ${{ github.sha }}"
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            echo "🔍 Health check attempt $((RETRY_COUNT + 1))/$MAX_RETRIES..."
+            
+            if curl -f --max-time 30 "$SERVICE_URL/health"; then
+              echo "✅ Health check passed"
+              echo "🎉 Production deployment successful!"
+              echo "Commit: ${{ github.sha }}"
+              exit 0
+            else
+              echo "❌ Health check failed, retrying in 30 seconds..."
+              sleep 30
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+            fi
+          done
+          
+          echo "❌ Health check failed after $MAX_RETRIES attempts"
+          echo "🔍 Checking service logs..."
+          gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=${{ env.SERVICE_NAME }}" --limit=10 --format="value(textPayload)" --freshness=5m
+          exit 1
