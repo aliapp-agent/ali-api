@@ -1,4 +1,5 @@
 # Use Python 3.13 slim image
+# Force rebuild - 2025-08-03
 FROM python:3.13.2-slim
 
 # Set environment variables
