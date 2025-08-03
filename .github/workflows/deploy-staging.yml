@@ -1,10 +1,10 @@
-# DISABLED: Direct production deployment enabled
-# name: Deploy to Staging
-# 
-# on:
-#   push:
-#     branches: [main]
-#   workflow_dispatch:
+ DISABLED: Direct production deployment enabled
+ name: Deploy to Staging
+ 
+ on:
+   push:
+     branches: [main]
+  workflow_dispatch:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
