@@ -34,7 +34,7 @@ COPY uv.lock ./
 # Create virtual environment and install dependencies
 RUN uv venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN uv pip install -e .
+RUN uv sync --frozen
 
 # Copy the application code
 COPY . .
@@ -53,5 +53,4 @@ RUN mkdir -p /app/logs
 EXPOSE 8000
 
 # Command to run the application
-ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]
 CMD ["/opt/venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
