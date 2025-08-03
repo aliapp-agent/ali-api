@@ -107,6 +107,7 @@ steps:
       - '1'
       - '--timeout'
       - '900'
+      - '--no-cpu-throttling'
       - '--set-env-vars'
       - 'APP_ENV=${_APP_ENV},PROJECT_ID=${PROJECT_ID},USE_MOCK_SERVICES=true'
       - '--set-secrets'

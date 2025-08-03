@@ -2,8 +2,9 @@
 FROM python:3.13.1-slim
 
 # Timestamp for cache busting - BUILD $(date +%s)
-RUN echo "=== FINAL CORRECTED BUILD - $(date) ===" && \
+RUN echo "=== UVICORN FIX BUILD - $(date) ===" && \
     echo "Using uv sync --frozen --no-dev ONLY" && \
+    echo "UVICORN COMMAND FIX VERSION" && \
     echo "======================================="
 
 # Set environment variables
@@ -44,7 +45,11 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 RUN echo "Running: uv sync --frozen --no-dev" && \
     uv sync --frozen --no-dev && \
-    echo "SUCCESS: Dependencies installed with uv sync"
+    echo "SUCCESS: Dependencies installed with uv sync" && \
+    echo "=== CHECKING UVICORN INSTALLATION ===" && \
+    ls -la /opt/venv/bin/ && \
+    which uvicorn && \
+    uvicorn --version
 
 # Copy application code
 COPY . .
@@ -60,4 +65,4 @@ RUN mkdir -p /app/logs
 EXPOSE 8000
 
 # Command
-CMD ["/opt/venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
