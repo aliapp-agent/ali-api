@@ -24,8 +24,7 @@
 #    c) Configurar autenticação Docker:
 #       gcloud auth configure-docker us-central1-docker.pkg.dev
 #
-#    d) Criar secrets no Secret Manager:
-#       echo "sua_postgres_connection_string" | gcloud secrets create postgres-url-staging --data-file=-
+#    d) Criar secrets no Secret Manager (mínimos para deploy sem BD):
 #       echo "sua_llm_api_key" | gcloud secrets create llm-api-key --data-file=-
 #       echo "sua_jwt_secret_key" | gcloud secrets create jwt-secret-key --data-file=-
 #
@@ -46,9 +45,9 @@
 #
 # 5. CONFIGURAÇÕES DE PRODUÇÃO:
 #    Para ambiente de produção, altere as substitutions abaixo:
-#    - _APP_ENV: 'production'
+#    - _APP_ENV: 'production'  
 #    - _SERVICE_NAME: 'ali-api-production'
-#    - _SECRET_POSTGRES_URL: 'postgres-url-production'
+#    - Remover USE_MOCK_SERVICES=true quando tiver PostgreSQL
 #
 # 6. MONITORAMENTO PÓS-DEPLOY:
 #    - Verificar logs: gcloud logging read "resource.type=cloud_run_revision"
@@ -108,9 +107,9 @@ steps:
       - '--timeout'
       - '900'
       - '--set-env-vars'
-      - 'APP_ENV=${_APP_ENV},PROJECT_ID=${PROJECT_ID}'
+      - 'APP_ENV=${_APP_ENV},PROJECT_ID=${PROJECT_ID},USE_MOCK_SERVICES=true'
       - '--set-secrets'
-      - 'POSTGRES_URL=${_SECRET_POSTGRES_URL}:latest,LLM_API_KEY=${_SECRET_LLM_API_KEY}:latest,JWT_SECRET_KEY=${_SECRET_JWT_SECRET_KEY}:latest'
+      - 'LLM_API_KEY=${_SECRET_LLM_API_KEY}:latest,JWT_SECRET_KEY=${_SECRET_JWT_SECRET_KEY}:latest'
 
 # Default substitutions
 substitutions:
@@ -118,7 +117,6 @@ substitutions:
   _ARTIFACT_REGISTRY_REPO: 'ali-api-repo'
   _SERVICE_NAME: 'ali-api-staging'
   _APP_ENV: 'staging'
-  _SECRET_POSTGRES_URL: 'postgres-url-staging'
   _SECRET_LLM_API_KEY: 'llm-api-key'
   _SECRET_JWT_SECRET_KEY: 'jwt-secret-key'
 
