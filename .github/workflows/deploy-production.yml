@@ -3,18 +3,18 @@ name: Deploy to Production
 on:
   push:
     branches: [main]
-  workflow_dispatch: {}
+  workflow_dispatch:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GCP_REGION: us-central1
   SERVICE_NAME: ali-api-production
-  ARTIFACT_REGISTRY_REPO: ali-api-repo
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: production
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,35 +27,30 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker to use gcloud as a credential helper
-        run: gcloud auth configure-docker $GCP_REGION-docker.pkg.dev
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
 
-      - name: Build and Deploy to Production
+      - name: Build and Deploy
         run: |
           gcloud builds submit \
             --config cloudbuild.yaml \
-            --substitutions _REGION=$GCP_REGION,_SERVICE_NAME=$SERVICE_NAME,_APP_ENV=production \
-            --region $GCP_REGION
+            --substitutions _REGION=${{ env.GCP_REGION }},_SERVICE_NAME=${{ env.SERVICE_NAME }},_APP_ENV=production \
+            --region ${{ env.GCP_REGION }}
 
-      - name: Verify production deployment
+      - name: Verify Deployment
         run: |
-          SERVICE_URL=$(gcloud run services describe $SERVICE_NAME --region=$GCP_REGION --format='value(status.url)')
-          echo "Production service deployed at: $SERVICE_URL"
-
-          # Wait for service to be ready
-          sleep 60
-
+          echo "⏳ Waiting for service to be ready..."
+          sleep 30
+          
+          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region=${{ env.GCP_REGION }} \
+            --format='value(status.url)')
+          
+          echo "🚀 Service deployed at: $SERVICE_URL"
+          
           # Test health endpoint
           curl -f "$SERVICE_URL/health" || exit 1
-          echo "✅ Production health check passed"
-
-          # Test API docs (should be disabled in production)
-          if curl -f "$SERVICE_URL/docs" 2>/dev/null; then
-            echo "⚠️  Warning: API docs are accessible in production"
-          else
-            echo "✅ API docs properly disabled in production"
-          fi
-
+          echo "✅ Health check passed"
+          
           echo "🎉 Production deployment successful!"
-          echo "Service URL: $SERVICE_URL"
-          echo "Deployed commit: ${{ github.sha }}"
+          echo "Commit: ${{ github.sha }}"
