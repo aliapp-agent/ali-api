@@ -1,16 +1,9 @@
 name: Deploy to Production
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
-    inputs:
-      tag:
-        description: "Git tag to deploy (e.g., v1.0.0)"
-        required: true
-        type: string
-      confirm:
-        description: 'Type "DEPLOY" to confirm production deployment'
-        required: true
-        type: string
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -19,27 +12,7 @@ env:
   ARTIFACT_REGISTRY_REPO: ali-api-repo
 
 jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Validate confirmation
-        run: |
-          if [ "${{ inputs.confirm }}" != "DEPLOY" ]; then
-            echo "❌ Deployment not confirmed. Please type 'DEPLOY' to proceed."
-            exit 1
-          fi
-          echo "✅ Deployment confirmed"
-
-      - name: Validate tag format
-        run: |
-          if [[ ! "${{ inputs.tag }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "❌ Invalid tag format. Use semantic versioning (e.g., v1.0.0)"
-            exit 1
-          fi
-          echo "✅ Tag format valid: ${{ inputs.tag }}"
-
   test:
-    needs: validate
     runs-on: ubuntu-latest
 
     services:
@@ -69,8 +42,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.tag }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -130,14 +101,12 @@ jobs:
           black --check .
 
   deploy:
-    needs: [validate, test]
+    needs: test
     runs-on: ubuntu-latest
     environment: production
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.tag }}
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -178,20 +147,4 @@ jobs:
 
           echo "🎉 Production deployment successful!"
           echo "Service URL: $SERVICE_URL"
-          echo "Deployed tag: ${{ inputs.tag }}"
-
-      - name: Create GitHub release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ inputs.tag }}
-          release_name: Release ${{ inputs.tag }}
-          body: |
-            🚀 Production deployment of Ali API ${{ inputs.tag }}
-
-            **Deployed to:** Production Cloud Run
-            **Deployment time:** ${{ github.event.head_commit.timestamp }}
-            **Commit:** ${{ github.sha }}
-          draft: false
-          prerelease: false
+          echo "Deployed commit: ${{ github.sha }}"
