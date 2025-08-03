@@ -118,7 +118,9 @@ class TestElasticsearchIntegration:
     @pytest.mark.asyncio
     async def test_rag_search_with_multiple_filters(self, mock_es_client):
         """Test RAG search with complex filtering."""
-        with patch("app.services.rag.Elasticsearch", return_value=mock_es_client):                mock_model = Mock()
+        with patch("app.services.rag.Elasticsearch", return_value=mock_es_client):
+            with patch("app.services.rag.SentenceTransformer") as mock_st:
+                mock_model = Mock()
                 mock_model.encode.return_value = [0.1] * 384
                 mock_st.return_value = mock_model
 
@@ -157,7 +159,9 @@ class TestElasticsearchIntegration:
     @pytest.mark.asyncio
     async def test_rag_service_error_scenarios(self, mock_es_client):
         """Test RAG service behavior in error scenarios."""
-        with patch("app.services.rag.Elasticsearch", return_value=mock_es_client):                mock_model = Mock()
+        with patch("app.services.rag.Elasticsearch", return_value=mock_es_client):
+            with patch("app.services.rag.SentenceTransformer") as mock_st:
+                mock_model = Mock()
                 mock_model.encode.return_value = [0.1] * 384
                 mock_st.return_value = mock_model
 
@@ -251,7 +255,9 @@ class TestElasticsearchIntegration:
     @pytest.mark.slow
     async def test_large_document_handling(self, mock_es_client):
         """Test handling of large documents."""
-        with patch("app.services.rag.Elasticsearch", return_value=mock_es_client):                mock_model = Mock()
+        with patch("app.services.rag.Elasticsearch", return_value=mock_es_client):
+            with patch("app.services.rag.SentenceTransformer") as mock_st:
+                mock_model = Mock()
                 mock_model.encode.return_value = [0.1] * 384
                 mock_st.return_value = mock_model
 
