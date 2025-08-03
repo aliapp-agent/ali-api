@@ -44,7 +44,7 @@ RUN echo "=== INSTALLING WITH UV SYNC ===" && \
 ENV PATH="/opt/venv/bin:$PATH"
 
 RUN echo "Running: uv sync --frozen --no-dev" && \
-    uv sync --python /opt/venv/bin/python --frozen --no-dev && \
+    uv sync -v --python /opt/venv/bin/python --frozen --no-dev && \
     echo "SUCCESS: Dependencies installed with uv sync" && \
     echo "=== CHECKING UVICORN INSTALLATION ===" && \
     ls -la /opt/venv/bin/ && \
