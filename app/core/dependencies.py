@@ -35,7 +35,7 @@ def get_db_session() -> Session:
     Returns:
         Session: SQLModel database session
     """
-    return _db_service.get_session_maker()
+    return get_database_service().get_session_maker()
 
 
 # Simple domain service dependencies

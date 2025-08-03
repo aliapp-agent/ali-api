@@ -89,8 +89,8 @@ jobs:
           uv venv
           source .venv/bin/activate
           uv pip install -e .
-          uv pip install --group dev
-          uv pip install --group test
+          uv sync --group dev
+          uv sync --group test
 
       - name: Wait for services
         run: |
