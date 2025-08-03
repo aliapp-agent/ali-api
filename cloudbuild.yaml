@@ -116,8 +116,8 @@ steps:
 substitutions:
   _REGION: 'us-central1'
   _ARTIFACT_REGISTRY_REPO: 'ali-api-repo'
-  _SERVICE_NAME: 'ali-api-staging'
-  _APP_ENV: 'staging'
+  _SERVICE_NAME: 'ali-api-production'
+  _APP_ENV: 'production'
   _SECRET_LLM_API_KEY: 'llm-api-key'
   _SECRET_JWT_SECRET_KEY: 'jwt-secret-key'
 

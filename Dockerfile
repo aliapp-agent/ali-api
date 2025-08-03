@@ -1,10 +1,10 @@
 # CORRECTED DOCKERFILE - uv sync build
 FROM python:3.13.1-slim
 
-# Timestamp for cache busting
-RUN echo "=== CORRECTED BUILD - $(date) ===" && \
-    echo "Using uv sync --frozen --no-dev" && \
-    echo "======================================"
+# Timestamp for cache busting - BUILD $(date +%s)
+RUN echo "=== FINAL CORRECTED BUILD - $(date) ===" && \
+    echo "Using uv sync --frozen --no-dev ONLY" && \
+    echo "======================================="
 
 # Set environment variables
 ARG APP_ENV=production
