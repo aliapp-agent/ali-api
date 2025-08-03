@@ -14,7 +14,7 @@ ENV APP_ENV=${APP_ENV} \
     PYTHONHASHSEED=random \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
-    PYTHONPATH=/app
+    PYTHONPATH=/
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
