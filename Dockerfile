@@ -2,9 +2,8 @@
 FROM python:3.13.1-slim
 
 # Timestamp for cache busting - BUILD $(date +%s)
-RUN echo "=== UVICORN FIX BUILD - $(date) ===" && \
-    echo "Using uv sync --frozen --no-dev ONLY" && \
-    echo "UVICORN COMMAND FIX VERSION" && \
+RUN echo "=== PIP BUILD - $(date) ===" && \
+    echo "Using pip install for dependencies" && \
     echo "======================================="
 
 # Set environment variables
@@ -24,8 +23,6 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-# Install uv
-RUN pip install uv
 
 # Create user
 RUN groupadd -r appuser && useradd -r -g appuser appuser
@@ -37,9 +34,9 @@ WORKDIR /app
 COPY pyproject.toml ./
 COPY uv.lock ./
 
-# Install dependencies directly with uv pip
+# Install dependencies with pip
 RUN echo "=== INSTALLING DEPENDENCIES ===" && \
-    uv pip install --system -e . && \
+    pip install -e . && \
     echo "SUCCESS: Dependencies installed"
 
 # Copy application code
