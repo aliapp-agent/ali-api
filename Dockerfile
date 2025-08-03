@@ -37,13 +37,10 @@ WORKDIR /app
 COPY pyproject.toml ./
 COPY uv.lock ./
 
-# Create virtual environment and install dependencies with uv pip
-RUN echo "=== INSTALLING WITH UV PIP ===" && \
-    uv venv /opt/venv && \
-    uv pip install --python /opt/venv/bin/python -e . && \
+# Install dependencies directly with uv pip
+RUN echo "=== INSTALLING DEPENDENCIES ===" && \
+    uv pip install --system -e . && \
     echo "SUCCESS: Dependencies installed"
-
-ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy application code
 COPY . .
