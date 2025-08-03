@@ -44,7 +44,7 @@ class TestChatbotEndpoints:
 
                 # Make request with authorization header
                 response = client.post(
-                    "/api/v1/chat/",
+                    "/api/v1/chatbot/chat",
                     json={"content": "Hello, how are you?", "role": "user"},
                     headers={"Authorization": "Bearer test-token"},
                 )
@@ -58,7 +58,7 @@ class TestChatbotEndpoints:
         """Test chat endpoint with invalid message."""
         with patch("app.api.v1.chatbot.get_current_session"):
             response = client.post(
-                "/api/v1/chat/",
+                "/api/v1/chatbot/chat",
                 json={"content": "", "role": "user"},  # Empty content
                 headers={"Authorization": "Bearer test-token"},
             )
@@ -69,7 +69,7 @@ class TestChatbotEndpoints:
     def test_chat_endpoint_unauthorized(self, client: TestClient):
         """Test chat endpoint without authorization."""
         response = client.post(
-            "/api/v1/chat/", json={"content": "Hello", "role": "user"}
+            "/api/v1/chatbot/chat", json={"content": "Hello", "role": "user"}
         )
 
         assert response.status_code == 403  # No auth header
@@ -94,7 +94,7 @@ class TestChatbotEndpoints:
                 mock_agent_class.return_value = mock_agent
 
                 response = client.post(
-                    "/api/v1/chat/stream",
+                    "/api/v1/chatbot/chat",
                     json={"content": "Stream test", "role": "user"},
                     headers={"Authorization": "Bearer test-token"},
                 )
