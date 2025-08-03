@@ -1,4 +1,4 @@
-"""This file contains the main application entry point."""
+o"""This file contains the main application entry point."""
 
 import traceback
 import uuid

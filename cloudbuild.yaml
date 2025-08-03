@@ -66,6 +66,7 @@ steps:
     args: 
       - 'build'
       - '--no-cache'
+      - '--pull'
       - '-t'
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/ali-api:${BUILD_ID}'
       - '-t'
