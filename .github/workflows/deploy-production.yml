@@ -27,6 +27,20 @@ jobs:
           echo "Has GCP_SA_KEY: ${{ secrets.GCP_SA_KEY != '' }}"
           echo "Has GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID != '' }}"
 
+      - name: Check Required Secrets
+        run: |
+          if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
+            echo "❌ Error: GCP_SA_KEY secret is not configured"
+            echo "Please configure the GCP service account key in GitHub Secrets"
+            exit 1
+          fi
+          if [ -z "${{ secrets.GCP_PROJECT_ID }}" ]; then
+            echo "❌ Error: GCP_PROJECT_ID secret is not configured"
+            echo "Please configure the GCP project ID in GitHub Secrets"
+            exit 1
+          fi
+          echo "✅ Required secrets are configured"
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
