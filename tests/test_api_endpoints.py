@@ -18,6 +18,7 @@ from app.schemas.chat import (
     Message,
 )
 from app.schemas.rag import DocumentSearchResult
+from app.shared.utils.auth import create_access_token
 
 
 class TestChatbotEndpoints:
@@ -42,11 +43,14 @@ class TestChatbotEndpoints:
                 )
                 mock_agent_class.return_value = mock_agent
 
+                # Generate valid JWT token
+                token = create_access_token(data={"session_id": "test-session-123"})
+                
                 # Make request with authorization header
                 response = client.post(
                     "/api/v1/chatbot/chat",
                     json={"content": "Hello, how are you?", "role": "user"},
-                    headers={"Authorization": "Bearer test-token"},
+                    headers={"Authorization": f"Bearer {token}"},
                 )
 
                 assert response.status_code == 200
@@ -57,10 +61,13 @@ class TestChatbotEndpoints:
     def test_chat_endpoint_invalid_message(self, client: TestClient):
         """Test chat endpoint with invalid message."""
         with patch("app.api.v1.chatbot.get_current_session"):
+            # Generate valid JWT token
+            token = create_access_token(data={"session_id": "test-session-123"})
+            
             response = client.post(
                 "/api/v1/chatbot/chat",
                 json={"content": "", "role": "user"},  # Empty content
-                headers={"Authorization": "Bearer test-token"},
+                headers={"Authorization": f"Bearer {token}"},
             )
 
             # Should return validation error
@@ -93,10 +100,13 @@ class TestChatbotEndpoints:
                 mock_agent.astream = AsyncMock(return_value=mock_stream())
                 mock_agent_class.return_value = mock_agent
 
+                # Generate valid JWT token
+                token = create_access_token(data={"session_id": "test-session-123"})
+
                 response = client.post(
                     "/api/v1/chatbot/chat",
                     json={"content": "Stream test", "role": "user"},
-                    headers={"Authorization": "Bearer test-token"},
+                    headers={"Authorization": f"Bearer {token}"},
                 )
 
                 assert response.status_code == 200
