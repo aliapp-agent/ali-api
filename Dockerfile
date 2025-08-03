@@ -30,12 +30,11 @@ WORKDIR /app
 # Copy dependency files first for better caching
 COPY pyproject.toml ./
 COPY uv.lock ./
-COPY README.md ./
 
 # Create virtual environment and install dependencies
 RUN uv venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN uv sync --frozen
+RUN uv sync --frozen --no-dev
 
 # Copy the application code
 COPY . .
