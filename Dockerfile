@@ -1,9 +1,12 @@
-# Use Python 3.13 slim image - REBUILD 2025-08-03-v2
-FROM python:3.13.2-slim
+# COMPLETE REBUILD - Use different base image
+FROM python:3.13.1-slim
 
-# Cache busting argument
-ARG CACHE_BUST=2025-08-03-17h30
-RUN echo "Cache bust: $CACHE_BUST"
+# RADICAL CACHE BUSTING - NEW TIMESTAMP
+ARG CACHE_BUST=REBUILD-17h35
+RUN echo "=== COMPLETE REBUILD - Cache bust: $CACHE_BUST ===" && \
+    echo "This is a completely new build - no cache allowed" && \
+    date && \
+    echo "=== END CACHE BUST ==="
 
 # Set environment variables
 ARG APP_ENV=production  
