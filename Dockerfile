@@ -37,16 +37,13 @@ WORKDIR /app
 COPY pyproject.toml ./
 COPY uv.lock ./
 
-# Create virtual environment and install dependencies with uv sync
-RUN echo "=== INSTALLING WITH UV SYNC ===" && \
-    uv venv /opt/venv
+# Create virtual environment and install dependencies with uv pip
+RUN echo "=== INSTALLING WITH UV PIP ===" && \
+    uv venv /opt/venv && \
+    uv pip install --python /opt/venv/bin/python -e . && \
+    echo "SUCCESS: Dependencies installed"
 
 ENV PATH="/opt/venv/bin:$PATH"
-
-RUN echo "Activating venv and installing dependencies" && \
-    . /opt/venv/bin/activate && \
-    uv sync --frozen --no-dev && \
-    echo "SUCCESS: Dependencies installed"
 
 # Copy application code
 COPY . .
