@@ -61,13 +61,11 @@
 #    - Database connection: verificar PostgreSQL connection string nos secrets
 
 steps:
-  # Step 1: Build the container image (BRAND NEW DOCKERFILE)
+  # Step 1: Build the container image (CORRECTED DOCKERFILE)
   - name: 'gcr.io/cloud-builders/docker'
     args: 
       - 'build'
       - '--no-cache'
-      - '--file'
-      - 'Dockerfile.new'
       - '-t'
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/ali-api:${BUILD_ID}'
       - '-t'
