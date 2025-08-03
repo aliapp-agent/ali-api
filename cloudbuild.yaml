@@ -61,10 +61,13 @@
 #    - Database connection: verificar PostgreSQL connection string nos secrets
 
 steps:
-  # Step 1: Build the container image
+  # Step 1: Build the container image (with cache busting)
   - name: 'gcr.io/cloud-builders/docker'
     args: 
       - 'build'
+      - '--no-cache'
+      - '--build-arg'
+      - 'CACHE_BUST=2025-08-03-17h30'
       - '-t'
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/ali-api:${BUILD_ID}'
       - '-t'

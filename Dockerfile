@@ -1,16 +1,20 @@
-# Use Python 3.13 slim image
-# Force rebuild - 2025-08-03
+# Use Python 3.13 slim image - REBUILD 2025-08-03-v2
 FROM python:3.13.2-slim
 
+# Cache busting argument
+ARG CACHE_BUST=2025-08-03-17h30
+RUN echo "Cache bust: $CACHE_BUST"
+
 # Set environment variables
-ARG APP_ENV=production
+ARG APP_ENV=production  
 ENV APP_ENV=${APP_ENV} \
     PYTHONFAULTHANDLER=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONHASHSEED=random \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
-    PYTHONPATH=/app
+    PYTHONPATH=/app \
+    CACHE_BUST=${CACHE_BUST}
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -33,9 +37,12 @@ COPY pyproject.toml ./
 COPY uv.lock ./
 
 # Create virtual environment and install dependencies
-RUN uv venv /opt/venv
+RUN echo "Installing dependencies with uv sync - REBUILD v2" && \
+    uv venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN uv sync --frozen --no-dev
+RUN echo "Running uv sync --frozen --no-dev" && \
+    uv sync --frozen --no-dev && \
+    echo "Dependencies installed successfully"
 
 # Copy the application code
 COPY . .
