@@ -53,42 +53,43 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
 
-      - name: Iniciar Cloud Build (só sucesso/falha, sem logs)
-        shell: bash
+      - name: Deploy to Cloud Run
         run: |
-          set -euo pipefail
-          export CLOUDSDK_CORE_DISABLE_PROMPTS=1
-
-          # Trigger do build em modo assíncrono (não bloqueia)
-          BUILD_ID=$(gcloud builds submit \
+          echo "🚀 Iniciando build e deploy..."
+          
+          gcloud builds submit \
             --config cloudbuild.yaml \
             --substitutions _REGION=${{ env.GCP_REGION }},_SERVICE_NAME=${{ env.SERVICE_NAME }},_APP_ENV=production \
-            --region="${{ env.GCP_REGION }}" \
-            --async \
-            --suppress-logs \
-            --format="value(metadata.build.id)")
+            --region="${{ env.GCP_REGION }}"
+          
+          echo "✅ Build e deploy concluído com sucesso!"
 
-          echo "👷 Build Cloud Build ID: $BUILD_ID"
+      - name: Get Service URL
+        run: |
+          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region=${{ env.GCP_REGION }} \
+            --format='value(status.url)')
+          
+          echo "🌐 Service URL: $SERVICE_URL"
+          echo "📖 API Docs: $SERVICE_URL/docs" 
+          echo "🏥 Health Check: $SERVICE_URL/health"
 
-          # Poll de status por até ~5 min (30×10s)
-          for i in {1..30}; do
-            STATUS=$(gcloud builds describe "$BUILD_ID" --format="value(status)")
-            case "$STATUS" in
-              "SUCCESS")
-                echo "✅ Build concluído com sucesso"
-                exit 0
-                ;;
-              "FAILURE"|"INTERNAL_ERROR"|"TIMEOUT"|"CANCELLED"|"EXPIRED")
-                echo "❌ Build finalizado com status: $STATUS"
-                exit 1
-                ;;
-              *)
-                # PENDING, QUEUED, WORKING ou outro
-                echo "🚧 Status atual: $STATUS — aguardando..."
-                sleep 10
-                ;;
-            esac
-          done
-
-          echo "❌ Tempo limite excedido (aprox. 5 min), último status: $STATUS"
-          exit 1
+      - name: Test Deployment
+        run: |
+          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region=${{ env.GCP_REGION }} \
+            --format='value(status.url)')
+          
+          echo "🔍 Testing health endpoint..."
+          
+          # Wait a moment for service to be ready
+          sleep 10
+          
+          # Test health endpoint
+          if curl -f --max-time 30 "$SERVICE_URL/health"; then
+            echo "✅ Health check passed!"
+            echo "🎉 Production deployment successful!"
+          else
+            echo "❌ Health check failed"
+            exit 1
+          fi
