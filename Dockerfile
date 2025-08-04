@@ -50,7 +50,7 @@ USER appuser
 RUN mkdir -p /app/logs
 
 # Expose port
-EXPOSE 8000
+EXPOSE 8080
 
 # Command - Use PORT environment variable from Cloud Run
-CMD ["sh", "-c", "python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}"]
