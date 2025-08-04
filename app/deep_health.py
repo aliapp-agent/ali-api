@@ -61,36 +61,42 @@ async def deep_health_check(request: Request) -> JSONResponse:
         except Exception as e:
             db_details["error"] = str(e)
 
-        # RAG service deep health check
+        # RAG service deep health check (skip if mock services enabled)
         rag_details = {
             "status": "unknown",
             "elasticsearch": "unknown",
             "index": "unknown",
             "error": None,
         }
-        try:
-            from app.services.rag import rag_service
+        if os.getenv("USE_MOCK_SERVICES") != "true":
+            try:
+                from app.services.rag import rag_service
 
-            rag_health = await rag_service.health_check()
-            rag_details.update(rag_health)
-        except Exception as e:
-            rag_details["error"] = str(e)
+                rag_health = await rag_service.health_check()
+                rag_details.update(rag_health)
+            except Exception as e:
+                rag_details["error"] = str(e)
+        else:
+            rag_details = {"status": "healthy", "mock": True}
 
-        # Agno agent deep health check
+        # Agno agent deep health check (skip if mock services enabled)
         agno_details = {
             "status": "unknown",
             "agent_ready": False,
             "tools_count": 0,
             "error": None,
         }
-        try:
-            from app.core.agno.graph import AgnoAgent
+        if os.getenv("USE_MOCK_SERVICES") != "true":
+            try:
+                from app.core.agno.graph import AgnoAgent
 
-            agent = AgnoAgent()
-            agno_health = await agent.health_check()
-            agno_details.update(agno_health)
-        except Exception as e:
-            agno_details["error"] = str(e)
+                agent = AgnoAgent()
+                agno_health = await agent.health_check()
+                agno_details.update(agno_health)
+            except Exception as e:
+                agno_details["error"] = str(e)
+        else:
+            agno_details = {"status": "healthy", "mock": True}
 
         # System resource information
         try:
@@ -153,7 +159,7 @@ async def deep_health_check(request: Request) -> JSONResponse:
         response_data = {
             "status": overall_status,
             "version": settings.VERSION,
-            "environment": settings.ENVIRONMENT.value,
+            "environment": settings.APP_ENV.value,
             "timestamp": datetime.now().isoformat(),
             "uptime_seconds": (
                 (datetime.now() - app.state.start_time).total_seconds()
