@@ -123,10 +123,24 @@ class Settings(BaseSettings):
     @property
     def ALLOWED_ORIGINS_LIST(self) -> list[str]:
         """Parse ALLOWED_ORIGINS string into a list."""
-        if not self.ALLOWED_ORIGINS:
+        origins = []
+        
+        # Check for individual origin environment variables (used in Cloud Run)
+        allowed_origin_1 = os.getenv("ALLOWED_ORIGIN_1")
+        allowed_origin_2 = os.getenv("ALLOWED_ORIGIN_2")
+        
+        if allowed_origin_1:
+            origins.append(allowed_origin_1.strip())
+        if allowed_origin_2:
+            origins.append(allowed_origin_2.strip())
+            
+        # Fallback to comma-separated ALLOWED_ORIGINS if individual vars not set
+        if not origins and self.ALLOWED_ORIGINS:
+            origins = [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
+        
+        # Default for development if no origins specified
+        if not origins:
             return ["*"]  # Allow all origins if none specified (dev only)
-
-        origins = [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
 
         # Add environment-specific defaults
         if self.APP_ENV == Environment.STAGING:

@@ -110,15 +110,7 @@ steps:
       - '900'
       - '--no-cpu-throttling'
       - '--set-env-vars'
-      - 'APP_ENV=${_APP_ENV}'
-      - '--set-env-vars'
-      - 'PROJECT_ID=${PROJECT_ID}'
-      - '--set-env-vars'
-      - 'QDRANT_URL=${_QDRANT_URL}'
-      - '--set-env-vars'
-      - 'QDRANT_API_KEY=${_QDRANT_API_KEY}'
-      - '--set-env-vars'
-      - 'ALLOWED_ORIGINS=${_ALLOWED_ORIGINS}'
+      - 'APP_ENV=${_APP_ENV},PROJECT_ID=${PROJECT_ID},QDRANT_URL=${_QDRANT_URL},QDRANT_API_KEY=${_QDRANT_API_KEY},ALLOWED_ORIGIN_1=${_ALLOWED_ORIGIN_1},ALLOWED_ORIGIN_2=${_ALLOWED_ORIGIN_2}'
       - '--set-secrets'
       - 'LLM_API_KEY=${_SECRET_LLM_API_KEY}:latest,JWT_SECRET_KEY=${_SECRET_JWT_SECRET_KEY}:latest'
 
@@ -132,7 +124,8 @@ substitutions:
   _SECRET_JWT_SECRET_KEY: 'jwt-secret-key'
   _QDRANT_URL: 'https://a7ec9a98-1327-4fe0-869d-e33b52d4a498.us-east4-0.gcp.cloud.qdrant.io'
   _QDRANT_API_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.yFsc6gtKzD5n2dalsPp6dvY8Cz9raMbkGUarmM0VbdM'
-  _ALLOWED_ORIGINS: 'https://ali-app-97976.web.app,https://ali-app-97976.firebaseapp.com'
+  _ALLOWED_ORIGIN_1: 'https://ali-app-97976.web.app'
+  _ALLOWED_ORIGIN_2: 'https://ali-app-97976.firebaseapp.com'
 
 # Build options
 options:

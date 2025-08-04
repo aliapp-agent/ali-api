@@ -59,7 +59,7 @@ jobs:
           
           gcloud builds submit \
             --config cloudbuild.yaml \
-            --substitutions _REGION=${{ env.GCP_REGION }},_SERVICE_NAME=${{ env.SERVICE_NAME }},_APP_ENV=production \
+            --substitutions _REGION=${{ env.GCP_REGION }},_SERVICE_NAME=${{ env.SERVICE_NAME }},_APP_ENV=production,_ALLOWED_ORIGIN_1=https://ali-app-97976.web.app,_ALLOWED_ORIGIN_2=https://ali-app-97976.firebaseapp.com \
             --region="${{ env.GCP_REGION }}"
           
           echo "✅ Build e deploy concluído com sucesso!"
