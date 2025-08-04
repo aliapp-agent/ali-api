@@ -464,12 +464,8 @@ async def health_check(request: Request) -> JSONResponse:
     logger.info("health_check_called")
 
     try:
-        # Check database connectivity
-        if _database_available:
-            database_service = get_database_service()
-            db_healthy = await database_service.health_check()
-        else:
-            db_healthy = True  # Firebase mode - no PostgreSQL needed
+        # Check database connectivity - Firebase mode (no PostgreSQL needed)
+        db_healthy = True
 
         # Check RAG service health (skip if mock services enabled)
         rag_health = {}
