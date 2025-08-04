@@ -64,9 +64,9 @@ jobs:
             --config cloudbuild.yaml \
             --substitutions _REGION=${{ env.GCP_REGION }},_SERVICE_NAME=${{ env.SERVICE_NAME }},_APP_ENV=production \
             --region="${{ env.GCP_REGION }}" \
-            --async \                      # retorna imediatamente :contentReference[oaicite:1]{index=1}
-            --suppress-logs \              # evita tentativa de stream de logs :contentReference[oaicite:2]{index=2}
-            --format="value(metadata.build.id)" )
+            --async \
+            --suppress-logs \
+            --format="value(metadata.build.id)")
 
           echo "👷 Build Cloud Build ID: $BUILD_ID"
 
