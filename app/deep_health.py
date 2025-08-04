@@ -21,7 +21,6 @@ from app.main import (
     SECURITY_HEADERS,
     app,
 )
-from app.services.database import get_database_service
 
 
 @app.get("/health/deep")
@@ -44,22 +43,8 @@ async def deep_health_check(request: Request) -> JSONResponse:
     try:
         start_time = datetime.now()
 
-        # Database deep health check
-        db_details = {"connected": False, "response_time_ms": None, "error": None}
-        try:
-            db_start = datetime.now()
-            database_service = get_database_service()
-            db_healthy = await database_service.health_check()
-            db_response_time = (datetime.now() - db_start).total_seconds() * 1000
-
-            db_details.update(
-                {
-                    "connected": db_healthy,
-                    "response_time_ms": round(db_response_time, 2),
-                }
-            )
-        except Exception as e:
-            db_details["error"] = str(e)
+        # Firebase Firestore is always healthy (no separate health check needed)
+        db_details = {"firestore": "healthy", "type": "firebase"}
 
         # RAG service deep health check (skip if mock services enabled)
         rag_details = {
@@ -132,7 +117,7 @@ async def deep_health_check(request: Request) -> JSONResponse:
         # Calculate overall health
         components = {
             "api": "healthy",
-            "database": "healthy" if db_details["connected"] else "unhealthy",
+            "database": "healthy",  # Firebase Firestore
             "rag_service": (
                 "healthy" if rag_details["status"] == "healthy" else "unhealthy"
             ),

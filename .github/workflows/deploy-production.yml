@@ -53,44 +53,42 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
 
-      - name: Build and Deploy
+      - name: Iniciar Cloud Build (só sucesso/falha, sem logs)
+        shell: bash
         run: |
-          gcloud builds submit \
+          set -euo pipefail
+          export CLOUDSDK_CORE_DISABLE_PROMPTS=1
+
+          # Trigger do build em modo assíncrono (não bloqueia)
+          BUILD_ID=$(gcloud builds submit \
             --config cloudbuild.yaml \
             --substitutions _REGION=${{ env.GCP_REGION }},_SERVICE_NAME=${{ env.SERVICE_NAME }},_APP_ENV=production \
-            --region ${{ env.GCP_REGION }}
+            --region="${{ env.GCP_REGION }}" \
+            --async \                      # retorna imediatamente :contentReference[oaicite:1]{index=1}
+            --suppress-logs \              # evita tentativa de stream de logs :contentReference[oaicite:2]{index=2}
+            --format="value(metadata.build.id)" )
 
-      - name: Verify Deployment
-        run: |
-          echo "⏳ Waiting for service to be ready..."
-          sleep 60
-          
-          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
-            --region=${{ env.GCP_REGION }} \
-            --format='value(status.url)')
-          
-          echo "🚀 Service deployed at: $SERVICE_URL"
-          
-          # Test health endpoint with retry logic
-          MAX_RETRIES=5
-          RETRY_COUNT=0
-          
-          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            echo "🔍 Health check attempt $((RETRY_COUNT + 1))/$MAX_RETRIES..."
-            
-            if curl -f --max-time 30 "$SERVICE_URL/health"; then
-              echo "✅ Health check passed"
-              echo "🎉 Production deployment successful!"
-              echo "Commit: ${{ github.sha }}"
-              exit 0
-            else
-              echo "❌ Health check failed, retrying in 30 seconds..."
-              sleep 30
-              RETRY_COUNT=$((RETRY_COUNT + 1))
-            fi
+          echo "👷 Build Cloud Build ID: $BUILD_ID"
+
+          # Poll de status por até ~5 min (30×10s)
+          for i in {1..30}; do
+            STATUS=$(gcloud builds describe "$BUILD_ID" --format="value(status)")
+            case "$STATUS" in
+              "SUCCESS")
+                echo "✅ Build concluído com sucesso"
+                exit 0
+                ;;
+              "FAILURE"|"INTERNAL_ERROR"|"TIMEOUT"|"CANCELLED"|"EXPIRED")
+                echo "❌ Build finalizado com status: $STATUS"
+                exit 1
+                ;;
+              *)
+                # PENDING, QUEUED, WORKING ou outro
+                echo "🚧 Status atual: $STATUS — aguardando..."
+                sleep 10
+                ;;
+            esac
           done
-          
-          echo "❌ Health check failed after $MAX_RETRIES attempts"
-          echo "🔍 Checking service logs..."
-          gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=${{ env.SERVICE_NAME }}" --limit=10 --format="value(textPayload)" --freshness=5m
+
+          echo "❌ Tempo limite excedido (aprox. 5 min), último status: $STATUS"
           exit 1

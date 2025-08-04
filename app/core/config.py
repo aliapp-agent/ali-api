@@ -86,13 +86,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = Field(default="/api/v1", env="API_V1_STR")
     DEBUG: bool = Field(default=False, env="DEBUG")
 
-    # Database Configuration
-    POSTGRES_URL: str = Field(
-        default="postgresql://ali_user:ali_password@localhost:5432/ali_db",
-        env="POSTGRES_URL",
-    )
-    POSTGRES_POOL_SIZE: int = Field(default=10, env="POSTGRES_POOL_SIZE")
-    POSTGRES_MAX_OVERFLOW: int = Field(default=5, env="POSTGRES_MAX_OVERFLOW")
+    # Firebase is now the primary database - PostgreSQL removed
 
     # Agno Memory Configuration
     AGNO_MEMORY_PATH: str = Field(

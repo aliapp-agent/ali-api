@@ -38,13 +38,8 @@ from app.shared.exceptions import (
     ValidationError,
 )
 
-# Firebase mode - PostgreSQL not needed
-try:
-    from app.services.database import get_database_service
-    _database_available = True
-except Exception:
-    _database_available = False
-    get_database_service = None
+# Using Firebase Firestore - no PostgreSQL needed
+_database_available = False
 
 # Load environment variables
 load_dotenv()
