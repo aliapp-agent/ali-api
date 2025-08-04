@@ -39,6 +39,7 @@ dependencies = [
     "google-cloud-logging>=3.8.0",
     "qdrant-client>=1.7.0",
     "elasticsearch>=8.0.0",
+    "sqlalchemy"
 ]
 
 [dependency-groups]

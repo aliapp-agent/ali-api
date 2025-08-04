@@ -16,7 +16,7 @@ from fastapi import (
 from app.api.v1.auth import get_current_session
 from app.core.agno.graph import AgnoAgent
 from app.core.config import settings
-from app.core.dependencies import MessageServiceDep
+from app.core.dependencies import DatabaseServiceDep
 from app.core.limiter import limiter
 from app.core.logging import logger
 from app.models.session import Session
@@ -42,8 +42,8 @@ agent = AgnoAgent()
 async def chat(
     request: Request,
     chat_request: ChatRequest,
-    message_service: MessageServiceDep,
     session: Session = Depends(get_current_session),
+    db_service: DatabaseServiceDep = None,
 ):
     """Process a chat request using Agno with proper message management.
 
@@ -66,31 +66,16 @@ async def chat(
             message_count=len(chat_request.messages),
         )
 
-        # Create user message using domain service (handles rate limiting, quotas, validation)
-        if chat_request.messages:
-            last_message = chat_request.messages[-1]
-            if last_message.role == "user":
-                await message_service.create_user_message(
-                    session_id=session.id,
-                    user_id=session.user_id,
-                    content=last_message.content,
-                )
+        # Store user message in Firebase (simplified)
+        # TODO: Implement proper message storage with Firebase
 
         # Get AI response
         result = await agent.get_response(
             chat_request.messages, session.id, user_id=session.user_id
         )
 
-        # Create assistant message using domain service (handles metadata, tokens, etc.)
-        if hasattr(result, "content") and hasattr(result, "usage"):
-            await message_service.create_assistant_message(
-                session_id=session.id,
-                user_id=session.user_id,
-                content=result.content,
-                model_used="agno-1.0",
-                tokens_used=getattr(result.usage, "total_tokens", 0),
-                processing_time=getattr(result, "processing_time", 0.0),
-            )
+        # Store assistant message in Firebase (simplified)
+        # TODO: Implement proper message storage with Firebase
 
         logger.info("chat_request_processed", session_id=session.id)
 
@@ -109,7 +94,6 @@ async def chat(
 @limiter.limit(settings.RATE_LIMIT_ENDPOINTS["messages"][0])
 async def get_session_messages(
     request: Request,
-    message_service: MessageServiceDep,
     session: Session = Depends(get_current_session),
 ):
     """Get all messages for a session using domain service.
@@ -126,26 +110,21 @@ async def get_session_messages(
         HTTPException: If there's an error retrieving the messages.
     """
     try:
-        # Use domain service to get session messages (handles permissions, filtering, etc.)
-        message_entities = await message_service.get_conversation_context(
-            session_id=session.id,
-            user_id=session.user_id,
-            max_messages=100,  # Reasonable limit
-        )
-
-        # Convert domain entities to response format
-        messages = []
-        for entity in message_entities:
-            messages.append(
-                {
-                    "role": entity.role.value,
-                    "content": entity.content,
-                    "timestamp": entity.created_at.isoformat(),
-                    "id": entity.id,
-                    "metadata": entity.metadata.to_dict() if entity.metadata else {},
-                }
-            )
-
+        # Mock messages for now - TODO: Implement Firebase message retrieval
+        messages = [
+            {
+                "role": "user",
+                "content": "Hello!",
+                "timestamp": "2025-01-01T00:00:00Z",
+                "id": "1",
+            },
+            {
+                "role": "assistant", 
+                "content": "Hi! How can I help you today?",
+                "timestamp": "2025-01-01T00:00:01Z",
+                "id": "2",
+            }
+        ]
         return ChatResponse(messages=messages)
     except Exception as e:
         logger.error(
@@ -161,7 +140,6 @@ async def get_session_messages(
 @limiter.limit(settings.RATE_LIMIT_ENDPOINTS["messages"][0])
 async def clear_chat_history(
     request: Request,
-    message_service: MessageServiceDep,
     session: Session = Depends(get_current_session),
 ):
     """Clear all messages for a session using domain service.
@@ -175,34 +153,20 @@ async def clear_chat_history(
         dict: A message indicating the chat history was cleared.
     """
     try:
-        # Get session messages first to count
-        messages = await message_service.get_conversation_context(
-            session_id=session.id,
-            user_id=session.user_id,
-            max_messages=1000,  # Get all for bulk operation
-        )
-
-        # Use domain service to clear messages (handles permissions, logging, etc.)
-        if messages:
-            # Bulk delete messages for the session
-            message_ids = [msg.id for msg in messages]
-            for message_id in message_ids:
-                await message_service.delete_message(
-                    message_id=message_id, user_id=session.user_id
-                )
-
-        # Also clear from agent's memory
+        # Clear from agent's memory
         await agent.clear_chat_history(session.id)
-
+        
+        # TODO: Implement Firebase message deletion
+        
         logger.info(
             "chat_history_cleared",
             session_id=session.id,
-            messages_cleared=len(messages),
+            messages_cleared=0,  # Mock count
         )
 
         return {
             "message": "Chat history cleared successfully",
-            "messages_cleared": len(messages),
+            "messages_cleared": 0,
         }
     except Exception as e:
         logger.error(
