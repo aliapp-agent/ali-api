@@ -51,7 +51,7 @@ docker-compose -f docker-compose.yml -f docker-compose.postgres.yml down
 
 ```bash
 # Configurar POSTGRES_URL no .env
-echo "POSTGRES_URL=postgresql://user:pass@host:5432/db" >> .env.development
+echo "POSTGRES_URL=postgresql://user:pass@host:5432/db" >> .env
 
 # Subir apenas a aplicação
 docker-compose up -d
@@ -72,7 +72,7 @@ docker-compose -f docker-compose.yml -f docker-compose.postgres.yml --profile ad
 
 ### Variáveis Obrigatórias
 
-Crie um arquivo `.env.development` com:
+Crie um arquivo `.env` com:
 
 ```bash
 # Aplicação

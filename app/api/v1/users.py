@@ -481,7 +481,7 @@ async def get_user_permissions(
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        # Mock permission response based on user data
+        # TODO: Implement proper permission checking based on user data
         user_model = await users_service.db_service.get_user(user_id)
 
         return UserPermissionResponse(
@@ -631,7 +631,7 @@ async def change_password(
         if not current_user.verify_password(password_change.current_password):
             raise HTTPException(status_code=400, detail="Current password is incorrect")
 
-        # Update password (mock implementation)
+        # TODO: Implement password update functionality
         # In real implementation: current_user.hashed_password = User.hash_password(password_change.new_password)
 
         # Log activity

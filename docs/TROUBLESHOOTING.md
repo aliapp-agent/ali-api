@@ -123,9 +123,9 @@ curl -X POST https://ali-api-production-459480858531.us-central1.run.app/api/v1/
 
 ### 3. Configuração de Ambiente
 
-- ✅ Arquivo `.env.development` atualizado
+- ✅ Arquivo `.env` atualizado
 - ✅ Configurações Firebase adicionadas
-- ✅ Mock services para desenvolvimento
+- ✅ Serviços configurados para desenvolvimento
 
 ### 4. Scripts de Diagnóstico
 

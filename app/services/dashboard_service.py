@@ -124,7 +124,7 @@ class DashboardService:
     async def _get_system_overview(self) -> SystemOverview:
         """Get system overview metrics."""
         try:
-            # Mock data - in real implementation, aggregate from various services
+            # TODO: Implement actual data aggregation from various services
             now = datetime.utcnow()
 
             return SystemOverview(
@@ -150,7 +150,7 @@ class DashboardService:
             # Generate time-based data points
             days = self._get_days_from_range(time_range)
 
-            # Mock user growth trend
+            # TODO: Implement actual user growth trend calculation
             growth_trend = []
             base_date = datetime.utcnow() - timedelta(days=days)
             for i in range(days):
@@ -559,7 +559,7 @@ class DashboardService:
             report_id = str(uuid.uuid4())
             now = datetime.utcnow()
 
-            # Mock report generation
+            # TODO: Implement actual report generation
             report_size = random.randint(500000, 2000000)  # 500KB - 2MB
 
             logger.info(
@@ -606,7 +606,7 @@ class DashboardService:
             export_id = str(uuid.uuid4())
             now = datetime.utcnow()
 
-            # Mock export
+            # TODO: Implement actual export functionality
             record_count = random.randint(1000, 50000)
             file_size = record_count * random.randint(100, 500)
 

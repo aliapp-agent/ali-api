@@ -110,7 +110,7 @@ async def get_session_messages(
         HTTPException: If there's an error retrieving the messages.
     """
     try:
-        # Mock messages for now - TODO: Implement Firebase message retrieval
+        # TODO: Implement Firebase message retrieval
         messages = [
             {
                 "role": "user",
@@ -161,7 +161,7 @@ async def clear_chat_history(
         logger.info(
             "chat_history_cleared",
             session_id=session.id,
-            messages_cleared=0,  # Mock count
+            messages_cleared=0,  # TODO: Implement actual count
         )
 
         return {
@@ -196,7 +196,7 @@ async def get_chat_history(
         ChatHistoryResponse: Paginated chat history
     """
     try:
-        # For now, return mock data. In a real implementation, this would
+        # TODO: In a real implementation, this would
         # query the database with the provided filters
         logger.info(
             "chat_history_requested",
@@ -205,20 +205,20 @@ async def get_chat_history(
             offset=history_request.offset,
         )
 
-        # Mock response - in real implementation, query message store
+        # TODO: Implement actual message store query
         import uuid
         from datetime import datetime
 
         messages = []
-        total_count = 50  # Mock total
+        total_count = 50  # TODO: Implement actual count from database
 
-        # Generate some mock messages
+        # TODO: Generate actual messages from database
         for i in range(min(history_request.limit, 10)):
             messages.append(
                 {
                     "id": str(uuid.uuid4()),
                     "role": "user" if i % 2 == 0 else "assistant",
-                    "content": f"Mock message {i + history_request.offset}",
+                    "content": f"Sample message {i + history_request.offset}",
                     "timestamp": datetime.now().isoformat(),
                     "session_id": session.id,
                     "user_id": session.user_id,
@@ -277,7 +277,7 @@ async def search_chat_history(
             limit=search_request.limit,
         )
 
-        # Mock search results - in real implementation, use Elasticsearch or similar
+        # TODO: Implement actual search using Elasticsearch or similar
         import uuid
         from datetime import datetime
 
@@ -337,7 +337,7 @@ async def get_chat_metrics(
     try:
         logger.info("chat_metrics_requested", session_id=session.id)
 
-        # Mock metrics - in real implementation, aggregate from database
+        # TODO: Implement actual metrics aggregation from database
         metrics = ChatMetrics(
             total_messages=1250,
             total_sessions=75,
@@ -403,7 +403,7 @@ async def export_chat_data(
             user_id=export_request.user_id,
         )
 
-        # Mock export - in real implementation, generate actual files
+        # TODO: Implement actual file generation
         import uuid
         from datetime import (
             datetime,
@@ -452,7 +452,7 @@ async def get_chat_insights(
     try:
         logger.info("chat_insights_requested", session_id=session.id)
 
-        # Mock insights - in real implementation, use AI to analyze patterns
+        # TODO: Implement AI-powered pattern analysis
         from datetime import datetime
 
         insights = [

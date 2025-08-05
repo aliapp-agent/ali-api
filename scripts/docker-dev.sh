@@ -74,11 +74,11 @@ show_help() {
 
 # Verificar se arquivo .env existe
 check_env_file() {
-    if [[ ! -f ".env.development" ]]; then
-        print_warning "Arquivo .env.development não encontrado."
-        print_info "Copiando .env.example para .env.development..."
-        cp .env.example .env.development
-        print_warning "Por favor, edite .env.development com suas configurações antes de continuar."
+    if [[ ! -f ".env" ]]; then
+    print_warning "Arquivo .env não encontrado."
+    print_info "Copiando .env.example para .env..."
+    cp .env.example .env
+    print_warning "Por favor, edite .env com suas configurações antes de continuar."
         print_info "Variáveis obrigatórias: LLM_API_KEY, JWT_SECRET_KEY"
         return 1
     fi

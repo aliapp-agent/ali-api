@@ -46,22 +46,17 @@ def get_environment() -> Environment:
             return Environment.DEVELOPMENT
 
 
-# Load appropriate .env file based on environment
+# Load .env file
 def load_env_file():
-    """Load environment-specific .env file."""
-    env = get_environment()
-    env_file = f".env.{env.value}"
-
-    # Also try to load .env.firebase if it exists
+    """Load .env file."""
+    # Load main .env file
+    if Path(".env").exists():
+        load_dotenv(".env")
+    
+    # Also try to load .env.firebase if it exists (for Firebase-specific configs)
     firebase_env = ".env.firebase"
     if Path(firebase_env).exists():
         load_dotenv(firebase_env)
-
-    if Path(env_file).exists():
-        load_dotenv(env_file)
-    else:
-        # Fallback to .env if environment-specific file doesn't exist
-        load_dotenv(".env")
 
 
 # Load environment file

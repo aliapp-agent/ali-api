@@ -487,38 +487,32 @@ async def health_check(request: Request) -> JSONResponse:
             db_healthy = False
             db_health = {"status": "unhealthy", "error": f"Database initialization failed: {str(e)}"}
 
-        # Check RAG service health (skip if mock services enabled)
+        # Check RAG service health
         rag_health = {}
         rag_healthy = True
-        if os.getenv("USE_MOCK_SERVICES") != "true":
-            try:
-                from app.services.rag import rag_service
+        try:
+            from app.services.rag import rag_service
 
-                rag_health = await rag_service.health_check()
-                rag_healthy = rag_health.get("status") == "healthy"
-            except Exception as e:
-                logger.warning("rag_health_check_failed", error=str(e))
-                rag_healthy = False
-                rag_health = {"status": "unhealthy", "error": str(e)}
-        else:
-            rag_health = {"status": "healthy", "mock": True}
+            rag_health = await rag_service.health_check()
+            rag_healthy = rag_health.get("status") == "healthy"
+        except Exception as e:
+            logger.warning("rag_health_check_failed", error=str(e))
+            rag_healthy = False
+            rag_health = {"status": "unhealthy", "error": str(e)}
 
-        # Check Agno agent health (skip if mock services enabled)
+        # Check Agno agent health
         agno_healthy = True
         agno_health = {}
-        if os.getenv("USE_MOCK_SERVICES") != "true":
-            try:
-                from app.core.agno.graph import AgnoAgent
+        try:
+            from app.core.agno.graph import AgnoAgent
 
-                agent = AgnoAgent()
-                agno_health = await agent.health_check()
-                agno_healthy = agno_health.get("status") == "healthy"
-            except Exception as e:
-                logger.warning("agno_health_check_failed", error=str(e))
-                agno_healthy = False
-                agno_health = {"status": "unhealthy", "error": str(e)}
-        else:
-            agno_health = {"status": "healthy", "mock": True}
+            agent = AgnoAgent()
+            agno_health = await agent.health_check()
+            agno_healthy = agno_health.get("status") == "healthy"
+        except Exception as e:
+            logger.warning("agno_health_check_failed", error=str(e))
+            agno_healthy = False
+            agno_health = {"status": "unhealthy", "error": str(e)}
 
         # Detailed component status
         components = {
@@ -632,8 +626,7 @@ async def detailed_health_check(request: Request) -> JSONResponse:
             "FIREBASE_CREDENTIALS_PATH", 
             "FIREBASE_STORAGE_BUCKET",
             "JWT_SECRET",
-            "APP_ENV",
-            "USE_MOCK_SERVICES"
+            "APP_ENV"
         ]
         
         for var in env_vars_to_check:

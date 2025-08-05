@@ -19,7 +19,7 @@
   - [ ] `ANTHROPIC_API_KEY`
   - [ ] `LANGFUSE_SECRET_KEY`
   - [ ] `LANGFUSE_PUBLIC_KEY`
-- [ ] Atualizar `.env.production` com valores reais
+- [ ] Atualizar `.env` com valores de produção reais
 - [ ] Configurar secrets no Google Secret Manager
 
 ### 3. Banco de Dados

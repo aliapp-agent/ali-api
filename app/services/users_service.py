@@ -106,18 +106,21 @@ class UsersService:
                 updated_at=now,
             )
 
-            # Save to database (mock implementation)
-            user.id = hash(user.email) % 1000000  # Mock ID generation
+            # TODO: Implement actual database save
+            user.id = hash(user.email) % 1000000  # TODO: Use proper ID generation
 
             # Log activity
             await self.log_activity(
                 created_by_user_id,
                 "user_create",
                 f"Created user {user.email}",
-                metadata={
-                    "created_user_id": user.id,
-                    "role": user.role,
-                    "status": user.status,
+                data={
+                    "metadata": {
+                        "created_user_id": user.id,
+                        "role": user.role,
+                        "status": user.status,
+                    },
+                    "success": True,
                 },
             )
 
@@ -169,6 +172,23 @@ class UsersService:
             )
             return None
 
+    def _update_user_fields(self, user, update_data):
+        """Helper method to update user fields."""
+        field_updates = [
+            ("email", update_data.email),
+            ("role", update_data.role.value if update_data.role else None),
+            ("status", update_data.status.value if update_data.status else None),
+            ("permissions", {"additional": [p.value for p in update_data.permissions]} if update_data.permissions else None),
+            ("preferences", update_data.preferences.dict() if update_data.preferences else None),
+            ("profile", update_data.profile.dict() if update_data.profile else None),
+        ]
+
+        for field, value in field_updates:
+            if value is not None:
+                setattr(user, field, value)
+                if field == "status":
+                    user.is_active = update_data.status == UserStatus.ACTIVE
+
     async def update_user(
         self, user_id: int, update_data: UserUpdate, updated_by_user_id: int
     ) -> Optional[UserResponse]:
@@ -194,49 +214,32 @@ class UsersService:
                 "email": user.email,
             }
 
-            # Update fields
+            # Check email uniqueness if email is being updated
             if update_data.email is not None:
-                # Check if new email already exists
-                existing_user = await self.db_service.get_user_by_email(
-                    update_data.email
-                )
+                existing_user = await self.db_service.get_user_by_email(update_data.email)
                 if existing_user and existing_user.id != user_id:
                     raise HTTPException(status_code=400, detail="Email already in use")
-                user.email = update_data.email
 
-            if update_data.role is not None:
-                user.role = update_data.role.value
-
-            if update_data.status is not None:
-                user.status = update_data.status.value
-                user.is_active = update_data.status == UserStatus.ACTIVE
-
-            if update_data.permissions is not None:
-                user.permissions = {
-                    "additional": [p.value for p in update_data.permissions]
-                }
-
-            if update_data.preferences is not None:
-                user.preferences = update_data.preferences.dict()
-
-            if update_data.profile is not None:
-                user.profile = update_data.profile.dict()
-
+            # Update all fields using helper method
+            self._update_user_fields(user, update_data)
             user.updated_at = datetime.utcnow()
 
             # Log significant changes
-            changes = []
-            for field, original_value in original_values.items():
-                current_value = getattr(user, field)
-                if original_value != current_value:
-                    changes.append(f"{field}: {original_value} -> {current_value}")
+            changes = [
+                f"{field}: {original_value} -> {getattr(user, field)}"
+                for field, original_value in original_values.items()
+                if original_value != getattr(user, field)
+            ]
 
             if changes:
                 await self.log_activity(
                     updated_by_user_id,
                     "user_update",
                     f"Updated user {user.email}: {', '.join(changes)}",
-                    metadata={"updated_user_id": user_id, "changes": changes},
+                    data={
+                        "metadata": {"updated_user_id": user_id, "changes": changes},
+                        "success": True,
+                    },
                 )
 
             logger.info(
@@ -288,7 +291,10 @@ class UsersService:
                     deleted_by_user_id,
                     "user_soft_delete",
                     f"Soft deleted user {user.email}",
-                    metadata={"deleted_user_id": user_id},
+                    data={
+                        "metadata": {"deleted_user_id": user_id},
+                        "success": True,
+                    },
                 )
 
                 logger.info(
@@ -298,12 +304,15 @@ class UsersService:
                     deleted_by=deleted_by_user_id,
                 )
             else:
-                # Hard delete - remove from database (not implemented in mock)
+                # TODO: Implement hard delete from database
                 await self.log_activity(
                     deleted_by_user_id,
                     "user_hard_delete",
                     f"Hard deleted user {user.email}",
-                    metadata={"deleted_user_id": user_id},
+                    data={
+                        "metadata": {"deleted_user_id": user_id},
+                        "success": True,
+                    },
                 )
 
                 logger.info(
@@ -335,10 +344,10 @@ class UsersService:
             UserListResponse: Paginated search results
         """
         try:
-            # Mock implementation - in real implementation, query database
-            total_count = 150  # Mock total
+            # TODO: Implement actual database query
+            total_count = 150  # TODO: Get actual count from database
 
-            # Generate mock users for the page
+            # TODO: Generate actual users from database for the page
             users = []
             start_index = (search_request.page - 1) * search_request.page_size
 
@@ -347,11 +356,11 @@ class UsersService:
                 if user_id > total_count:
                     break
 
-                # Create mock user
+                # TODO: Create actual user from database
                 user = User(
                     id=user_id,
                     email=f"user{user_id}@example.com",
-                    hashed_password="mock_hash",
+                    hashed_password="placeholder_hash",
                     role=(
                         "viewer" if i % 3 == 0 else "editor" if i % 3 == 1 else "admin"
                     ),
@@ -415,9 +424,7 @@ class UsersService:
             UserStats: User statistics
         """
         try:
-            # Mock statistics - in real implementation, aggregate from database
-            now = datetime.utcnow()
-
+            # TODO: Implement actual statistics aggregation from database
             stats = UserStats(
                 total_users=245,
                 active_users=198,
@@ -532,10 +539,13 @@ class UsersService:
                 operator_user_id,
                 f"bulk_{operation}",
                 f"Bulk {operation} on {len(user_ids)} users",
-                metadata={
-                    "user_ids": user_ids,
-                    "success_count": success_count,
-                    "error_count": error_count,
+                data={
+                    "metadata": {
+                        "user_ids": user_ids,
+                        "success_count": success_count,
+                        "error_count": error_count,
+                    },
+                    "success": error_count == 0,
                 },
             )
 
@@ -620,13 +630,8 @@ class UsersService:
         user_id: int,
         activity_type: str,
         description: str,
-        metadata: Optional[dict] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
-        session_id: Optional[str] = None,
-        resource_type: Optional[str] = None,
-        resource_id: Optional[str] = None,
-        success: bool = True,
+        *,
+        data: Optional[dict] = None,
     ) -> None:
         """Log user activity for audit purposes.
 
@@ -634,16 +639,12 @@ class UsersService:
             user_id: User ID
             activity_type: Type of activity
             description: Human-readable description
-            metadata: Additional metadata
-            ip_address: IP address
-            user_agent: User agent string
-            session_id: Session ID
-            resource_type: Resource type
-            resource_id: Resource ID
-            success: Whether the activity was successful
+            data: Additional data including metadata, context, and success status
         """
         try:
             # In real implementation, save to database
+            success = data.get("success", True) if data else True
+            metadata = data.get("metadata") if data else None
             logger.info(
                 "user_activity_logged",
                 user_id=user_id,
@@ -709,7 +710,7 @@ class UsersService:
         Args:
             user: User to send welcome email to
         """
-        # Mock implementation - in real implementation, send actual email
+        # TODO: Implement actual email sending
         logger.info("welcome_email_sent", user_id=user.id, email=user.email)
 
 

@@ -46,7 +46,7 @@ Este guia detalha como configurar Firebase para a Ali API.
 4. Salve o arquivo como `firebase-credentials.json` na raiz do projeto
 
 ### 3.2 Configurar Variáveis de Ambiente
-Copie `.env.firebase` para `.env.development` e atualize:
+Copie `.env.firebase` para `.env` e atualize:
 
 ```bash
 FIREBASE_PROJECT_ID=seu-project-id

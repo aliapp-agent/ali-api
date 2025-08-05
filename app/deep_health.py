@@ -46,42 +46,36 @@ async def deep_health_check(request: Request) -> JSONResponse:
         # Firebase Firestore is always healthy (no separate health check needed)
         db_details = {"firestore": "healthy", "type": "firebase"}
 
-        # RAG service deep health check (skip if mock services enabled)
+        # RAG service deep health check
         rag_details = {
             "status": "unknown",
             "elasticsearch": "unknown",
             "index": "unknown",
             "error": None,
         }
-        if os.getenv("USE_MOCK_SERVICES") != "true":
-            try:
-                from app.services.rag import rag_service
+        try:
+            from app.services.rag import rag_service
 
-                rag_health = await rag_service.health_check()
-                rag_details.update(rag_health)
-            except Exception as e:
-                rag_details["error"] = str(e)
-        else:
-            rag_details = {"status": "healthy", "mock": True}
+            rag_health = await rag_service.health_check()
+            rag_details.update(rag_health)
+        except Exception as e:
+            rag_details["error"] = str(e)
 
-        # Agno agent deep health check (skip if mock services enabled)
+        # Agno agent deep health check
         agno_details = {
             "status": "unknown",
             "agent_ready": False,
             "tools_count": 0,
             "error": None,
         }
-        if os.getenv("USE_MOCK_SERVICES") != "true":
-            try:
-                from app.core.agno.graph import AgnoAgent
+        try:
+            from app.core.agno.graph import AgnoAgent
 
-                agent = AgnoAgent()
-                agno_health = await agent.health_check()
-                agno_details.update(agno_health)
-            except Exception as e:
-                agno_details["error"] = str(e)
-        else:
-            agno_details = {"status": "healthy", "mock": True}
+            agent = AgnoAgent()
+            agno_health = await agent.health_check()
+            agno_details.update(agno_health)
+        except Exception as e:
+            agno_details["error"] = str(e)
 
         # System resource information
         try:

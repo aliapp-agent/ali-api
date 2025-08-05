@@ -64,7 +64,7 @@
 ### **2. Configuração de Ambiente** (5 min)
 ```bash
 # Copiar configurações
-cp .env.firebase .env.development
+cp .env.firebase .env
 
 # Editar variáveis (substituir pelos valores reais)
 FIREBASE_PROJECT_ID=seu-project-id

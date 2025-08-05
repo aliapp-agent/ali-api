@@ -52,15 +52,15 @@ def setup_virtual_environment():
         return False
 
 def check_env_file():
-    """Verifica se o arquivo .env.development existe."""
+    """Verifica se o arquivo .env existe."""
     print("\n⚙️  Verificando arquivo de configuração...")
-    env_file = Path(".env.development")
+    env_file = Path(".env")
     if env_file.exists():
-        print("  ✅ Arquivo .env.development encontrado")
+        print("  ✅ Arquivo .env encontrado")
         return True
     else:
-        print("  ❌ Arquivo .env.development não encontrado")
-        print("  💡 Copie .env.example para .env.development e configure")
+        print("  ❌ Arquivo .env não encontrado")
+        print("  💡 Copie .env.example para .env e configure")
         return False
 
 def create_data_directory():
@@ -85,20 +85,27 @@ def create_logs_directory():
         print("  ✅ Diretório 'logs' já existe")
     return True
 
-def check_firebase_mock():
-    """Verifica se o mock do Firebase está configurado."""
+def check_firebase_config():
+    """Verifica se o Firebase está configurado."""
     print("\n🔥 Verificando configuração Firebase...")
-    env_file = Path(".env.development")
+    env_file = Path(".env")
     if env_file.exists():
         with open(env_file, 'r') as f:
             content = f.read()
-            if "USE_MOCK_SERVICES=true" in content:
-                print("  ✅ Mock services habilitado para desenvolvimento")
-                return True
-            else:
-                print("  ⚠️  Mock services não habilitado")
-                print("  💡 Adicione USE_MOCK_SERVICES=true ao .env.development")
-                return False
+        
+        required_vars = ["FIREBASE_PROJECT_ID", "FIREBASE_CREDENTIALS_PATH"]
+        missing_vars = []
+        
+        for var in required_vars:
+            if f"{var}=" not in content:
+                missing_vars.append(var)
+        
+        if not missing_vars:
+            print("  ✅ Firebase configurado")
+            return True
+        else:
+            print(f"  ⚠️  Variáveis Firebase faltando: {', '.join(missing_vars)}")
+            return False
     return False
 
 def run_health_check():
@@ -135,7 +142,7 @@ def main():
         check_env_file,
         create_data_directory,
         create_logs_directory,
-        check_firebase_mock,
+        check_firebase_config,
         run_health_check,
     ]
     

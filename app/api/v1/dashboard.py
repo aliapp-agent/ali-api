@@ -421,7 +421,7 @@ async def acknowledge_alert(
         if not current_user.has_permission("system:write"):
             raise HTTPException(status_code=403, detail="Permission denied")
 
-        # Mock acknowledgment
+        # TODO: Implement actual acknowledgment logic
         logger.info(
             "alert_acknowledged", alert_id=alert_id, acknowledged_by=current_user.id
         )
@@ -608,7 +608,7 @@ async def download_report(
         if not current_user.has_permission("analytics:read"):
             raise HTTPException(status_code=403, detail="Permission denied")
 
-        # Mock download - in real implementation, return actual file
+        # TODO: Implement actual file download
         logger.info("report_downloaded", report_id=report_id, user_id=current_user.id)
 
         return MessageResponse(
@@ -648,7 +648,7 @@ async def download_export(
         if not current_user.has_permission("analytics:read"):
             raise HTTPException(status_code=403, detail="Permission denied")
 
-        # Mock download - in real implementation, return actual file
+        # TODO: Implement actual file download
         logger.info("export_downloaded", export_id=export_id, user_id=current_user.id)
 
         return MessageResponse(

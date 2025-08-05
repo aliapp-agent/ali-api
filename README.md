@@ -9,7 +9,7 @@ Uma API FastAPI robusta e pronta para produção com integração Agno e Langfus
 uv sync
 
 # Configurar ambiente
-cp .env.example .env.development
+cp .env.example .env
 
 # Executar aplicação
 uv run python -m app.main
