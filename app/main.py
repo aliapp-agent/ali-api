@@ -470,7 +470,7 @@ async def health_check(request: Request) -> JSONResponse:
         try:
             from app.core.firebase import get_firestore
             from app.services.database import DatabaseService
-            
+
             # Test Firebase connection
             db = get_firestore()
             if db:
@@ -623,35 +623,35 @@ async def detailed_health_check(request: Request) -> JSONResponse:
         # Check environment variables
         env_vars_to_check = [
             "FIREBASE_PROJECT_ID",
-            "FIREBASE_CREDENTIALS_PATH", 
+            "FIREBASE_CREDENTIALS_PATH",
             "FIREBASE_STORAGE_BUCKET",
-            "JWT_SECRET",
+            "JWT_SECRET_KEY",
             "APP_ENV"
         ]
-        
+
         for var in env_vars_to_check:
             value = os.getenv(var)
             health_details["environment_variables"][var] = {
                 "set": value is not None,
-                "value": "***" if var in ["JWT_SECRET", "FIREBASE_CREDENTIALS_PATH"] and value else value
+                "value": "***" if var in ["JWT_SECRET_KEY", "FIREBASE_CREDENTIALS_PATH"] and value else value
             }
 
         # Detailed Firebase check
         try:
             from app.core.firebase import get_firestore, firebase_config
-            
+
             health_details["checks"]["firebase_config"] = {
                 "status": "checking",
                 "details": {}
             }
-            
+
             # Check if Firebase app is initialized
             if firebase_config._app:
                 health_details["checks"]["firebase_config"]["details"]["app_initialized"] = True
                 health_details["checks"]["firebase_config"]["details"]["project_id"] = firebase_config._app.project_id
             else:
                 health_details["checks"]["firebase_config"]["details"]["app_initialized"] = False
-                
+
             # Test Firestore connection
             db = get_firestore()
             if db:
@@ -668,7 +668,7 @@ async def detailed_health_check(request: Request) -> JSONResponse:
             else:
                 health_details["checks"]["firebase_config"]["details"]["firestore_client"] = False
                 health_details["checks"]["firebase_config"]["status"] = "unhealthy"
-                
+
         except Exception as firebase_error:
             health_details["checks"]["firebase_config"] = {
                 "status": "error",
@@ -678,17 +678,17 @@ async def detailed_health_check(request: Request) -> JSONResponse:
         # Check DatabaseService
         try:
             from app.services.database import DatabaseService
-            
+
             db_service = DatabaseService()
             health_details["checks"]["database_service"] = {
                 "status": "checking",
                 "details": {}
             }
-            
+
             db_healthy = await db_service.health_check()
             health_details["checks"]["database_service"]["details"]["health_check_result"] = db_healthy
             health_details["checks"]["database_service"]["status"] = "healthy" if db_healthy else "unhealthy"
-            
+
         except Exception as db_error:
             health_details["checks"]["database_service"] = {
                 "status": "error",
@@ -697,9 +697,9 @@ async def detailed_health_check(request: Request) -> JSONResponse:
 
         # Check JWT configuration
         try:
-            from app.core.security import create_access_token
-            
-            test_token = create_access_token(data={"sub": "test"})
+            from app.shared.utils.auth import create_access_token
+
+            test_token = create_access_token(session_id="test_health_check")
             health_details["checks"]["jwt"] = {
                 "status": "healthy" if test_token else "unhealthy",
                 "details": {
@@ -715,7 +715,7 @@ async def detailed_health_check(request: Request) -> JSONResponse:
         # System information
         import platform
         import sys
-        
+
         health_details["system_info"] = {
             "python_version": sys.version,
             "platform": platform.platform(),
@@ -741,7 +741,7 @@ async def detailed_health_check(request: Request) -> JSONResponse:
             error=str(e),
             exc_info=True,
         )
-        
+
         response = JSONResponse(
             status_code=HTTP_500_INTERNAL_SERVER_ERROR,
             content={
@@ -763,9 +763,9 @@ async def detailed_health_check(request: Request) -> JSONResponse:
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
-        "app.main:app", 
-        host="0.0.0.0", 
-        port=8080, 
+        "app.main:app",
+        host="0.0.0.0",
+        port=8080,
         reload=True,
         log_level="info"
     )
