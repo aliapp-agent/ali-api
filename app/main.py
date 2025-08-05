@@ -464,8 +464,28 @@ async def health_check(request: Request) -> JSONResponse:
     logger.info("health_check_called")
 
     try:
-        # Check database connectivity - Firebase mode (no PostgreSQL needed)
+        # Check Firebase/Database connectivity
         db_healthy = True
+        db_health = {"status": "healthy"}
+        try:
+            from app.core.firebase import get_firestore
+            from app.services.database import DatabaseService
+            
+            # Test Firebase connection
+            db = get_firestore()
+            if db:
+                # Try to create a DatabaseService instance
+                db_service = DatabaseService()
+                db_healthy = await db_service.health_check()
+                if not db_healthy:
+                    db_health = {"status": "unhealthy", "error": "Firebase connection failed"}
+            else:
+                db_healthy = False
+                db_health = {"status": "unhealthy", "error": "Firebase client not initialized"}
+        except Exception as e:
+            logger.error("database_health_check_failed", error=str(e), exc_info=True)
+            db_healthy = False
+            db_health = {"status": "unhealthy", "error": f"Database initialization failed: {str(e)}"}
 
         # Check RAG service health (skip if mock services enabled)
         rag_health = {}
@@ -510,7 +530,7 @@ async def health_check(request: Request) -> JSONResponse:
 
         # Add detailed component information
         component_details = {
-            "database": {"connected": db_healthy},
+            "database": db_health,
             "rag_service": rag_health,
             "agno_agent": agno_health,
         }
@@ -576,6 +596,166 @@ async def health_check(request: Request) -> JSONResponse:
                 "error": "Health check failed",
                 "error_id": error_id,
                 "timestamp": datetime.now().isoformat(),
+            },
+        )
+
+        # Add security headers
+        for header, value in SECURITY_HEADERS.items():
+            response.headers[header] = value
+
+        return response
+
+
+@app.get("/api/v1/health/detailed")
+@limiter.limit("10/minute")
+async def detailed_health_check(request: Request) -> JSONResponse:
+    """Detailed health check endpoint for debugging.
+
+    Returns:
+        JSONResponse: Detailed health status information
+    """
+    logger.info("detailed_health_check_called")
+
+    try:
+        health_details = {
+            "timestamp": datetime.now().isoformat(),
+            "environment": settings.APP_ENV.value,
+            "version": settings.VERSION,
+            "checks": {},
+            "environment_variables": {},
+            "system_info": {}
+        }
+
+        # Check environment variables
+        env_vars_to_check = [
+            "FIREBASE_PROJECT_ID",
+            "FIREBASE_CREDENTIALS_PATH", 
+            "FIREBASE_STORAGE_BUCKET",
+            "JWT_SECRET",
+            "APP_ENV",
+            "USE_MOCK_SERVICES"
+        ]
+        
+        for var in env_vars_to_check:
+            value = os.getenv(var)
+            health_details["environment_variables"][var] = {
+                "set": value is not None,
+                "value": "***" if var in ["JWT_SECRET", "FIREBASE_CREDENTIALS_PATH"] and value else value
+            }
+
+        # Detailed Firebase check
+        try:
+            from app.core.firebase import get_firestore, firebase_config
+            
+            health_details["checks"]["firebase_config"] = {
+                "status": "checking",
+                "details": {}
+            }
+            
+            # Check if Firebase app is initialized
+            if firebase_config._app:
+                health_details["checks"]["firebase_config"]["details"]["app_initialized"] = True
+                health_details["checks"]["firebase_config"]["details"]["project_id"] = firebase_config._app.project_id
+            else:
+                health_details["checks"]["firebase_config"]["details"]["app_initialized"] = False
+                
+            # Test Firestore connection
+            db = get_firestore()
+            if db:
+                health_details["checks"]["firebase_config"]["details"]["firestore_client"] = True
+                # Try a simple operation
+                try:
+                    collections = db.collections()
+                    health_details["checks"]["firebase_config"]["details"]["firestore_accessible"] = True
+                    health_details["checks"]["firebase_config"]["status"] = "healthy"
+                except Exception as fs_error:
+                    health_details["checks"]["firebase_config"]["details"]["firestore_accessible"] = False
+                    health_details["checks"]["firebase_config"]["details"]["firestore_error"] = str(fs_error)
+                    health_details["checks"]["firebase_config"]["status"] = "unhealthy"
+            else:
+                health_details["checks"]["firebase_config"]["details"]["firestore_client"] = False
+                health_details["checks"]["firebase_config"]["status"] = "unhealthy"
+                
+        except Exception as firebase_error:
+            health_details["checks"]["firebase_config"] = {
+                "status": "error",
+                "error": str(firebase_error)
+            }
+
+        # Check DatabaseService
+        try:
+            from app.services.database import DatabaseService
+            
+            db_service = DatabaseService()
+            health_details["checks"]["database_service"] = {
+                "status": "checking",
+                "details": {}
+            }
+            
+            db_healthy = await db_service.health_check()
+            health_details["checks"]["database_service"]["details"]["health_check_result"] = db_healthy
+            health_details["checks"]["database_service"]["status"] = "healthy" if db_healthy else "unhealthy"
+            
+        except Exception as db_error:
+            health_details["checks"]["database_service"] = {
+                "status": "error",
+                "error": str(db_error)
+            }
+
+        # Check JWT configuration
+        try:
+            from app.core.security import create_access_token
+            
+            test_token = create_access_token(data={"sub": "test"})
+            health_details["checks"]["jwt"] = {
+                "status": "healthy" if test_token else "unhealthy",
+                "details": {
+                    "token_created": bool(test_token)
+                }
+            }
+        except Exception as jwt_error:
+            health_details["checks"]["jwt"] = {
+                "status": "error",
+                "error": str(jwt_error)
+            }
+
+        # System information
+        import platform
+        import sys
+        
+        health_details["system_info"] = {
+            "python_version": sys.version,
+            "platform": platform.platform(),
+            "working_directory": os.getcwd()
+        }
+
+        response = JSONResponse(
+            content=health_details,
+            status_code=status.HTTP_200_OK,
+        )
+
+        # Add security headers
+        for header, value in SECURITY_HEADERS.items():
+            response.headers[header] = value
+
+        return response
+
+    except Exception as e:
+        error_id = str(uuid.uuid4())
+        logger.error(
+            "detailed_health_check_error",
+            error_id=error_id,
+            error=str(e),
+            exc_info=True,
+        )
+        
+        response = JSONResponse(
+            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+            content={
+                "status": "error",
+                "error_id": error_id,
+                "message": "Detailed health check failed",
+                "error": str(e)
             },
         )
 

@@ -244,6 +244,8 @@ async def login(
     Raises:
         HTTPException: If credentials are invalid
     """
+    logger.info("login_attempt", email=username)
+    
     try:
         # Sanitize inputs
         username = sanitize_string(username)
@@ -252,34 +254,86 @@ async def login(
 
         # Verify grant type
         if grant_type != "password":
+            logger.warning("invalid_grant_type", grant_type=grant_type)
             raise HTTPException(
                 status_code=400,
                 detail="Unsupported grant type. Must be 'password'",
             )
 
         if db_service is None:
+            logger.error("database_service_unavailable")
             raise HTTPException(
                 status_code=503,
                 detail="Database service not available",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        user = await db_service.get_user_by_email(username)
-        if not user or not user.verify_password(password):
+            
+        # Test database connection before proceeding
+        try:
+            user = await db_service.get_user_by_email(username)
+        except Exception as db_error:
+            logger.error("database_connection_error", error=str(db_error), email=username, exc_info=True)
+            raise HTTPException(
+                status_code=503,
+                detail="Database service error",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+            
+        if not user:
+            logger.warning("user_not_found", email=username)
             raise HTTPException(
                 status_code=401,
                 detail="Incorrect email or password",
                 headers={"WWW-Authenticate": "Bearer"},
             )
+            
+        # Verify password
+        try:
+            if not user.verify_password(password):
+                logger.warning("password_verification_failed", email=username)
+                raise HTTPException(
+                    status_code=401,
+                    detail="Incorrect email or password",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+        except Exception as pwd_error:
+            logger.error("password_verification_error", error=str(pwd_error), email=username, exc_info=True)
+            raise HTTPException(
+                status_code=500,
+                detail="Authentication service error",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
-        token = create_access_token(str(user.id))
+        # Create access token
+        try:
+            token = create_access_token(str(user.id))
+        except Exception as token_error:
+            logger.error("token_creation_failed", error=str(token_error), user_id=user.id, exc_info=True)
+            raise HTTPException(
+                status_code=500,
+                detail="Token creation failed",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+            
+        logger.info("login_successful", user_id=user.id, email=username)
+        
         return TokenResponse(
             access_token=token.access_token,
             token_type="bearer",
             expires_at=token.expires_at,
         )
+    except HTTPException:
+        raise
     except ValueError as ve:
-        logger.error("login_validation_failed", error=str(ve), exc_info=True)
+        logger.error("login_validation_failed", error=str(ve), email=username, exc_info=True)
         raise HTTPException(status_code=422, detail=str(ve))
+    except Exception as e:
+        logger.error("login_unexpected_error", error=str(e), email=username, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Internal server error",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 @router.post("/session", response_model=SessionResponse)
