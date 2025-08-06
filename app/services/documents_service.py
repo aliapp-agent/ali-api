@@ -47,9 +47,10 @@ class DocumentsService:
     def __init__(self):
         """Initialize the documents service."""
         self.rag_service = rag_service
-        self.es_client = rag_service.es_client
+        # RAG service now uses Qdrant instead of Elasticsearch
+        self.qdrant_client = rag_service.qdrant_client
         self.embedding_model = rag_service.embedding_model
-        self.index_name = rag_service.index_name
+        self.collection_name = rag_service.collection_name
 
     async def create_document(
         self, document_data: DocumentCreate, user_id: int

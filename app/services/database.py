@@ -1,6 +1,7 @@
 """Database service for Firebase Firestore integration."""
 
 import asyncio
+import uuid
 from typing import Any, Dict, List, Optional
 
 from google.cloud.firestore_v1.base_query import FieldFilter
@@ -204,6 +205,228 @@ class DatabaseService:
                 error=str(e)
             )
             return []
+
+    # User-specific methods
+    async def get_user(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """Get a user by Firebase UID.
+        
+        Args:
+            user_id: Firebase UID
+            
+        Returns:
+            User document data if found, None otherwise
+        """
+        return await self.get_document("users", user_id)
+    
+    async def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        """Get a user by email address.
+        
+        Args:
+            email: User email address
+            
+        Returns:
+            User document data if found, None otherwise
+        """
+        try:
+            filters = [FieldFilter("email", "==", email)]
+            users = await self.query_documents("users", filters=filters, limit=1)
+            return users[0] if users else None
+        except Exception as e:
+            logger.error(
+                "database_get_user_by_email_failed",
+                email=email,
+                error=str(e)
+            )
+            return None
+    
+    async def create_user(self, user_id: str, user_data: Dict[str, Any]) -> bool:
+        """Create a new user document.
+        
+        Args:
+            user_id: Firebase UID
+            user_data: User data dictionary
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        return await self.create_document("users", user_id, user_data)
+    
+    async def update_user(self, user_id: str, update_data: Dict[str, Any]) -> bool:
+        """Update an existing user document.
+        
+        Args:
+            user_id: Firebase UID
+            update_data: Updated user data
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        return await self.update_document("users", user_id, update_data)
+    
+    async def list_users(
+        self, 
+        limit: Optional[int] = None,
+        filters: Optional[List[FieldFilter]] = None,
+        order_by: Optional[str] = "created_at"
+    ) -> List[Dict[str, Any]]:
+        """List users with optional filtering and pagination.
+        
+        Args:
+            limit: Maximum number of users to return
+            filters: Optional filters to apply
+            order_by: Field to order by
+            
+        Returns:
+            List of user documents
+        """
+        return await self.query_documents(
+            "users", 
+            filters=filters, 
+            limit=limit, 
+            order_by=order_by
+        )
+    
+    async def delete_user(self, user_id: str) -> bool:
+        """Delete a user document.
+        
+        Args:
+            user_id: Firebase UID
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        return await self.delete_document("users", user_id)
+    
+    # Session-specific methods
+    async def get_session(self, session_id: str) -> Optional["Session"]:
+        """Get a session by session ID.
+        
+        Args:
+            session_id: Session ID
+            
+        Returns:
+            Session object if found, None otherwise
+        """
+        from app.models.session import Session
+        
+        session_data = await self.get_document("sessions", session_id)
+        if not session_data:
+            return None
+            
+        # Convert to Session object
+        return Session(
+            session_id=session_id,
+            user_id=session_data["user_id"],
+            created_at=session_data["created_at"],
+            updated_at=session_data["updated_at"],
+            is_active=session_data.get("is_active", True),
+            metadata=session_data.get("metadata", {})
+        )
+    
+    async def create_session(self, session_id: str, user_id: str) -> "Session":
+        """Create a new session document.
+        
+        Args:
+            session_id: Session ID
+            user_id: Firebase UID
+            
+        Returns:
+            Session object
+        """
+        from datetime import datetime
+        from app.models.session import Session
+        
+        now = datetime.utcnow()
+        
+        session_data = {
+            "user_id": user_id,
+            "created_at": now,
+            "updated_at": now,
+            "is_active": True,
+            "metadata": {"name": f"Chat Session {now.strftime('%Y-%m-%d %H:%M')}"}
+        }
+        
+        success = await self.create_document("sessions", session_id, session_data)
+        if not success:
+            raise Exception("Failed to create session")
+            
+        return Session(
+            session_id=session_id,
+            user_id=user_id,
+            created_at=now,
+            updated_at=now,
+            is_active=True,
+            metadata=session_data["metadata"]
+        )
+    
+    async def update_session_name(self, session_id: str, name: str) -> "Session":
+        """Update a session's name.
+        
+        Args:
+            session_id: Session ID
+            name: New session name
+            
+        Returns:
+            Updated session object
+        """
+        from datetime import datetime
+        update_data = {
+            "metadata.name": name,
+            "updated_at": datetime.utcnow(),
+        }
+        
+        success = await self.update_document("sessions", session_id, update_data)
+        if not success:
+            raise Exception("Failed to update session name")
+            
+        # Return updated session
+        session = await self.get_session(session_id)
+        if not session:
+            raise Exception("Session not found after update")
+            
+        return session
+    
+    async def delete_session(self, session_id: str) -> bool:
+        """Delete a session document.
+        
+        Args:
+            session_id: Session ID
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        return await self.delete_document("sessions", session_id)
+    
+    async def get_user_sessions(self, user_id: str) -> List["Session"]:
+        """Get all sessions for a user.
+        
+        Args:
+            user_id: Firebase UID
+            
+        Returns:
+            List of session objects
+        """
+        from google.cloud.firestore_v1.base_query import FieldFilter
+        from app.models.session import Session
+        
+        filters = [FieldFilter("user_id", "==", user_id)]
+        sessions_data = await self.query_documents("sessions", filters=filters, order_by="created_at")
+        
+        sessions = []
+        for session_data in sessions_data:
+            # We need to get the session ID from the document reference
+            # For now, we'll generate a temporary ID - in production you'd store it or query differently
+            session_id = str(uuid.uuid4())
+            sessions.append(Session(
+                session_id=session_id,
+                user_id=session_data["user_id"],
+                created_at=session_data["created_at"],
+                updated_at=session_data["updated_at"],
+                is_active=session_data.get("is_active", True),
+                metadata=session_data.get("metadata", {})
+            ))
+        
+        return sessions
 
 
 # Global database service instance

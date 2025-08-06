@@ -16,9 +16,10 @@ from fastapi import (
 from app.api.v1.auth import get_current_session
 from app.core.agno.graph import AgnoAgent
 from app.core.config import settings
-from app.core.dependencies import DatabaseServiceDep
+from app.core.dependencies import DatabaseServiceDep, MessageServiceDep
 from app.core.limiter import limiter
 from app.core.logging import logger
+from app.domain.entities.message_entity import MessageRole, MessageStatus
 from app.models.session import Session
 from app.schemas.chat import (
     ChatExportRequest,
@@ -43,7 +44,7 @@ async def chat(
     request: Request,
     chat_request: ChatRequest,
     session: Session = Depends(get_current_session),
-    db_service: DatabaseServiceDep = None,
+    message_service: MessageServiceDep = None,
 ):
     """Process a chat request using Agno with proper message management.
 
@@ -51,7 +52,7 @@ async def chat(
         request: The FastAPI request object for rate limiting.
         chat_request: The chat request containing messages.
         session: The current session from the auth token.
-        message_service: Message domain service for business logic.
+        message_service: Message service for business logic.
 
     Returns:
         ChatResponse: The processed chat response.
@@ -59,6 +60,8 @@ async def chat(
     Raises:
         HTTPException: If there's an error processing the request.
     """
+    import time
+
     try:
         logger.info(
             "chat_request_received",
@@ -66,18 +69,69 @@ async def chat(
             message_count=len(chat_request.messages),
         )
 
-        # Store user message in Firebase (simplified)
-        # TODO: Implement proper message storage with Firebase
+        # Get the last user message from the request
+        user_messages = [msg for msg in chat_request.messages if msg.role == "user"]
+        if not user_messages:
+            raise HTTPException(status_code=400, detail="No user message found")
+
+        last_user_message = user_messages[-1]
+
+        # Store user message in Firebase
+        user_message_entity = await message_service.create_user_message(
+            session_id=session.id,
+            user_id=session.user_id,
+            content=last_user_message.content,
+        )
+
+        logger.info(
+            "user_message_stored",
+            session_id=session.id,
+            message_id=user_message_entity.id,
+        )
+
+        # Measure processing time
+        start_time = time.time()
 
         # Get AI response
         result = await agent.get_response(
             chat_request.messages, session.id, user_id=session.user_id
         )
 
-        # Store assistant message in Firebase (simplified)
-        # TODO: Implement proper message storage with Firebase
+        processing_time = time.time() - start_time
 
-        logger.info("chat_request_processed", session_id=session.id)
+        # Store assistant message(s) in Firebase
+        assistant_messages = [msg for msg in result if msg.role == "assistant"]
+        stored_messages = []
+
+        for assistant_msg in assistant_messages:
+            # Extract token count from the message content (approximation)
+            tokens_used = len(assistant_msg.content.split()) * 1.3  # Rough estimate
+            
+            assistant_message_entity = await message_service.create_assistant_message(
+                session_id=session.id,
+                user_id=session.user_id,
+                content=assistant_msg.content,
+                model_used=settings.LLM_MODEL,
+                tokens_used=int(tokens_used),
+                processing_time=processing_time,
+                confidence_score=0.9,  # Default confidence
+            )
+            
+            stored_messages.append(assistant_message_entity)
+
+            logger.info(
+                "assistant_message_stored",
+                session_id=session.id,
+                message_id=assistant_message_entity.id,
+                tokens_used=int(tokens_used),
+            )
+
+        logger.info(
+            "chat_request_processed",
+            session_id=session.id,
+            user_message_id=user_message_entity.id,
+            assistant_messages_count=len(stored_messages),
+        )
 
         return ChatResponse(messages=result)
     except Exception as e:
@@ -94,12 +148,19 @@ async def chat(
 @limiter.limit(settings.RATE_LIMIT_ENDPOINTS["messages"][0])
 async def get_session_messages(
     request: Request,
+    limit: int = 50,
+    order_by: str = "timestamp",
+    direction: str = "asc",
     session: Session = Depends(get_current_session),
+    message_service: MessageServiceDep = None,
 ):
     """Get all messages for a session using domain service.
 
     Args:
         request: The FastAPI request object for rate limiting.
+        limit: Maximum number of messages to return.
+        order_by: Field to order messages by.
+        direction: Sort direction ('asc' or 'desc').
         session: The current session from the auth token.
         message_service: Message domain service for business logic.
 
@@ -110,21 +171,38 @@ async def get_session_messages(
         HTTPException: If there's an error retrieving the messages.
     """
     try:
-        # TODO: Implement Firebase message retrieval
-        messages = [
-            {
-                "role": "user",
-                "content": "Hello!",
-                "timestamp": "2025-01-01T00:00:00Z",
-                "id": "1",
-            },
-            {
-                "role": "assistant", 
-                "content": "Hi! How can I help you today?",
-                "timestamp": "2025-01-01T00:00:01Z",
-                "id": "2",
+        logger.info(
+            "get_messages_request",
+            session_id=session.id,
+            limit=limit,
+            order_by=order_by,
+            direction=direction,
+        )
+
+        # Get messages from Firebase using the message service
+        message_entities = await message_service.get_session_messages(
+            session_id=session.id,
+            user_id=session.user_id,
+            limit=limit,
+            order_by=order_by,
+            direction=direction,
+        )
+
+        # Convert MessageEntity objects to the Message schema format
+        messages = []
+        for entity in message_entities:
+            message_dict = {
+                "role": entity.role,
+                "content": entity.content,
             }
-        ]
+            messages.append(message_dict)
+
+        logger.info(
+            "get_messages_success",
+            session_id=session.id,
+            message_count=len(messages),
+        )
+
         return ChatResponse(messages=messages)
     except Exception as e:
         logger.error(
@@ -141,6 +219,7 @@ async def get_session_messages(
 async def clear_chat_history(
     request: Request,
     session: Session = Depends(get_current_session),
+    message_service: MessageServiceDep = None,
 ):
     """Clear all messages for a session using domain service.
 
@@ -153,20 +232,30 @@ async def clear_chat_history(
         dict: A message indicating the chat history was cleared.
     """
     try:
-        # Clear from agent's memory
+        logger.info(
+            "clear_chat_history_request",
+            session_id=session.id,
+        )
+
+        # Clear from agent's memory first
         await agent.clear_chat_history(session.id)
         
-        # TODO: Implement Firebase message deletion
+        # Clear messages from Firebase using the message service
+        messages_cleared = await message_service.clear_session_messages(
+            session_id=session.id,
+            user_id=session.user_id,
+        )
         
         logger.info(
             "chat_history_cleared",
             session_id=session.id,
-            messages_cleared=0,  # TODO: Implement actual count
+            messages_cleared=messages_cleared,
         )
 
         return {
             "message": "Chat history cleared successfully",
-            "messages_cleared": 0,
+            "messages_cleared": messages_cleared,
+            "session_id": session.id,
         }
     except Exception as e:
         logger.error(

@@ -1,40 +1,92 @@
 version: '3.8'
 
 services:
-  # API service with Firebase
-  app:
+  # Ali API - FastAPI with Firebase & Qdrant
+  ali-api:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        APP_ENV: development
+    container_name: ali-api
     ports:
-      - "8000:8000"
+      - "8080:8080"
     volumes:
-      - .:/app
+      # Development hot-reload (comment out for production)
+      - ./app:/app/app:ro
+      # Persistent data volumes
       - ./logs:/app/logs
+      - ./data:/app/data
       - ./firebase-credentials.json:/app/firebase-credentials.json:ro
     environment:
+      # Application settings
       - APP_ENV=development
+      - DEBUG=true
+      - PORT=8080
+      
+      # Firebase configuration
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
       - FIREBASE_CREDENTIALS_PATH=/app/firebase-credentials.json
+      - FIREBASE_STORAGE_BUCKET=${FIREBASE_STORAGE_BUCKET}
+      - FIREBASE_REGION=${FIREBASE_REGION}
+      
+      # JWT configuration
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - JWT_ACCESS_TOKEN_EXPIRE_DAYS=${JWT_ACCESS_TOKEN_EXPIRE_DAYS:-30}
+      
+      # LLM configuration
       - LLM_API_KEY=${LLM_API_KEY}
       - LLM_MODEL=${LLM_MODEL:-gpt-4o-mini}
-      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY}
-      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY}
-      - LANGFUSE_HOST=${LANGFUSE_HOST:-https://cloud.langfuse.com}
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-      - POSTGRES_URL=${POSTGRES_URL:-postgresql://ali_user:ali_password@postgres:5432/ali_db}
-      - DEBUG=${DEBUG:-true}
+      - DEFAULT_LLM_TEMPERATURE=${DEFAULT_LLM_TEMPERATURE:-0.2}
+      - MAX_TOKENS=${MAX_TOKENS:-2000}
+      - MAX_LLM_CALL_RETRIES=${MAX_LLM_CALL_RETRIES:-3}
+      
+      # Qdrant configuration
+      - QDRANT_URL=${QDRANT_URL}
+      - QDRANT_API_KEY=${QDRANT_API_KEY}
+      - QDRANT_COLLECTION_NAME=${QDRANT_COLLECTION_NAME:-aguas_claras}
+      
+      # RAG configuration
+      - RAG_INDEX_NAME=${RAG_INDEX_NAME:-aguas_claras}
+      - RAG_EMBEDDING_MODEL=${RAG_EMBEDDING_MODEL:-sentence-transformers/all-MiniLM-L6-v2}
+      - RAG_CHUNK_SIZE=${RAG_CHUNK_SIZE:-1000}
+      - RAG_CHUNK_OVERLAP=${RAG_CHUNK_OVERLAP:-200}
+      - RAG_MAX_RESULTS=${RAG_MAX_RESULTS:-5}
+      
+      # CORS settings
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080,http://127.0.0.1:3000}
+      
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_FORMAT=${LOG_FORMAT:-console}
+      - LOG_DIR=/app/logs
+      
+      # Agno configuration
+      - AGNO_MEMORY_PATH=/app/data/agno_memory.db
+      
+      # Rate limiting
+      - RATE_LIMIT_DEFAULT=${RATE_LIMIT_DEFAULT:-1000 per day,200 per hour}
+      - RATE_LIMIT_CHAT=${RATE_LIMIT_CHAT:-100 per minute}
+      - RATE_LIMIT_HEALTH=${RATE_LIMIT_HEALTH:-100 per minute}
+    
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
-    networks:
-      - ali-network
-    depends_on:
-      - postgres
-    restart: on-failure
+      start_period: 60s
+    
+    restart: unless-stopped
+    
+    # Resource limits (optional)
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
 
-networks:
-  ali-network:
-    driver: bridge
+# No external services needed - using Firebase & Qdrant Cloud

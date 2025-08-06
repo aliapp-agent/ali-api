@@ -147,9 +147,10 @@ class FirestoreMessageRepository(BaseFirestoreRepository, MessageRepositoryInter
         """
         messages_collection = self.get_messages_collection(session_id)
 
-        query = messages_collection.order_by(
-            order_by, direction="asc" if direction == "asc" else "desc"
-        ).limit(limit)
+        from google.cloud.firestore import Query
+        
+        firestore_direction = Query.ASCENDING if direction.lower() == "asc" else Query.DESCENDING
+        query = messages_collection.order_by(order_by, direction=firestore_direction).limit(limit)
 
         docs = query.stream()
         results = []

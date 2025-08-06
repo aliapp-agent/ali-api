@@ -8,8 +8,9 @@ from typing import (
     Optional,
 )
 
-from elasticsearch import Elasticsearch
-# from sentence_transformers import SentenceTransformer
+from qdrant_client import QdrantClient
+from qdrant_client.models import Filter, FieldCondition, MatchValue
+from sentence_transformers import SentenceTransformer
 
 from app.core.config import settings
 from app.core.logging import logger
@@ -21,78 +22,143 @@ from app.schemas.rag import (
 
 class RAGService:
     def __init__(self):
-        # Configurar Elasticsearch com autenticação se necessário
-        es_config = {
-            "hosts": [settings.ELASTICSEARCH_URL],
-            "request_timeout": settings.ELASTICSEARCH_TIMEOUT,
-            "retry_on_timeout": True,
-        }
-
-        # Adicionar API key se fornecida
-        if settings.ELASTICSEARCH_API_KEY:
-            es_config["api_key"] = settings.ELASTICSEARCH_API_KEY
-
-        self.es_client = Elasticsearch(**es_config)
-        # self.embedding_model = SentenceTransformer(settings.RAG_EMBEDDING_MODEL)
-        self.embedding_model = None  # Temporarily disabled
-        self.index_name = settings.RAG_INDEX_NAME
+        # Configurar Qdrant Client
+        self.qdrant_client = QdrantClient(
+            url=settings.QDRANT_URL,
+            api_key=settings.QDRANT_API_KEY if settings.QDRANT_API_KEY else None,
+            timeout=120
+        )
+        
+        # Inicializar modelo de embedding
+        self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')  # Mesmo modelo usado nos embeddings
+        
+        # Nome da collection no Qdrant
+        self.collection_name = settings.QDRANT_COLLECTION_NAME
 
     async def initialize_index(self):
-        """Cria o índice do Elasticsearch se não existir."""
-        if not self.es_client.indices.exists(index=self.index_name):
-            mapping = {
-                "mappings": {
-                    "properties": {
-                        "content": {"type": "text"},
-                        "title": {"type": "text"},
-                        "source_type": {"type": "keyword"},
-                        "summary": {"type": "text"},
-                        "municipio": {"type": "keyword"},
-                        "legislatura": {"type": "keyword"},
-                        "autor": {"type": "keyword"},
-                        "categoria": {"type": "keyword"},
-                        "status": {"type": "keyword"},
-                        "tipo_documento": {"type": "keyword"},
-                        "embedding": {"type": "dense_vector", "dims": 384},
-                        "date": {"type": "date"},
-                        "tokens": {"type": "integer"},
-                        "file_path": {"type": "keyword"},
-                        "timestamp": {"type": "date"},
-                    }
-                }
-            }
-            self.es_client.indices.create(index=self.index_name, body=mapping)
-            logger.info(f"Índice {self.index_name} criado com sucesso")
+        """Verifica se a collection do Qdrant existe."""
+        try:
+            # Verificar se a collection existe
+            collections = self.qdrant_client.get_collections()
+            collection_exists = any(
+                collection.name == self.collection_name 
+                for collection in collections.collections
+            )
+            
+            if collection_exists:
+                logger.info(f"Collection '{self.collection_name}' já existe no Qdrant")
+            else:
+                logger.warning(f"Collection '{self.collection_name}' não existe no Qdrant")
+                
+        except Exception as e:
+            logger.error(f"Erro ao verificar collection no Qdrant: {e}")
 
     async def add_legislative_document(self, document: DocumentoLegislativo) -> str:
-        """Adiciona um documento legislativo ao índice."""
-        # Temporarily use empty embedding when model is disabled
-        if self.embedding_model is not None:
+        """Adiciona um documento legislativo ao Qdrant."""
+        try:
+            # Gerar embedding do documento
             embedding = self.embedding_model.encode(document.content).tolist()
-        else:
-            embedding = [0.0] * 384  # Default embedding size for sentence-transformers
 
-        doc = {
-            "content": document.content,
-            "title": document.title,
-            "source_type": document.source_type,
-            "summary": document.summary,
-            "municipio": document.municipio,
-            "legislatura": document.legislatura,
-            "autor": document.autor,
-            "categoria": document.categoria,
-            "status": document.status,
-            "tipo_documento": document.tipo_documento,
-            "embedding": embedding,
-            "date": document.date,
-            "tokens": document.tokens,
-            "file_path": document.file_path,
-            "timestamp": datetime.now(timezone.utc),
-        }
+            # Preparar payload do documento
+            payload = {
+                "content": document.content,
+                "title": document.title,
+                "source_type": document.source_type,
+                "summary": document.summary,
+                "municipio": document.municipio,
+                "legislatura": document.legislatura,
+                "autor": document.autor,
+                "categoria": document.categoria,
+                "status": document.status,
+                "tipo_documento": document.tipo_documento,
+                "date": document.date.isoformat() if document.date else None,
+                "tokens": document.tokens,
+                "file_path": document.file_path,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
 
-        result = self.es_client.index(index=self.index_name, body=doc)
-        logger.info(f"Documento adicionado com ID: {result['_id']}")
-        return result["_id"]
+            # Adicionar ponto ao Qdrant
+            from qdrant_client.models import PointStruct
+            import uuid
+            
+            point_id = str(uuid.uuid4())
+            point = PointStruct(
+                id=point_id,
+                vector=embedding,
+                payload=payload
+            )
+
+            result = self.qdrant_client.upsert(
+                collection_name=self.collection_name,
+                points=[point]
+            )
+            
+            logger.info(f"Documento adicionado ao Qdrant com ID: {point_id}")
+            return point_id
+            
+        except Exception as e:
+            logger.error(f"Erro ao adicionar documento ao Qdrant: {e}")
+            raise
+
+    async def search_similar(
+        self,
+        query: str,
+        top_k: int = 5,
+        categoria: Optional[str] = None,
+        municipio: Optional[str] = None,
+    ) -> List[Dict]:
+        """Busca documentos similares usando Qdrant."""
+        try:
+            # Gerar embedding da query
+            query_embedding = self.embedding_model.encode(query).tolist()
+            
+            # Construir filtros se necessário
+            filter_conditions = []
+            if categoria:
+                filter_conditions.append(
+                    FieldCondition(key="categoria", match=MatchValue(value=categoria))
+                )
+            if municipio:
+                filter_conditions.append(
+                    FieldCondition(key="municipio", match=MatchValue(value=municipio))
+                )
+            
+            # Criar filtro se houver condições
+            search_filter = None
+            if filter_conditions:
+                search_filter = Filter(must=filter_conditions)
+            
+            # Fazer a busca no Qdrant
+            search_results = self.qdrant_client.search(
+                collection_name=self.collection_name,
+                query_vector=query_embedding,
+                limit=top_k,
+                query_filter=search_filter,
+                with_payload=True,
+                score_threshold=0.3  # Threshold mínimo de similaridade
+            )
+            
+            # Formatar resultados
+            results = []
+            for result in search_results:
+                payload = result.payload
+                results.append({
+                    'id': result.id,
+                    'score': float(result.score),
+                    'title': payload.get('title', 'Sem título'),
+                    'content': payload.get('content', ''),
+                    'municipio': payload.get('municipio', ''),
+                    'categoria': payload.get('categoria', ''),
+                    'source_type': payload.get('source_type', ''),
+                    'timestamp': payload.get('timestamp'),
+                })
+            
+            logger.info(f"Busca RAG executada: '{query}' - {len(results)} resultados encontrados")
+            return results
+            
+        except Exception as e:
+            logger.error(f"Erro na busca Qdrant: {e}")
+            return []
 
     async def search_legislative_documents(
         self,
@@ -104,99 +170,71 @@ class RAGService:
         legislatura: Optional[str] = None,
     ) -> List[DocumentSearchResult]:
         """Busca documentos legislativos usando busca semântica e filtros."""
-        # Gerar embedding da query
-        if self.embedding_model is not None:
-            query_embedding = self.embedding_model.encode(query).tolist()
-        else:
-            query_embedding = [0.0] * 384  # Default embedding size for sentence-transformers
-
-        # Construir filtros
-        filters = []
-        if categoria:
-            filters.append({"term": {"categoria": categoria}})
-        if source_type:
-            filters.append({"term": {"source_type": source_type}})
-        if status:
-            filters.append({"term": {"status": status}})
-        if legislatura:
-            filters.append({"term": {"legislatura": legislatura}})
-
-        # Query híbrida: busca semântica + busca textual
-        search_body = {
-            "size": max_results,
-            "query": {
-                "bool": {
-                    "should": [
-                        {
-                            "script_score": {
-                                "query": {"match_all": {}},
-                                "script": {
-                                    "source": "cosineSimilarity(params.query_vector, 'embedding') + 1.0",
-                                    "params": {"query_vector": query_embedding},
-                                },
-                            }
-                        },
-                        {
-                            "multi_match": {
-                                "query": query,
-                                "fields": [
-                                    "title^2",
-                                    "content",
-                                    "summary^1.5",
-                                ],
-                                "type": "best_fields",
-                            }
-                        },
-                    ],
-                    "filter": filters if filters else [],
-                }
-            },
-        }
-
-        response = self.es_client.search(index=self.index_name, body=search_body)
-
-        results = []
-        for hit in response["hits"]["hits"]:
-            source = hit["_source"]
-            result = DocumentSearchResult(
-                id=hit["_id"],
-                title=source["title"],
-                content=source["content"],
-                source_type=source["source_type"],
-                summary=source.get("summary", ""),
-                municipio=source.get("municipio", ""),
-                legislatura=source.get("legislatura", ""),
-                autor=source.get("autor", ""),
-                categoria=source.get("categoria", ""),
-                status=source.get("status", ""),
-                tipo_documento=source.get("tipo_documento", ""),
-                date=source.get("date"),
-                tokens=source.get("tokens", 0),
-                file_path=source.get("file_path", ""),
-                score=hit["_score"],
+        # Usar o novo mét-odo search_similar
+        results = await self.search_similar(
+            query=query,
+            top_k=max_results,
+            categoria=categoria,
+            municipio=None  # Pode ser mapeado de outro parâmetro se necessário
+        )
+        
+        # Converter para DocumentSearchResult se necessário
+        document_results = []
+        for result in results:
+            doc_result = DocumentSearchResult(
+                id=str(result['id']),
+                score=result['score'],
+                title=result['title'],
+                content=result['content'],
+                source_type=result['source_type'],
+                municipio=result['municipio'],
+                timestamp=result['timestamp']
             )
-            results.append(result)
-
-        return results
+            document_results.append(doc_result)
+        
+        return document_results
 
     async def health_check(self) -> Dict[str, str]:
         """Verifica a saúde do serviço RAG."""
         try:
-            # Verificar conexão com Elasticsearch
-            es_health = self.es_client.ping()
-
-            # Verificar se o índice existe
-            index_exists = self.es_client.indices.exists(index=self.index_name)
-
-            return {
-                "status": "healthy" if es_health and index_exists else "unhealthy",
-                "elasticsearch": "connected" if es_health else "disconnected",
-                "index": "exists" if index_exists else "missing",
-                "embedding_model": settings.RAG_EMBEDDING_MODEL,
-            }
+            # Verificar conexão com Qdrant
+            collections = self.qdrant_client.get_collections()
+            
+            # Verificar se a collection existe
+            collection_exists = any(
+                collection.name == self.collection_name 
+                for collection in collections.collections
+            )
+            
+            if collection_exists:
+                # Verificar quantidade de vetores na collection
+                collection_info = self.qdrant_client.get_collection(self.collection_name)
+                vector_count = collection_info.points_count
+                
+                return {
+                    "status": "healthy",
+                    "qdrant_connection": "ok",
+                    "collection": self.collection_name,
+                    "collection_exists": "yes",
+                    "vector_count": str(vector_count),
+                    "embedding_model": "all-MiniLM-L6-v2"
+                }
+            else:
+                return {
+                    "status": "unhealthy",
+                    "qdrant_connection": "ok",
+                    "collection": self.collection_name,
+                    "collection_exists": "no",
+                    "error": f"Collection '{self.collection_name}' não encontrada"
+                }
+                
         except Exception as e:
-            logger.error(f"RAG health check failed: {str(e)}")
-            return {"status": "unhealthy", "error": str(e)}
+            logger.error(f"RAG health check failed: {e}")
+            return {
+                "status": "unhealthy",
+                "qdrant_connection": "error",
+                "error": str(e)
+            }
 
 
 # Criar instância global do serviço

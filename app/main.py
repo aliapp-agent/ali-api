@@ -58,7 +58,29 @@ async def lifespan(app: FastAPI):
         api_prefix=settings.API_V1_STR,
         startup_time=app.state.start_time.isoformat(),
     )
+    
+    # Initialize AgnoAgent
+    try:
+        from app.core.agno.graph import AgnoAgent
+        logger.info("initializing_agno_agent")
+        
+        agno_agent = AgnoAgent()
+        await agno_agent.initialize()
+        app.state.agno_agent = agno_agent
+        
+        logger.info("agno_agent_initialized_successfully")
+    except Exception as e:
+        logger.error(
+            "agno_agent_initialization_failed",
+            error=str(e),
+            exc_info=True
+        )
+        # Don't fail the application startup, but log the error
+        app.state.agno_agent = None
+    
     yield
+    
+    # Cleanup on shutdown
     logger.info("application_shutdown")
 
 
