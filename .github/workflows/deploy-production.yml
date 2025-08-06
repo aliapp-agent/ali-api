@@ -1,5 +1,3 @@
-# .github/workflows/deploy-production.yml
-
 name: Deploy to Production
 
 on:
@@ -14,70 +12,80 @@ env:
 
 jobs:
   deploy:
-    name: Build and Deploy to Cloud Run
     runs-on: ubuntu-latest
+    environment: production
     
-    # Adiciona permissões necessárias para Workload Identity Federation
-    permissions:
-      contents: 'read'
-      id-token: 'write'
-
     steps:
-      - name: 'Checkout'
-        uses: 'actions/checkout@v4'
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      # Autenticação segura via Workload Identity Federation
-      - name: 'Authenticate to Google Cloud'
-        id: 'auth'
-        uses: 'google-github-actions/auth@v2'
-        with:
-          workload_identity_provider: 'projects/992382423284/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
-          # CORREÇÃO: Usando a nova conta de serviço fornecida.
-          service_account: 'github-action-1017635732@ali-app-97976.iam.gserviceaccount.com'
-
-      - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v2'
-        with:
-          project_id: ${{ env.PROJECT_ID }}
-
-      - name: 'Build and Deploy'
-        id: 'deploy'
+      - name: Debug Environment
         run: |
-          echo "🚀 Iniciando build e deploy para Produção..."
+          echo "PROJECT_ID: ${{ env.PROJECT_ID }}"
+          echo "GCP_REGION: ${{ env.GCP_REGION }}"
+          echo "SERVICE_NAME: ${{ env.SERVICE_NAME }}"
+          echo "Has GCP_SA_KEY: ${{ secrets.GCP_SA_KEY != '' }}"
+          echo "Has GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID != '' }}"
+      - name: Check Required Secrets
+        run: |
+          if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
+            echo "❌ Error: GCP_SA_KEY secret is not configured"
+            echo "Please configure the GCP service account key in GitHub Secrets"
+            exit 1
+          fi
+          if [ -z "${{ secrets.GCP_PROJECT_ID }}" ]; then
+            echo "❌ Error: GCP_PROJECT_ID secret is not configured"
+            echo "Please configure the GCP project ID in GitHub Secrets"
+            exit 1
+          fi
+          echo "✅ Required secrets are configured"
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
+
+      - name: Deploy to Cloud Run
+        run: |
+          echo "🚀 Iniciando build e deploy..."
           
-          # Comando simplificado para evitar o erro INVALID_ARGUMENT.
-          # As configurações são lidas do cloudbuild.yaml, que é a fonte da verdade.
           gcloud builds submit \
             --config cloudbuild.yaml \
+            --substitutions _REGION=${{ env.GCP_REGION }},_SERVICE_NAME=${{ env.SERVICE_NAME }},_APP_ENV=production,_ALLOWED_ORIGIN_1=https://ali-app-97976.web.app,_ALLOWED_ORIGIN_2=https://ali-app-97976.firebaseapp.com \
             --region="${{ env.GCP_REGION }}"
           
-          echo "✅ Build e deploy de Produção concluído com sucesso!"
-
-      - name: 'Get Service URL'
-        id: 'service-url'
+          echo "✅ Build e deploy concluído com sucesso!"
+      - name: Get Service URL
         run: |
           SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
             --region=${{ env.GCP_REGION }} \
             --format='value(status.url)')
           
-          echo "SERVICE_URL=$SERVICE_URL" >> $GITHUB_OUTPUT
-          
           echo "🌐 Service URL: $SERVICE_URL"
           echo "📖 API Docs: $SERVICE_URL/docs" 
           echo "🏥 Health Check: $SERVICE_URL/health"
-
-      - name: 'Test Deployment'
+      - name: Test Deployment
         run: |
-          echo "🔍 Testing health endpoint at ${{ steps.service-url.outputs.SERVICE_URL }}/health"
+          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region=${{ env.GCP_REGION }} \
+            --format='value(status.url)')
           
-          # Aguarda um momento para o serviço estabilizar
-          sleep 15
+          echo "🔍 Testing health endpoint..."
           
-          # Testa o endpoint de health
-          if curl -fsS --max-time 60 "${{ steps.service-url.outputs.SERVICE_URL }}/health"; then
+          # Wait a moment for service to be ready
+          sleep 10
+          
+          # Test health endpoint
+          if curl -f --max-time 30 "$SERVICE_URL/health"; then
             echo "✅ Health check passed!"
             echo "🎉 Production deployment successful!"
           else
-            echo "❌ Health check failed. Verifique os logs do Cloud Run."
+            echo "❌ Health check failed"
             exit 1
           fi
