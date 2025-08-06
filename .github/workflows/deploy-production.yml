@@ -26,14 +26,14 @@ jobs:
       - name: 'Checkout'
         uses: 'actions/checkout@v4'
 
-      # CORREÇÃO 1: Autenticação segura via Workload Identity Federation
-      # Este mét-odo é mais seguro pois não armazena chaves de longa duração.
+      # Autenticação segura via Workload Identity Federation
       - name: 'Authenticate to Google Cloud'
         id: 'auth'
         uses: 'google-github-actions/auth@v2'
         with:
           workload_identity_provider: 'projects/992382423284/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
-          service_account: 'github-actions-sa@ali-app-97976.iam.gserviceaccount.com'
+          # CORREÇÃO: Usando a nova conta de serviço fornecida.
+          service_account: 'github-action-1017635732@ali-app-97976.iam.gserviceaccount.com'
 
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v2'
@@ -45,7 +45,7 @@ jobs:
         run: |
           echo "🚀 Iniciando build e deploy para Produção..."
           
-          # CORREÇÃO 2: Comando simplificado para evitar o erro INVALID_ARGUMENT.
+          # Comando simplificado para evitar o erro INVALID_ARGUMENT.
           # As configurações são lidas do cloudbuild.yaml, que é a fonte da verdade.
           gcloud builds submit \
             --config cloudbuild.yaml \
