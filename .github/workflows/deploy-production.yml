@@ -4,14 +4,20 @@ name: Deploy to Production
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_REGION: us-central1
+  SERVICE_NAME: ali-api-production
 
 jobs:
   deploy:
     name: Build and Deploy to Cloud Run
     runs-on: ubuntu-latest
-
+    
+    # Adiciona permissões necessárias para Workload Identity Federation
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -20,6 +26,8 @@ jobs:
       - name: 'Checkout'
         uses: 'actions/checkout@v4'
 
+      # CORREÇÃO 1: Autenticação segura via Workload Identity Federation
+      # Este mét-odo é mais seguro pois não armazena chaves de longa duração.
       - name: 'Authenticate to Google Cloud'
         id: 'auth'
         uses: 'google-github-actions/auth@v2'
@@ -30,17 +38,46 @@ jobs:
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v2'
         with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          project_id: ${{ env.PROJECT_ID }}
 
       - name: 'Build and Deploy'
+        id: 'deploy'
         run: |
           echo "🚀 Iniciando build e deploy para Produção..."
           
-          # COMANDO CORRIGIDO:
-          # A flag --substitutions foi removida. O Cloud Build agora usará
-          # os valores padrão definidos diretamente no arquivo cloudbuild.yaml.
+          # CORREÇÃO 2: Comando simplificado para evitar o erro INVALID_ARGUMENT.
+          # As configurações são lidas do cloudbuild.yaml, que é a fonte da verdade.
           gcloud builds submit \
             --config cloudbuild.yaml \
-            --region="us-central1"
+            --region="${{ env.GCP_REGION }}"
           
           echo "✅ Build e deploy de Produção concluído com sucesso!"
+
+      - name: 'Get Service URL'
+        id: 'service-url'
+        run: |
+          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region=${{ env.GCP_REGION }} \
+            --format='value(status.url)')
+          
+          echo "SERVICE_URL=$SERVICE_URL" >> $GITHUB_OUTPUT
+          
+          echo "🌐 Service URL: $SERVICE_URL"
+          echo "📖 API Docs: $SERVICE_URL/docs" 
+          echo "🏥 Health Check: $SERVICE_URL/health"
+
+      - name: 'Test Deployment'
+        run: |
+          echo "🔍 Testing health endpoint at ${{ steps.service-url.outputs.SERVICE_URL }}/health"
+          
+          # Aguarda um momento para o serviço estabilizar
+          sleep 15
+          
+          # Testa o endpoint de health
+          if curl -fsS --max-time 60 "${{ steps.service-url.outputs.SERVICE_URL }}/health"; then
+            echo "✅ Health check passed!"
+            echo "🎉 Production deployment successful!"
+          else
+            echo "❌ Health check failed. Verifique os logs do Cloud Run."
+            exit 1
+          fi
