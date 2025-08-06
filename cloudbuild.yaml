@@ -1,69 +1,18 @@
 # Cloud Build configuration for Ali API
-# 
-# PASSO A PASSO COMPLETO PARA DEPLOY:
 #
-# 1. PRÉ-REQUISITOS OBRIGATÓRIOS:
-#    - Conta Google Cloud ativa
-#    - Projeto Google Cloud criado
-#    - APIs habilitadas: Cloud Build, Cloud Run, Artifact Registry, Secret Manager
-#    - Billing account configurada
-#    - gcloud CLI instalado e autenticado
+# Este arquivo define o processo de build e deploy contínuo para a Ali API,
+# automatizando a construção da imagem Docker, o envio para o Artifact Registry
+# e o deploy no Cloud Run.
 #
-# 2. CONFIGURAÇÃO INICIAL (apenas uma vez):
-#    a) Habilitar APIs necessárias:
-#       gcloud services enable cloudbuild.googleapis.com
-#       gcloud services enable run.googleapis.com
-#       gcloud services enable artifactregistry.googleapis.com
-#       gcloud services enable secretmanager.googleapis.com
-#
-#    b) Criar Artifact Registry repository:
-#       gcloud artifacts repositories create ali-api-repo \
-#         --repository-format=docker \
-#         --location=us-central1
-#
-#    c) Configurar autenticação Docker:
-#       gcloud auth configure-docker us-central1-docker.pkg.dev
-#
-#    d) Criar secrets no Secret Manager (mínimos para deploy sem BD):
-#       echo "sua_llm_api_key" | gcloud secrets create llm-api-key --data-file=-
-#       echo "sua_jwt_secret_key" | gcloud secrets create jwt-secret-key --data-file=-
-#
-# 3. ESTRUTURA NECESSÁRIA NO PROJETO:
-#    - Dockerfile na raiz (já existe)
-#    - requirements.txt (já existe)
-#    - Este arquivo cloudbuild.yaml (já existe)
-#    - Código da aplicação em /app (já existe)
-#
-# 4. COMANDOS PARA DEPLOY:
-#    a) Deploy via Cloud Build (RECOMENDADO):
-#       gcloud builds submit --config=cloudbuild.yaml
-#
-#    b) Deploy direto (alternativo):
-#       docker build -t us-central1-docker.pkg.dev/PROJECT_ID/ali-api-repo/ali-api:latest .
-#       docker push us-central1-docker.pkg.dev/PROJECT_ID/ali-api-repo/ali-api:latest
-#       gcloud run deploy ali-api-staging --image=us-central1-docker.pkg.dev/PROJECT_ID/ali-api-repo/ali-api:latest
-#
-# 5. CONFIGURAÇÕES DE PRODUÇÃO:
-#    Para ambiente de produção, altere as substitutions abaixo:
-#    - _APP_ENV: 'production'  
-#    - _SERVICE_NAME: 'ali-api-production'
-#    - Configurar variáveis de ambiente de produção
-#
-# 6. MONITORAMENTO PÓS-DEPLOY:
-#    - Verificar logs: gcloud logging read "resource.type=cloud_run_revision"
-#    - Verificar service: gcloud run services describe ali-api-staging --region=us-central1
-#    - Testar endpoints: curl https://SERVICE_URL/api/health
-#
-# 7. TROUBLESHOOTING COMUM:
-#    - Build failing: verificar Dockerfile e dependencies
-#    - Deploy failing: verificar secrets e environment variables
-#    - Runtime errors: verificar logs do Cloud Run
-#    - Database connection: verificar PostgreSQL connection string nos secrets
+# Para executar, use o comando:
+# gcloud builds submit --config=cloudbuild.yaml --region=us-central1
 
 steps:
-  # Step 1: Build the container image (CORRECTED DOCKERFILE)
+  # Passo 1: Construir a imagem do contêiner
+  # Constrói a imagem Docker a partir do Dockerfile na raiz do projeto.
+  # Duas tags são criadas: uma com o ID do build (para rastreabilidade) e a 'latest'.
   - name: 'gcr.io/cloud-builders/docker'
-    args: 
+    args:
       - 'build'
       - '--no-cache'
       - '--pull'
@@ -75,14 +24,17 @@ steps:
     env:
       - 'APP_ENV=${_APP_ENV}'
 
-  # Step 2: Push the container image to Artifact Registry
+  # Passo 2: Enviar a imagem para o Artifact Registry
+  # Publica a imagem construída no repositório do Artifact Registry.
   - name: 'gcr.io/cloud-builders/docker'
-    args: 
+    args:
       - 'push'
       - '--all-tags'
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/ali-api'
 
-  # Step 3: Deploy to Cloud Run
+  # Passo 3: Fazer o deploy no Cloud Run
+  # Implanta a nova versão da imagem no serviço do Cloud Run.
+  # Configura recursos, variáveis de ambiente e segredos.
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
     args:
@@ -113,57 +65,57 @@ steps:
       - '--set-secrets'
       - 'LLM_API_KEY=${_SECRET_LLM_API_KEY}:latest,JWT_SECRET_KEY=${_SECRET_JWT_SECRET_KEY}:latest,QDRANT_API_KEY=${_SECRET_QDRANT_API_KEY}:latest,FIREBASE_CREDENTIALS=${_SECRET_FIREBASE_CREDENTIALS}:latest,LANGFUSE_SECRET_KEY=${_SECRET_LANGFUSE_SECRET_KEY}:latest,ELASTICSEARCH_API_KEY=${_SECRET_ELASTICSEARCH_API_KEY}:latest'
 
-# Default substitutions
+# Substituições padrão. Podem ser sobrescritas no comando `gcloud builds submit`.
 substitutions:
-  # GCP Infrastructure
+  # Infraestrutura GCP
   _REGION: 'us-central1'
   _ARTIFACT_REGISTRY_REPO: 'ali-api-repo'
   _SERVICE_NAME: 'ali-api-production'
-  
-  # Application Settings
+
+  # Configurações da Aplicação
   _APP_ENV: 'production'
   _DEBUG: 'false'
-  
-  # Secret Manager References
+
+  # Referências do Secret Manager
   _SECRET_LLM_API_KEY: 'ali-llm-api-key'
   _SECRET_JWT_SECRET_KEY: 'ali-jwt-secret-key'
   _SECRET_QDRANT_API_KEY: 'ali-qdrant-api-key'
   _SECRET_FIREBASE_CREDENTIALS: 'ali-firebase-credentials'
   _SECRET_LANGFUSE_SECRET_KEY: 'ali-langfuse-secret-key'
   _SECRET_ELASTICSEARCH_API_KEY: 'ali-elasticsearch-api-key'
-  
-  # External Services
+
+  # Serviços Externos
   _QDRANT_URL: 'https://a7ec9a98-1327-4fe0-869d-e33b52d4a498.us-east4-0.gcp.cloud.qdrant.io'
   _QDRANT_COLLECTION_NAME: 'aguas_claras'
-  
-  # Firebase Settings
+
+  # Configurações do Firebase
   _FIREBASE_REGION: 'us-central1'
-  
-  # LLM Configuration
+
+  # Configuração do LLM
   _LLM_MODEL: 'gpt-4o-mini'
   _DEFAULT_LLM_TEMPERATURE: '0.2'
   _MAX_TOKENS: '2000'
   _MAX_LLM_CALL_RETRIES: '3'
-  
-  # RAG Configuration
+
+  # Configuração do RAG
   _RAG_INDEX_NAME: 'aguas_claras'
   _RAG_EMBEDDING_MODEL: 'sentence-transformers/all-MiniLM-L6-v2'
   _RAG_CHUNK_SIZE: '1000'
   _RAG_CHUNK_OVERLAP: '200'
   _RAG_MAX_RESULTS: '5'
-  
-  # CORS Settings (Production)
+
+  # Configurações de CORS (Produção)
   _ALLOWED_ORIGINS: 'https://ali-app-97976.web.app,https://ali-app-97976.firebaseapp.com'
-  
-  # Logging Configuration
+
+  # Configuração de Logging
   _LOG_LEVEL: 'INFO'
   _LOG_FORMAT: 'json'
-  
-  # JWT Configuration
+
+  # Configuração do JWT
   _JWT_ALGORITHM: 'HS256'
   _JWT_ACCESS_TOKEN_EXPIRE_DAYS: '30'
-  
-  # Rate Limiting (Production Values)
+
+  # Limites de Taxa (Valores de Produção)
   _RATE_LIMIT_DEFAULT: '5000 per day,500 per hour'
   _RATE_LIMIT_CHAT: '200 per minute'
   _RATE_LIMIT_CHAT_STREAM: '100 per minute'
@@ -172,16 +124,16 @@ substitutions:
   _RATE_LIMIT_LOGIN: '30 per minute'
   _RATE_LIMIT_ROOT: '100 per minute'
   _RATE_LIMIT_HEALTH: '500 per minute'
-  
-  # Observability (Langfuse)
+
+  # Observabilidade (Langfuse)
   _LANGFUSE_HOST: 'https://cloud.langfuse.com'
-  _LANGFUSE_PUBLIC_KEY: 'your-langfuse-public-key'
-  
-  # Search (Elasticsearch) 
+  _LANGFUSE_PUBLIC_KEY: 'your-langfuse-public-key' # Substitua pela sua chave pública real
+
+  # Busca (Elasticsearch)
   _ELASTICSEARCH_TIMEOUT: '30'
   _ELASTICSEARCH_MAX_RETRIES: '3'
 
-# Build options
+# Opções de build
 options:
   logging: CLOUD_LOGGING_ONLY
   machineType: 'E2_HIGHCPU_8'
