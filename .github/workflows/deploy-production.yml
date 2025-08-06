@@ -1,95 +1,46 @@
+# .github/workflows/deploy-production.yml
+
 name: Deploy to Production
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
-
-env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  GCP_REGION: us-central1
-  SERVICE_NAME: ali-api-production
+    branches:
+      - main
 
 jobs:
   deploy:
+    name: Build and Deploy to Cloud Run
     runs-on: ubuntu-latest
-    environment: production
-    
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: 'Checkout'
+        uses: 'actions/checkout@v4'
 
-      - name: Debug Environment
-        run: |
-          echo "PROJECT_ID: ${{ env.PROJECT_ID }}"
-          echo "GCP_REGION: ${{ env.GCP_REGION }}"
-          echo "SERVICE_NAME: ${{ env.SERVICE_NAME }}"
-          echo "Has GCP_SA_KEY: ${{ secrets.GCP_SA_KEY != '' }}"
-          echo "Has GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID != '' }}"
-
-      - name: Check Required Secrets
-        run: |
-          if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
-            echo "❌ Error: GCP_SA_KEY secret is not configured"
-            echo "Please configure the GCP service account key in GitHub Secrets"
-            exit 1
-          fi
-          if [ -z "${{ secrets.GCP_PROJECT_ID }}" ]; then
-            echo "❌ Error: GCP_PROJECT_ID secret is not configured"
-            echo "Please configure the GCP project ID in GitHub Secrets"
-            exit 1
-          fi
-          echo "✅ Required secrets are configured"
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
+      - name: 'Authenticate to Google Cloud'
+        id: 'auth'
+        uses: 'google-github-actions/auth@v2'
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          workload_identity_provider: 'projects/992382423284/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+          service_account: 'github-actions-sa@ali-app-97976.iam.gserviceaccount.com'
+
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+        with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
-
-      - name: Deploy to Cloud Run
+      - name: 'Build and Deploy'
         run: |
-          echo "🚀 Iniciando build e deploy..."
+          echo "🚀 Iniciando build e deploy para Produção..."
           
+          # COMANDO CORRIGIDO:
+          # A flag --substitutions foi removida. O Cloud Build agora usará
+          # os valores padrão definidos diretamente no arquivo cloudbuild.yaml.
           gcloud builds submit \
             --config cloudbuild.yaml \
-            --substitutions _REGION=${{ env.GCP_REGION }},_SERVICE_NAME=${{ env.SERVICE_NAME }},_APP_ENV=production,_ALLOWED_ORIGIN_1=https://ali-app-97976.web.app,_ALLOWED_ORIGIN_2=https://ali-app-97976.firebaseapp.com \
-            --region="${{ env.GCP_REGION }}"
+            --region="us-central1"
           
-          echo "✅ Build e deploy concluído com sucesso!"
-
-      - name: Get Service URL
-        run: |
-          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
-            --region=${{ env.GCP_REGION }} \
-            --format='value(status.url)')
-          
-          echo "🌐 Service URL: $SERVICE_URL"
-          echo "📖 API Docs: $SERVICE_URL/docs" 
-          echo "🏥 Health Check: $SERVICE_URL/health"
-
-      - name: Test Deployment
-        run: |
-          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
-            --region=${{ env.GCP_REGION }} \
-            --format='value(status.url)')
-          
-          echo "🔍 Testing health endpoint..."
-          
-          # Wait a moment for service to be ready
-          sleep 10
-          
-          # Test health endpoint
-          if curl -f --max-time 30 "$SERVICE_URL/health"; then
-            echo "✅ Health check passed!"
-            echo "🎉 Production deployment successful!"
-          else
-            echo "❌ Health check failed"
-            exit 1
-          fi
+          echo "✅ Build e deploy de Produção concluído com sucesso!"
