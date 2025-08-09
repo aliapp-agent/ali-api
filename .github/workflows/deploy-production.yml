@@ -54,12 +54,20 @@ jobs:
       - name: Deploy to Cloud Run
         run: |
           echo "🚀 Iniciando build e deploy..."
-          
-          gcloud builds submit \
-            --config cloudbuild.yaml \
-            --substitutions _REGION=${{ env.GCP_REGION }},_SERVICE_NAME=${{ env.SERVICE_NAME }},_APP_ENV=production,_ALLOWED_ORIGINS=https://ali-app-97976.web.app\,https://ali-app-97976.firebaseapp.com \
-            --region="${{ env.GCP_REGION }}"
-          
+
+          FLAGS_FILE="$RUNNER_TEMP/gcloud_build_flags.yaml"
+          cat > "$FLAGS_FILE" <<EOF
+          --config: cloudbuild.yaml
+          --substitutions:
+            _REGION: "${{ env.GCP_REGION }}"
+            _SERVICE_NAME: "${{ env.SERVICE_NAME }}"
+            _APP_ENV: "production"
+            _ALLOWED_ORIGINS: "https://ali-app-97976.web.app,https://ali-app-97976.firebaseapp.com"
+          --region: "${{ env.GCP_REGION }}"
+          EOF
+
+          gcloud builds submit --flags-file="$FLAGS_FILE"
+
           echo "✅ Build e deploy concluído com sucesso!"
       - name: Get Service URL
         run: |
