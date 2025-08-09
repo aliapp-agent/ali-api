@@ -52,12 +52,14 @@ jobs:
         run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
 
       - name: Deploy to Cloud Run
+        env:
+          ALLOWED_ORIGINS: "https://ali-app-97976.web.app,https://ali-app-97976.firebaseapp.com"
         run: |
           echo "🚀 Iniciando build e deploy..."
           
           gcloud builds submit \
             --config cloudbuild.yaml \
-            --substitutions "_REGION=${{ env.GCP_REGION }},_SERVICE_NAME=${{ env.SERVICE_NAME }},_APP_ENV=production,_ALLOWED_ORIGINS=https://ali-app-97976.web.app,https://ali-app-97976.firebaseapp.com" \
+            --substitutions _REGION=${{ env.GCP_REGION }},_SERVICE_NAME=${{ env.SERVICE_NAME }},_APP_ENV=production,_ALLOWED_ORIGINS="${ALLOWED_ORIGINS}" \
             --region="${{ env.GCP_REGION }}"
           
           echo "✅ Build e deploy concluído com sucesso!"

@@ -1,140 +1,141 @@
- DISABLED: Direct production deployment enabled
- name: Deploy to Staging
- 
- on:
-   push:
-     branches: [main]
-  workflow_dispatch:
-
-env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  GCP_REGION: us-central1
-  SERVICE_NAME: ali-api-staging
-  ARTIFACT_REGISTRY_REPO: ali-api-repo
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db
-          POSTGRES_USER: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
-      APP_ENV: test
-      JWT_SECRET_KEY: test-secret-key-for-testing-only
-      FIREBASE_PROJECT_ID: test-project
-      FIREBASE_CREDENTIALS_PATH: /tmp/test-firebase-credentials.json
-      FIREBASE_STORAGE_BUCKET: test-project.appspot.com
-      FIREBASE_REGION: us-central1
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.13"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-
-      - name: Create test Firebase credentials
-        run: |
-          echo '{"type": "service_account", "project_id": "test-project"}' > /tmp/test-firebase-credentials.json
-
-      - name: Install dependencies
-        run: |
-          uv venv
-          source .venv/bin/activate
-          uv pip install -e .
-          uv sync --group dev
-          uv sync --group test
-
-      - name: Wait for services
-        run: |
-          echo "Checking docker version"
-          docker --version
-          
-          echo "Clean up resources from previous jobs"
-          docker system prune -f || true
-          
-          echo "Create local container network"
-          docker network create test-network || true
-          
-          echo "Starting postgres service container"
-
-          
-          echo "Waiting for all services to be ready"
-          echo "Waiting for PostgreSQL..."
-          timeout 120 bash -c 'until pg_isready -h localhost -p 5432 -U postgres; do echo "PostgreSQL not ready, waiting..."; sleep 2; done'
-          echo "✅ PostgreSQL is ready"
-          
-
-
-      - name: Run tests
-        run: |
-          source .venv/bin/activate
-          pytest --tb=short --maxfail=1 -v
-
-      - name: Run linting
-        run: |
-          source .venv/bin/activate
-          ruff check .
-          black --check .
-
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Configure Docker to use gcloud as a credential helper
-        run: gcloud auth configure-docker $GCP_REGION-docker.pkg.dev
-
-      - name: Build and Deploy to Cloud Run
-        run: |
-          gcloud builds submit \
-            --config cloudbuild.yaml \
-            --substitutions _REGION=$GCP_REGION,_SERVICE_NAME=$SERVICE_NAME,_APP_ENV=staging \
-            --region $GCP_REGION
-
-      - name: Verify deployment
-        run: |
-          SERVICE_URL=$(gcloud run services describe $SERVICE_NAME --region=$GCP_REGION --format='value(status.url)')
-          echo "Service deployed at: $SERVICE_URL"
-
-          # Wait for service to be ready
-          sleep 30
-
-          # Test health endpoint
-          curl -f "$SERVICE_URL/health" || exit 1
-          echo "✅ Health check passed"
-
-          # Test API docs
-          curl -f "$SERVICE_URL/docs" || exit 1
-          echo "✅ API docs accessible"
-
-          echo "🚀 Deployment successful! Service URL: $SERVICE_URL"
+# DISABLED: Direct production deployment enabled
+# This workflow is disabled - only using deploy-production.yml
+# # name: Deploy to Staging
+# # 
+# # on:
+# #   push:
+# #     branches: [main]
+# #   workflow_dispatch:
+# 
+# # env:
+# #   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+# #   GCP_REGION: us-central1
+# #   SERVICE_NAME: ali-api-staging
+# #   ARTIFACT_REGISTRY_REPO: ali-api-repo
+# # 
+# # jobs:
+#   test:
+#     runs-on: ubuntu-latest
+# 
+#     services:
+#       postgres:
+#         image: postgres:15
+#         env:
+#           POSTGRES_PASSWORD: postgres
+#           POSTGRES_DB: test_db
+#           POSTGRES_USER: postgres
+#         ports:
+#           - 5432:5432
+#         options: >-
+#           --health-cmd pg_isready
+#           --health-interval 10s
+#           --health-timeout 5s
+#           --health-retries 5
+# 
+#     env:
+#       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+#       APP_ENV: test
+#       JWT_SECRET_KEY: test-secret-key-for-testing-only
+#       FIREBASE_PROJECT_ID: test-project
+#       FIREBASE_CREDENTIALS_PATH: /tmp/test-firebase-credentials.json
+#       FIREBASE_STORAGE_BUCKET: test-project.appspot.com
+#       FIREBASE_REGION: us-central1
+# 
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+# 
+#       - name: Set up Python
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: "3.13"
+# 
+#       - name: Install uv
+#         uses: astral-sh/setup-uv@v4
+# 
+#       - name: Create test Firebase credentials
+#         run: |
+#           echo '{"type": "service_account", "project_id": "test-project"}' > /tmp/test-firebase-credentials.json
+# 
+#       - name: Install dependencies
+#         run: |
+#           uv venv
+#           source .venv/bin/activate
+#           uv pip install -e .
+#           uv sync --group dev
+#           uv sync --group test
+# 
+#       - name: Wait for services
+#         run: |
+#           echo "Checking docker version"
+#           docker --version
+#           
+#           echo "Clean up resources from previous jobs"
+#           docker system prune -f || true
+#           
+#           echo "Create local container network"
+#           docker network create test-network || true
+#           
+#           echo "Starting postgres service container"
+# 
+#           
+#           echo "Waiting for all services to be ready"
+#           echo "Waiting for PostgreSQL..."
+#           timeout 120 bash -c 'until pg_isready -h localhost -p 5432 -U postgres; do echo "PostgreSQL not ready, waiting..."; sleep 2; done'
+#           echo "✅ PostgreSQL is ready"
+#           
+# 
+# 
+#       - name: Run tests
+#         run: |
+#           source .venv/bin/activate
+#           pytest --tb=short --maxfail=1 -v
+# 
+#       - name: Run linting
+#         run: |
+#           source .venv/bin/activate
+#           ruff check .
+#           black --check .
+# 
+#   deploy:
+#     needs: test
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+# 
+#       - name: Authenticate to Google Cloud
+#         uses: google-github-actions/auth@v2
+#         with:
+#           credentials_json: ${{ secrets.GCP_SA_KEY }}
+# 
+#       - name: Set up Cloud SDK
+#         uses: google-github-actions/setup-gcloud@v2
+# 
+#       - name: Configure Docker to use gcloud as a credential helper
+#         run: gcloud auth configure-docker $GCP_REGION-docker.pkg.dev
+# 
+#       - name: Build and Deploy to Cloud Run
+#         run: |
+#           gcloud builds submit \
+#             --config cloudbuild.yaml \
+#             --substitutions _REGION=$GCP_REGION,_SERVICE_NAME=$SERVICE_NAME,_APP_ENV=staging \
+#             --region $GCP_REGION
+# 
+#       - name: Verify deployment
+#         run: |
+#           SERVICE_URL=$(gcloud run services describe $SERVICE_NAME --region=$GCP_REGION --format='value(status.url)')
+#           echo "Service deployed at: $SERVICE_URL"
+# 
+#           # Wait for service to be ready
+#           sleep 30
+# 
+#           # Test health endpoint
+#           curl -f "$SERVICE_URL/health" || exit 1
+#           echo "✅ Health check passed"
+# 
+#           # Test API docs
+#           curl -f "$SERVICE_URL/docs" || exit 1
+#           echo "✅ API docs accessible"
+# 
+#           echo "🚀 Deployment successful! Service URL: $SERVICE_URL"
