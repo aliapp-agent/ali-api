@@ -55,13 +55,21 @@ jobs:
         run: |
           echo "🚀 Iniciando build e deploy..."
 
-          # Ensure ALLOWED_ORIGINS has no backticks or extra spaces and escape comma for gcloud substitutions
-          ALLOWED_ORIGINS="https://ali-app-97976.web.app\,https://ali-app-97976.firebaseapp.com"
+          FLAGS_FILE="$RUNNER_TEMP/gcloud_build_flags.yaml"
+          cat > "$FLAGS_FILE" <<EOF
+          --config: cloudbuild.yaml
+          --region: "${GCP_REGION}"
+          --substitutions:
+            _REGION: "${GCP_REGION}"
+            _SERVICE_NAME: "${SERVICE_NAME}"
+            _APP_ENV: "production"
+            _ALLOWED_ORIGINS: "https://ali-app-97976.web.app,https://ali-app-97976.firebaseapp.com"
+          EOF
 
-          gcloud builds submit \
-            --config=cloudbuild.yaml \
-            --substitutions=_REGION=${{ env.GCP_REGION }},_SERVICE_NAME=${{ env.SERVICE_NAME }},_APP_ENV=production,_ALLOWED_ORIGINS=${ALLOWED_ORIGINS} \
-            --region=${{ env.GCP_REGION }}
+          echo "📄 Flags file gerado (debug):"
+          cat "$FLAGS_FILE"
+
+          gcloud builds submit --flags-file="$FLAGS_FILE"
 
           echo "✅ Build e deploy concluído com sucesso!"
       - name: Get Service URL
