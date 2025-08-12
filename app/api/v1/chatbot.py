@@ -4,7 +4,7 @@ This module provides endpoints for chat interactions, including regular chat,
 message history management, and chat history clearing.
 """
 
-from typing import List
+from typing import AsyncGenerator, List
 
 from fastapi import (
     APIRouter,
@@ -12,6 +12,7 @@ from fastapi import (
     HTTPException,
     Request,
 )
+from fastapi.responses import StreamingResponse
 
 from app.api.v1.auth import get_current_session
 from app.core.agno.graph import AgnoAgent
@@ -32,7 +33,9 @@ from app.schemas.chat import (
     ChatResponse,
     ChatSearchRequest,
     ChatSearchResult,
+    StreamResponse,
 )
+from app.shared.constants.http import CONTENT_TYPE_SSE
 
 router = APIRouter()
 agent = AgnoAgent()
@@ -142,6 +145,148 @@ async def chat(
             exc_info=True,
         )
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/chat/stream")
+@limiter.limit(settings.RATE_LIMIT_CHAT_STREAM)
+async def chat_stream(
+    request: Request,
+    chat_request: ChatRequest,
+    session: Session = Depends(get_current_session),
+    message_service: MessageServiceDep = None,
+):
+    """Process a chat request with streaming response using Agno.
+
+    Args:
+        request: The FastAPI request object for rate limiting.
+        chat_request: The chat request containing messages.
+        session: The current session from the auth token.
+        message_service: Message service for business logic.
+
+    Returns:
+        StreamingResponse: Server-sent events stream with chat tokens.
+
+    Raises:
+        HTTPException: If there's an error processing the request.
+    """
+    import json
+    import time
+
+    async def generate_stream() -> AsyncGenerator[str, None]:
+        try:
+            logger.info(
+                "chat_stream_request_received",
+                session_id=session.id,
+                message_count=len(chat_request.messages),
+            )
+
+            # Get the last user message from the request
+            user_messages = [msg for msg in chat_request.messages if msg.role == "user"]
+            if not user_messages:
+                error_data = StreamResponse(
+                    type="error",
+                    content="No user message found",
+                    done=True
+                )
+                yield f"data: {json.dumps(error_data.dict())}\n\n"
+                return
+
+            last_user_message = user_messages[-1]
+
+            # Store user message in Firebase
+            user_message_entity = await message_service.create_user_message(
+                session_id=session.id,
+                user_id=session.user_id,
+                content=last_user_message.content,
+            )
+
+            logger.info(
+                "user_message_stored_stream",
+                session_id=session.id,
+                message_id=user_message_entity.id,
+            )
+
+            # Start streaming response
+            start_time = time.time()
+            full_content = ""
+            
+            # Get streaming response from Agno
+            async for token in agent.get_stream_response(
+                chat_request.messages, session.id, user_id=session.user_id
+            ):
+                full_content += token
+                
+                # Send token to client
+                stream_data = StreamResponse(
+                    type="token",
+                    content=token,
+                    done=False
+                )
+                yield f"data: {json.dumps(stream_data.dict())}\n\n"
+
+            processing_time = time.time() - start_time
+
+            # Store complete assistant message in Firebase
+            tokens_used = len(full_content.split()) * 1.3  # Rough estimate
+            
+            assistant_message_entity = await message_service.create_assistant_message(
+                session_id=session.id,
+                user_id=session.user_id,
+                content=full_content,
+                model_used=settings.LLM_MODEL,
+                tokens_used=int(tokens_used),
+                processing_time=processing_time,
+                confidence_score=0.9,  # Default confidence
+            )
+
+            logger.info(
+                "assistant_message_stored_stream",
+                session_id=session.id,
+                message_id=assistant_message_entity.id,
+                tokens_used=int(tokens_used),
+            )
+
+            # Send completion signal
+            completion_data = StreamResponse(
+                type="done",
+                content="",
+                done=True
+            )
+            yield f"data: {json.dumps(completion_data.dict())}\n\n"
+
+            logger.info(
+                "chat_stream_completed",
+                session_id=session.id,
+                user_message_id=user_message_entity.id,
+                assistant_message_id=assistant_message_entity.id,
+                processing_time=processing_time,
+            )
+
+        except Exception as e:
+            logger.error(
+                "chat_stream_failed",
+                session_id=session.id,
+                error=str(e),
+                exc_info=True,
+            )
+            # Send error to client
+            error_data = StreamResponse(
+                type="error",
+                content=f"Stream error: {str(e)}",
+                done=True
+            )
+            yield f"data: {json.dumps(error_data.dict())}\n\n"
+
+    return StreamingResponse(
+        generate_stream(),
+        media_type=CONTENT_TYPE_SSE,
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "*",
+        },
+    )
 
 
 @router.get("/messages", response_model=ChatResponse)

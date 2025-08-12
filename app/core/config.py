@@ -214,6 +214,11 @@ class Settings(BaseSettings):
         default="documents", env="QDRANT_COLLECTION_NAME"
     )
 
+    # Evolution API Configuration (WhatsApp)
+    EVOLUTION_API_URL: str = Field(default="", env="EVOLUTION_API_URL")
+    EVOLUTION_INSTANCE: str = Field(default="", env="EVOLUTION_INSTANCE")
+    EVOLUTION_API_KEY: str = Field(default="", env="EVOLUTION_API_KEY")
+
     # Rate Limiting Endpoints
     @property
     def RATE_LIMIT_ENDPOINTS(self) -> dict:

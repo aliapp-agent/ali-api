@@ -62,14 +62,28 @@ class FirebaseConfig:
                 )
 
         except Exception as e:
-            raise RuntimeError(f"Failed to initialize Firebase: {e}")
+            # In development mode, allow Firebase initialization to fail gracefully
+            if os.getenv("APP_ENV", "development") == "development":
+                print(f"Warning: Firebase initialization failed in development mode: {e}")
+                print("Firebase services will not be available. This is expected in development.")
+                return
+            else:
+                raise RuntimeError(f"Failed to initialize Firebase: {e}")
 
     @property
     def firestore(self) -> firestore.Client:
         """Get Firestore client."""
         if self._firestore_client is None:
             self.initialize()
-            self._firestore_client = firestore.client(app=self._app)
+            if self._app is None:
+                return None  # Development mode without Firebase
+            try:
+                self._firestore_client = firestore.client(app=self._app)
+            except Exception as e:
+                if os.getenv("APP_ENV", "development") == "development":
+                    print(f"Warning: Firestore client creation failed in development: {e}")
+                    return None
+                raise
         return self._firestore_client
 
     @property
@@ -77,6 +91,8 @@ class FirebaseConfig:
         """Get Cloud Storage bucket."""
         if self._storage_client is None:
             self.initialize()
+            if self._app is None:
+                return None  # Development mode without Firebase
             self._storage_client = storage.bucket(app=self._app)
         return self._storage_client
 
@@ -85,6 +101,8 @@ class FirebaseConfig:
         """Get Firebase Auth client."""
         if self._auth_client is None:
             self.initialize()
+            if self._app is None:
+                return None  # Development mode without Firebase
             self._auth_client = auth
         return self._auth_client
 

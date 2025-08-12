@@ -9,6 +9,7 @@ from google.cloud.firestore_v1.base_query import FieldFilter
 from app.core.config import settings
 from app.core.firebase import get_firestore
 from app.core.logging import logger
+from app.models.session import Session
 
 
 class DatabaseService:
@@ -17,6 +18,7 @@ class DatabaseService:
     def __init__(self):
         """Initialize the database service."""
         self.db = get_firestore()
+        self.is_available = self.db is not None
         
     async def health_check(self) -> bool:
         """Check database connectivity.
@@ -24,6 +26,10 @@ class DatabaseService:
         Returns:
             bool: True if database is healthy, False otherwise
         """
+        if not self.is_available:
+            logger.warning("Firebase not available in development mode")
+            return False
+            
         try:
             # Simple health check - attempt to read from a system collection
             doc_ref = self.db.collection("_health").document("check")

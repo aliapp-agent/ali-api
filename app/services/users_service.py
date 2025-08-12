@@ -25,9 +25,9 @@ from app.core.logging import logger
 from app.models.user import User
 from app.models.user_activity import (
     UserActivity,
-    UserInvitation,
     UserSession,
 )
+from app.schemas.users import UserInvitation
 from app.schemas.users import (
     MessageResponse,
     Permission,

@@ -13,6 +13,7 @@ from openai import OpenAIError
 
 
 from app.core.agno.tools.rag_search import rag_search_tool
+from app.core.agno.tools.whatsapp_tool import whatsapp_tool
 from app.core.config import settings
 from app.core.logging import logger
 from app.core.metrics import llm_inference_duration_seconds
@@ -40,7 +41,7 @@ storage = SqliteStorage(table_name="agent_sessions", db_file=db_file)
 
 class AgnoAgent:  # noqa: D101
     def __init__(self):  # noqa: D107
-        self.tools = [rag_search_tool]  # Adicionar RAG tool
+        self.tools = [rag_search_tool, whatsapp_tool]  # Adicionar RAG tool e WhatsApp tool
         self.agent: Optional[Agent] = None
         self.rag_service = RAGService()
 
