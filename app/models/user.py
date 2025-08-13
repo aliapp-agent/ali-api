@@ -44,6 +44,19 @@ class User(BaseModel):
         """
         return hashlib.sha256(password.encode()).hexdigest()
     
+    def verify_password(self, password: str) -> bool:
+        """Verify a password against the stored hash.
+        
+        Args:
+            password: Plain text password to verify
+            
+        Returns:
+            True if password matches, False otherwise
+        """
+        if not self.hashed_password:
+            return False
+        return self.hash_password(password) == self.hashed_password
+    
     def has_permission(self, permission: str) -> bool:
         """Check if user has a specific permission.
         

@@ -1,7 +1,7 @@
 from agno.tools.function import Function
 
 from app.core.logging import logger
-from app.services.rag import RAGService
+from app.services import get_rag_service
 
 
 async def rag_search(query: str, top_k: int = 5) -> str:
@@ -15,7 +15,7 @@ async def rag_search(query: str, top_k: int = 5) -> str:
         str: Informações encontradas formatadas
     """
     try:
-        rag_service = RAGService()
+        rag_service = get_rag_service()
         results = await rag_service.search_similar(query, top_k)
 
         if not results:

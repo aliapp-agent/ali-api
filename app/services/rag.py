@@ -237,5 +237,5 @@ class RAGService:
             }
 
 
-# Criar instância global do serviço
-rag_service = RAGService()
+# Removido instância global para evitar inicialização durante import
+# Use get_rag_service() from app.services para obter a instância

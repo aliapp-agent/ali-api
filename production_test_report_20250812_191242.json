@@ -1,0 +1,307 @@
+{
+  "summary": {
+    "total_tests": 15,
+    "passed": 9,
+    "failed": 6,
+    "success_rate": "60.0%",
+    "total_duration_ms": 13615.57,
+    "avg_duration_ms": 907.7
+  },
+  "categories": {
+    "Health": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0
+    },
+    "Auth": {
+      "total": 6,
+      "passed": 6,
+      "failed": 0
+    },
+    "Users": {
+      "total": 6,
+      "passed": 0,
+      "failed": 6
+    }
+  },
+  "test_details": [
+    {
+      "endpoint": "/health",
+      "method": "GET",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 3752.76,
+      "timestamp": "2025-08-12T19:12:32.952920",
+      "response_data": {
+        "status": "healthy",
+        "version": "1.0.0",
+        "environment": "development",
+        "components": {
+          "api": "healthy",
+          "database": "healthy",
+          "rag_service": "healthy",
+          "agno_agent": "healthy"
+        },
+        "component_details": {
+          "database": {
+            "status": "healthy"
+          },
+          "rag_service": {
+            "status": "healthy",
+            "qdrant_connection": "ok",
+            "collection": "aguas_claras",
+            "collection_exists": "yes",
+            "vector_count": "47458",
+            "embedding_model": "all-MiniLM-L6-v2"
+          },
+          "agno_agent": {
+            "status": "healthy",
+            "agent_ready": true,
+            "tools_count": 2,
+            "memory_configured": true
+          }
+        },
+        "timestamp": "2025-08-12T19:12:32.951743",
+        "uptime_seconds": 6.525006
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/health/deep",
+      "method": "GET",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 3285.55,
+      "timestamp": "2025-08-12T19:12:36.238555",
+      "response_data": {
+        "status": "healthy",
+        "version": "1.0.0",
+        "environment": "development",
+        "timestamp": "2025-08-12T19:12:36.237454",
+        "uptime_seconds": 9.810718,
+        "health_check_duration_ms": 3271.99,
+        "components": {
+          "api": "healthy",
+          "database": "healthy",
+          "rag_service": "healthy",
+          "agno_agent": "healthy"
+        },
+        "component_details": {
+          "database": {
+            "firestore": "healthy",
+            "type": "firebase"
+          },
+          "rag_service": {
+            "status": "healthy",
+            "elasticsearch": "unknown",
+            "index": "unknown",
+            "error": null,
+            "qdrant_connection": "ok",
+            "collection": "aguas_claras",
+            "collection_exists": "yes",
+            "vector_count": "47458",
+            "embedding_model": "all-MiniLM-L6-v2"
+          },
+          "agno_agent": {
+            "status": "healthy",
+            "agent_ready": true,
+            "tools_count": 2,
+            "error": null,
+            "memory_configured": true
+          },
+          "system": {
+            "memory": {
+              "total_mb": 63758.11,
+              "available_mb": 48084.59,
+              "used_percent": 24.6
+            },
+            "disk": {
+              "total_gb": 226.08,
+              "free_gb": 51.14,
+              "used_percent": 72.27
+            },
+            "cpu": {
+              "usage_percent": 1.7,
+              "load_average": [
+                1.12109375,
+                0.9609375,
+                0.8720703125
+              ]
+            },
+            "process": {
+              "pid": 26854,
+              "threads": 70
+            }
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/health",
+      "method": "GET",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 12.79,
+      "timestamp": "2025-08-12T19:12:36.251426",
+      "response_data": {
+        "status": "healthy",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/auth/register",
+      "method": "POST",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 923.32,
+      "timestamp": "2025-08-12T19:12:37.174812",
+      "response_data": {
+        "id": "921cd351-f9b8-4d6d-9cc4-8049dd635a09",
+        "email": "test_elu4e9sd@example.com",
+        "token": {
+          "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5MjFjZDM1MS1mOWI4LTRkNmQtOWNjNC04MDQ5ZGQ2MzVhMDkiLCJleHAiOjE3NTc2Mjg3NTcsImlhdCI6MTc1NTAzNjc1NywianRpIjoiOTIxY2QzNTEtZjliOC00ZDZkLTljYzQtODA0OWRkNjM1YTA5LTE3NTUwMzY3NTcuMTcyNC02NmViZDcwZjQyZWE2ZjE2IiwidHlwZSI6ImFjY2Vzc190b2tlbiJ9.1mfU9TbpKHxCn8PjvHk_pQ8RozrJGSg9E2RHVKdvLiw",
+          "token_type": "bearer",
+          "expires_at": "2025-09-11T22:12:37.172397Z"
+        }
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/auth/login",
+      "method": "POST",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 213.25,
+      "timestamp": "2025-08-12T19:12:37.388162",
+      "response_data": {
+        "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5MjFjZDM1MS1mOWI4LTRkNmQtOWNjNC04MDQ5ZGQ2MzVhMDkiLCJleHAiOjE3NTc2Mjg3NTcsImlhdCI6MTc1NTAzNjc1NywianRpIjoiOTIxY2QzNTEtZjliOC00ZDZkLTljYzQtODA0OWRkNjM1YTA5LTE3NTUwMzY3NTcuMzg2MjA1LTkyNTM2OTI4Mjg1ZWYwMjAiLCJ0eXBlIjoiYWNjZXNzX3Rva2VuIn0.MaCmlRltRXeXiV3H0g17fCfShYst5lnoV_SGZ9U7NF8",
+        "token_type": "bearer",
+        "expires_at": "2025-09-11T22:12:37.386203Z"
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/auth/session",
+      "method": "POST",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 934.02,
+      "timestamp": "2025-08-12T19:12:38.322267",
+      "response_data": {
+        "session_id": "237c2ec1-b78c-482d-9607-b6468e96b8c8",
+        "name": "Chat Session 2025-08-12 22:12",
+        "token": {
+          "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyMzdjMmVjMS1iNzhjLTQ4MmQtOTYwNy1iNjQ2OGU5NmI4YzgiLCJleHAiOjE3NTc2Mjg3NTgsImlhdCI6MTc1NTAzNjc1OCwianRpIjoiMjM3YzJlYzEtYjc4Yy00ODJkLTk2MDctYjY0NjhlOTZiOGM4LTE3NTUwMzY3NTguMzIwMzM1LTRmYjEyZjEwMTM4Y2M2OWYiLCJ0eXBlIjoiYWNjZXNzX3Rva2VuIn0.enGt5qF1G3mldWziK-T-f_o_A4nr6-H53MkYc-n7S_s",
+          "token_type": "bearer",
+          "expires_at": "2025-09-11T22:12:38.320331Z"
+        }
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/auth/sessions",
+      "method": "GET",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 902.83,
+      "timestamp": "2025-08-12T19:12:39.225184",
+      "response_data": [],
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/auth/forgot-password",
+      "method": "POST",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 595.18,
+      "timestamp": "2025-08-12T19:12:39.820437",
+      "response_data": {
+        "message": "If an account with that email exists, a password reset link has been sent",
+        "success": true
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/auth/logout",
+      "method": "POST",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 295.39,
+      "timestamp": "2025-08-12T19:12:40.115903",
+      "response_data": {
+        "message": "Successfully logged out",
+        "success": true
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/users/health",
+      "method": "GET",
+      "success": false,
+      "status_code": 422,
+      "duration_ms": 604.93,
+      "timestamp": "2025-08-12T19:12:40.720924",
+      "response_data": null,
+      "error": "HTTP 422: {'error': 'ValidationError', 'message': 'Request validation failed', 'details': {'errors': [{'field': 'path -> user_id', 'message': 'Input should be a valid integer, unable to parse string as an integer', 'type': 'int_parsing'}], 'error_id': '0ec0e837-856f-4ec9-9916-2df50fcdee43'}, 'timestamp': '2025-08-12T19:12:40.720019', 'path': '/api/v1/users/health'}"
+    },
+    {
+      "endpoint": "/api/v1/users/me",
+      "method": "GET",
+      "success": false,
+      "status_code": 422,
+      "duration_ms": 290.13,
+      "timestamp": "2025-08-12T19:12:41.011139",
+      "response_data": null,
+      "error": "HTTP 422: {'error': 'ValidationError', 'message': 'Request validation failed', 'details': {'errors': [{'field': 'path -> user_id', 'message': 'Input should be a valid integer, unable to parse string as an integer', 'type': 'int_parsing'}], 'error_id': 'bc955d31-ebcb-4393-93fa-474187050f30'}, 'timestamp': '2025-08-12T19:12:41.010368', 'path': '/api/v1/users/me'}"
+    },
+    {
+      "endpoint": "/api/v1/users/",
+      "method": "GET",
+      "success": false,
+      "status_code": 403,
+      "duration_ms": 616.22,
+      "timestamp": "2025-08-12T19:12:41.627440",
+      "response_data": null,
+      "error": "HTTP 403: {'error': 'HTTPException', 'message': 'Permission denied', 'status_code': 403, 'error_id': '0ac16ccb-c003-479f-bdc4-0463d8f4f595', 'timestamp': '2025-08-12T19:12:41.626312', 'path': '/api/v1/users/'}"
+    },
+    {
+      "endpoint": "/api/v1/users/search",
+      "method": "POST",
+      "success": false,
+      "status_code": 403,
+      "duration_ms": 287.14,
+      "timestamp": "2025-08-12T19:12:41.914658",
+      "response_data": null,
+      "error": "HTTP 403: {'error': 'HTTPException', 'message': 'Permission denied', 'status_code': 403, 'error_id': 'e92c461c-8382-43b4-b5d7-0869340cad90', 'timestamp': '2025-08-12T19:12:41.913700', 'path': '/api/v1/users/search'}"
+    },
+    {
+      "endpoint": "/api/v1/users/stats",
+      "method": "GET",
+      "success": false,
+      "status_code": 422,
+      "duration_ms": 598.95,
+      "timestamp": "2025-08-12T19:12:42.513696",
+      "response_data": null,
+      "error": "HTTP 422: {'error': 'ValidationError', 'message': 'Request validation failed', 'details': {'errors': [{'field': 'path -> user_id', 'message': 'Input should be a valid integer, unable to parse string as an integer', 'type': 'int_parsing'}], 'error_id': 'd3120ec6-372b-4fd7-92f7-ddd9cca25bcf'}, 'timestamp': '2025-08-12T19:12:42.512877', 'path': '/api/v1/users/stats'}"
+    },
+    {
+      "endpoint": "/api/v1/users/921cd351-f9b8-4d6d-9cc4-8049dd635a09",
+      "method": "GET",
+      "success": false,
+      "status_code": 422,
+      "duration_ms": 303.11,
+      "timestamp": "2025-08-12T19:12:42.816893",
+      "response_data": null,
+      "error": "HTTP 422: {'error': 'ValidationError', 'message': 'Request validation failed', 'details': {'errors': [{'field': 'path -> user_id', 'message': 'Input should be a valid integer, unable to parse string as an integer', 'type': 'int_parsing'}], 'error_id': 'c3a15ab1-8134-4177-aef4-9eaf36677974'}, 'timestamp': '2025-08-12T19:12:42.816023', 'path': '/api/v1/users/921cd351-f9b8-4d6d-9cc4-8049dd635a09'}"
+    }
+  ],
+  "test_config": {
+    "base_url": "http://localhost:8081",
+    "test_email": "test_elu4e9sd@example.com",
+    "user_id": "921cd351-f9b8-4d6d-9cc4-8049dd635a09",
+    "session_id": "237c2ec1-b78c-482d-9607-b6468e96b8c8",
+    "timestamp": "2025-08-12T19:12:42.816973"
+  }
+}

@@ -88,22 +88,22 @@ async def get_current_user(
             )
 
         # Verify user exists in database
-        user_id_int = int(user_id)
         if db_service is None:
             raise HTTPException(
                 status_code=503,
                 detail="Database service not available",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        user = await db_service.get_user(user_id_int)
-        if user is None:
-            logger.error("user_not_found", user_id=user_id_int)
+        user_data = await db_service.get_user(user_id)
+        if user_data is None:
+            logger.error("user_not_found", user_id=user_id)
             raise HTTPException(
                 status_code=404,
                 detail="User not found",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
+        user = User.from_dict(user_id, user_data)
         return user
     except ValueError as ve:
         logger.error("token_validation_failed", error=str(ve), exc_info=True)
@@ -293,7 +293,7 @@ async def login(
             
         # Test database connection before proceeding
         try:
-            user = await db_service.get_user_by_email(username)
+            user_data = await db_service.get_user_by_email(username)
         except Exception as db_error:
             logger.error("database_connection_error", error=str(db_error), email=username, exc_info=True)
             raise HTTPException(
@@ -302,13 +302,37 @@ async def login(
                 headers={"WWW-Authenticate": "Bearer"},
             )
             
-        if not user:
+        if not user_data:
             logger.warning("user_not_found", email=username)
             raise HTTPException(
                 status_code=401,
                 detail="Incorrect email or password",
                 headers={"WWW-Authenticate": "Bearer"},
             )
+        
+        # Convert user data to User object
+        user_id = next(iter(user_data.keys())) if isinstance(user_data, dict) and user_data else None
+        if not user_id:
+            logger.warning("user_id_not_found", email=username)
+            raise HTTPException(
+                status_code=401,
+                detail="Incorrect email or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # Convert Firebase data to proper format before creating User object
+        raw_user_data = user_data[user_id]
+        clean_user_data = {}
+        
+        for key, value in raw_user_data.items():
+            # Convert DatetimeWithNanoseconds to datetime
+            if hasattr(value, 'timestamp'):
+                from datetime import datetime
+                clean_user_data[key] = datetime.fromtimestamp(value.timestamp())
+            else:
+                clean_user_data[key] = value
+            
+        user = User.from_dict(user_id, clean_user_data)
             
         # Verify password
         try:
@@ -594,13 +618,15 @@ async def refresh_token(
                 detail="Database service not available",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        user = await db_service.get_user(int(user_id))
-        if not user:
+        user_data = await db_service.get_user(user_id)
+        if not user_data:
             raise HTTPException(
                 status_code=404,
                 detail="User not found",
             )
 
+        user = User.from_dict(user_id, user_data)
+        
         # Create new access token
         token = create_access_token(str(user.id))
 

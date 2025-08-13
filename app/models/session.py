@@ -17,6 +17,11 @@ class Session(BaseModel):
     is_active: bool = Field(True, description="Whether session is active")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional session metadata")
     
+    @property
+    def id(self) -> str:
+        """Return session_id as id for compatibility."""
+        return self.session_id
+    
     class Config:
         """Pydantic configuration."""
         

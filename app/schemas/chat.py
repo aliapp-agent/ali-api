@@ -122,7 +122,7 @@ class DetailedMessage(BaseModel):
     content: str = Field(..., description="Message content")
     timestamp: datetime = Field(..., description="Message timestamp")
     session_id: str = Field(..., description="Session ID")
-    user_id: int = Field(..., description="User ID")
+    user_id: str = Field(..., description="User ID")
     tokens: int = Field(0, description="Token count")
     processing_time: Optional[float] = Field(
         None, description="Processing time in seconds"
@@ -185,7 +185,7 @@ class ChatSearchRequest(BaseModel):
 
     query: str = Field(..., description="Search query", min_length=1, max_length=500)
     session_ids: Optional[List[str]] = Field(None, description="Filter by session IDs")
-    user_id: Optional[int] = Field(None, description="Filter by user ID")
+    user_id: Optional[str] = Field(None, description="Filter by user ID")
     date_from: Optional[datetime] = Field(None, description="Filter from date")
     date_to: Optional[datetime] = Field(None, description="Filter to date")
     limit: int = Field(20, description="Maximum results", ge=1, le=100)
@@ -255,7 +255,7 @@ class ChatExportRequest(BaseModel):
 
     format: Literal["json", "csv", "txt"] = Field("json", description="Export format")
     session_ids: Optional[List[str]] = Field(None, description="Filter by session IDs")
-    user_id: Optional[int] = Field(None, description="Filter by user ID")
+    user_id: Optional[str] = Field(None, description="Filter by user ID")
     date_from: Optional[datetime] = Field(None, description="Filter from date")
     date_to: Optional[datetime] = Field(None, description="Filter to date")
     include_metadata: bool = Field(True, description="Include message metadata")

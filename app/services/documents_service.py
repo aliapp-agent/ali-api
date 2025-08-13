@@ -38,7 +38,7 @@ from app.schemas.documents import (
     MessageResponse,
 )
 from app.schemas.documents import DocumentCategory as DocumentCategoryEnum
-from app.services.rag import rag_service
+from app.services import get_rag_service
 
 
 class DocumentsService:
@@ -46,11 +46,11 @@ class DocumentsService:
 
     def __init__(self):
         """Initialize the documents service."""
-        self.rag_service = rag_service
+        self.rag_service = get_rag_service()
         # RAG service now uses Qdrant instead of Elasticsearch
-        self.qdrant_client = rag_service.qdrant_client
-        self.embedding_model = rag_service.embedding_model
-        self.collection_name = rag_service.collection_name
+        self.qdrant_client = self.rag_service.qdrant_client
+        self.embedding_model = self.rag_service.embedding_model
+        self.collection_name = self.rag_service.collection_name
 
     async def create_document(
         self, document_data: DocumentCreate, user_id: int

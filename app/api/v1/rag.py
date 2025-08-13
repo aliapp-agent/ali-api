@@ -22,7 +22,7 @@ from app.schemas.rag import (
     DocumentUploadResponse,
 )
 from app.services.document_processor import DocumentProcessor
-from app.services.rag import rag_service
+from app.services import get_rag_service
 
 router = APIRouter()
 doc_processor = DocumentProcessor()
@@ -37,6 +37,7 @@ async def search_documents(
 ):
     """Buscar documentos legislativos."""
     try:
+        rag_service = get_rag_service()
         results = await rag_service.search_legislative_documents(
             query=search_request.query,
             max_results=search_request.max_results,
@@ -60,6 +61,7 @@ async def upload_document(
 ):
     """Upload de documento legislativo."""
     try:
+        rag_service = get_rag_service()
         document_id = await rag_service.add_legislative_document(
             upload_request.documento
         )
@@ -106,6 +108,7 @@ async def upload_file(
                 file_path=file.filename,
             )
 
+            rag_service = get_rag_service()
             doc_id = await rag_service.add_legislative_document(documento)
             document_ids.append(doc_id)
 
@@ -131,6 +134,7 @@ async def search_knowledge_base(
     """Busca simples na base de conhecimento."""
     try:
         search_request = DocumentSearchRequest(query=query, max_results=top_k)
+        rag_service = get_rag_service()
         results = await rag_service.search_legislative_documents(
             query=search_request.query, max_results=search_request.max_results
         )
@@ -144,6 +148,7 @@ async def search_knowledge_base(
 async def rag_health():
     """Health check do serviço RAG."""
     try:
+        rag_service = get_rag_service()
         health_status = await rag_service.health_check()
         return health_status
     except Exception as e:

@@ -736,3 +736,115 @@ async def get_chat_insights(
             exc_info=True,
         )
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# DEVELOPMENT ENDPOINTS (No Authentication Required)
+# ============================================================================
+
+@router.post("/test-chat", response_model=ChatResponse)
+@limiter.limit("50/minute")  # Relaxed rate limiting for testing
+async def test_chat(
+    request: Request,
+    chat_request: ChatRequest,
+):
+    """Test endpoint for chat functionality without authentication.
+    
+    This endpoint is available only in development environment.
+    It allows testing the Agno Agent without requiring authentication.
+
+    Args:
+        request: The FastAPI request object for rate limiting.
+        chat_request: The chat request containing messages.
+
+    Returns:
+        ChatResponse: The processed chat response.
+
+    Raises:
+        HTTPException: If not in development mode or processing error.
+    """
+    # Only allow in development environment
+    if settings.APP_ENV.value != "development":
+        raise HTTPException(
+            status_code=404, 
+            detail="Endpoint not available in production"
+        )
+
+    import time
+    import uuid
+
+    try:
+        # Use fixed session ID for testing
+        test_session_id = "test_session_123"
+        test_user_id = "test_user"
+
+        logger.info(
+            "test_chat_request_received",
+            session_id=test_session_id,
+            message_count=len(chat_request.messages),
+        )
+
+        # Get the last user message from the request
+        user_messages = [msg for msg in chat_request.messages if msg.role == "user"]
+        if not user_messages:
+            raise HTTPException(status_code=400, detail="No user message found")
+
+        last_user_message = user_messages[-1]
+
+        # Measure processing time
+        start_time = time.time()
+
+        # Initialize agent if needed
+        if agent.agent is None:
+            await agent.initialize()
+
+        # Get AI response
+        result = await agent.get_response(
+            chat_request.messages, test_session_id, user_id=test_user_id
+        )
+
+        processing_time = time.time() - start_time
+
+        # Format response messages
+        response_messages = []
+        for msg in result:
+            response_messages.append({
+                "id": str(uuid.uuid4()),
+                "role": msg.role,
+                "content": msg.content,
+                "timestamp": time.time(),
+                "metadata": {
+                    "processing_time_ms": int(processing_time * 1000),
+                    "model": "gpt-4o-mini",
+                    "tools_used": len(agent.tools) if agent.tools else 0,
+                }
+            })
+
+        logger.info(
+            "test_chat_response_generated",
+            session_id=test_session_id,
+            processing_time=processing_time,
+            response_length=len(response_messages),
+        )
+
+        return ChatResponse(
+            messages=response_messages,
+            session_id=test_session_id,
+            processing_time_ms=int(processing_time * 1000),
+            metadata={
+                "message_count": len(response_messages),
+                "user_message": last_user_message.content[:100] + "..." if len(last_user_message.content) > 100 else last_user_message.content,
+                "total_processing_time": processing_time,
+                "tools_available": ["rag_search", "whatsapp_tool"],
+                "environment": "development_test",
+            },
+        )
+
+    except Exception as e:
+        logger.error(
+            "test_chat_failed",
+            session_id="test_session_123",
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(status_code=500, detail=f"Test chat error: {str(e)}")

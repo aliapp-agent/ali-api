@@ -42,6 +42,7 @@ curl http://localhost:8000/health
 - ✅ FastAPI com documentação automática
 - ✅ Integração com Agno para agentes de IA
 - ✅ Sistema RAG com Elasticsearch
+- ✅ **Integração WhatsApp via Evolution API**
 - ✅ Observabilidade com Langfuse
 - ✅ Autenticação JWT
 - ✅ Rate limiting
@@ -49,11 +50,26 @@ curl http://localhost:8000/health
 - ✅ Testes automatizados
 - ✅ Docker e CI/CD
 
+## 📱 WhatsApp Integration
+
+Configure e teste a integração com WhatsApp via Evolution API:
+
+```bash
+# Configurar WhatsApp
+python scripts/setup_whatsapp.py
+
+# Testar integração
+python scripts/test_whatsapp.py --full-test
+```
+
+Veja a [documentação completa](./docs/WHATSAPP_SETUP.md) para mais detalhes.
+
 ## 🔗 Links Úteis
 
 - **API Docs**: http://localhost:8000/docs
 - **Health Check**: http://localhost:8000/health
 - **Metrics**: http://localhost:8000/metrics
+- **WhatsApp Webhook Test**: http://localhost:8000/api/v1/whatsapp/webhook/test
 
 ---
 

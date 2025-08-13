@@ -1,0 +1,292 @@
+{
+  "summary": {
+    "total_tests": 15,
+    "passed": 5,
+    "failed": 10,
+    "success_rate": "33.3%",
+    "total_duration_ms": 10118.72,
+    "avg_duration_ms": 674.58
+  },
+  "categories": {
+    "Health": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0
+    },
+    "Auth": {
+      "total": 6,
+      "passed": 2,
+      "failed": 4
+    },
+    "Users": {
+      "total": 6,
+      "passed": 0,
+      "failed": 6
+    }
+  },
+  "test_details": [
+    {
+      "endpoint": "/health",
+      "method": "GET",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 5181.75,
+      "timestamp": "2025-08-12T19:09:44.340483",
+      "response_data": {
+        "status": "healthy",
+        "version": "1.0.0",
+        "environment": "development",
+        "components": {
+          "api": "healthy",
+          "database": "healthy",
+          "rag_service": "healthy",
+          "agno_agent": "healthy"
+        },
+        "component_details": {
+          "database": {
+            "status": "healthy"
+          },
+          "rag_service": {
+            "status": "healthy",
+            "qdrant_connection": "ok",
+            "collection": "aguas_claras",
+            "collection_exists": "yes",
+            "vector_count": "47458",
+            "embedding_model": "all-MiniLM-L6-v2"
+          },
+          "agno_agent": {
+            "status": "healthy",
+            "agent_ready": true,
+            "tools_count": 2,
+            "memory_configured": true
+          }
+        },
+        "timestamp": "2025-08-12T19:09:44.339073",
+        "uptime_seconds": 21.980418
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/health/deep",
+      "method": "GET",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 2924.1,
+      "timestamp": "2025-08-12T19:09:47.264695",
+      "response_data": {
+        "status": "healthy",
+        "version": "1.0.0",
+        "environment": "development",
+        "timestamp": "2025-08-12T19:09:47.263547",
+        "uptime_seconds": 24.904892,
+        "health_check_duration_ms": 2910.05,
+        "components": {
+          "api": "healthy",
+          "database": "healthy",
+          "rag_service": "healthy",
+          "agno_agent": "healthy"
+        },
+        "component_details": {
+          "database": {
+            "firestore": "healthy",
+            "type": "firebase"
+          },
+          "rag_service": {
+            "status": "healthy",
+            "elasticsearch": "unknown",
+            "index": "unknown",
+            "error": null,
+            "qdrant_connection": "ok",
+            "collection": "aguas_claras",
+            "collection_exists": "yes",
+            "vector_count": "47458",
+            "embedding_model": "all-MiniLM-L6-v2"
+          },
+          "agno_agent": {
+            "status": "healthy",
+            "agent_ready": true,
+            "tools_count": 2,
+            "error": null,
+            "memory_configured": true
+          },
+          "system": {
+            "memory": {
+              "total_mb": 63758.11,
+              "available_mb": 48321.62,
+              "used_percent": 24.2
+            },
+            "disk": {
+              "total_gb": 226.08,
+              "free_gb": 51.14,
+              "used_percent": 72.27
+            },
+            "cpu": {
+              "usage_percent": 4.6,
+              "load_average": [
+                0.7255859375,
+                0.83740234375,
+                0.82275390625
+              ]
+            },
+            "process": {
+              "pid": 26010,
+              "threads": 70
+            }
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/health",
+      "method": "GET",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 14.21,
+      "timestamp": "2025-08-12T19:09:47.278978",
+      "response_data": {
+        "status": "healthy",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/auth/register",
+      "method": "POST",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 967.76,
+      "timestamp": "2025-08-12T19:09:48.246810",
+      "response_data": {
+        "id": "5a3f1a94-c86e-438e-b04b-b280758c2898",
+        "email": "test_7ntimwnv@example.com",
+        "token": {
+          "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1YTNmMWE5NC1jODZlLTQzOGUtYjA0Yi1iMjgwNzU4YzI4OTgiLCJleHAiOjE3NTc2Mjg1ODgsImlhdCI6MTc1NTAzNjU4OCwianRpIjoiNWEzZjFhOTQtYzg2ZS00MzhlLWIwNGItYjI4MDc1OGMyODk4LTE3NTUwMzY1ODguMjQ0NzM2LTgxNzE0OTQ3NDk3ZTM4MzEiLCJ0eXBlIjoiYWNjZXNzX3Rva2VuIn0.nz9VFYqLG4r1NMxXa-TvUw9Ftlx7FiK7ADyuK-G2Rko",
+          "token_type": "bearer",
+          "expires_at": "2025-09-11T22:09:48.244734Z"
+        }
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/auth/login",
+      "method": "POST",
+      "success": false,
+      "status_code": 500,
+      "duration_ms": 250.68,
+      "timestamp": "2025-08-12T19:09:48.497579",
+      "response_data": null,
+      "error": "HTTP 500: {'error': 'HTTPException', 'message': 'Internal server error', 'status_code': 500, 'error_id': '2d227e23-ad52-4b99-b452-eb6de26558b3', 'timestamp': '2025-08-12T19:09:48.496720', 'path': '/api/v1/auth/login'}"
+    },
+    {
+      "endpoint": "/api/v1/auth/session",
+      "method": "POST",
+      "success": false,
+      "status_code": 422,
+      "duration_ms": 14.52,
+      "timestamp": "2025-08-12T19:09:48.512174",
+      "response_data": null,
+      "error": "HTTP 422: {'error': 'HTTPException', 'message': 'Invalid token format', 'status_code': 422, 'error_id': '9611736b-5140-4036-a633-9b6cf9a879f8', 'timestamp': '2025-08-12T19:09:48.511543', 'path': '/api/v1/auth/session'}"
+    },
+    {
+      "endpoint": "/api/v1/auth/sessions",
+      "method": "GET",
+      "success": false,
+      "status_code": 422,
+      "duration_ms": 16.2,
+      "timestamp": "2025-08-12T19:09:48.528442",
+      "response_data": null,
+      "error": "HTTP 422: {'error': 'HTTPException', 'message': 'Invalid token format', 'status_code': 422, 'error_id': '742b881b-9342-4f23-87d0-fbc6e8c47512', 'timestamp': '2025-08-12T19:09:48.527849', 'path': '/api/v1/auth/sessions'}"
+    },
+    {
+      "endpoint": "/api/v1/auth/forgot-password",
+      "method": "POST",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 628.96,
+      "timestamp": "2025-08-12T19:09:49.157462",
+      "response_data": {
+        "message": "If an account with that email exists, a password reset link has been sent",
+        "success": true
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/auth/logout",
+      "method": "POST",
+      "success": false,
+      "status_code": 422,
+      "duration_ms": 14.26,
+      "timestamp": "2025-08-12T19:09:49.171790",
+      "response_data": null,
+      "error": "HTTP 422: {'error': 'HTTPException', 'message': 'Invalid token format', 'status_code': 422, 'error_id': 'e0f96320-9716-4665-be30-0836fa8cabb1', 'timestamp': '2025-08-12T19:09:49.171167', 'path': '/api/v1/auth/logout'}"
+    },
+    {
+      "endpoint": "/api/v1/users/health",
+      "method": "GET",
+      "success": false,
+      "status_code": 422,
+      "duration_ms": 16.35,
+      "timestamp": "2025-08-12T19:09:49.188231",
+      "response_data": null,
+      "error": "HTTP 422: {'error': 'HTTPException', 'message': 'Invalid token format', 'status_code': 422, 'error_id': '37292a15-a448-46a6-bed8-6c6b9e35e5cc', 'timestamp': '2025-08-12T19:09:49.187681', 'path': '/api/v1/users/health'}"
+    },
+    {
+      "endpoint": "/api/v1/users/me",
+      "method": "GET",
+      "success": false,
+      "status_code": 422,
+      "duration_ms": 23.93,
+      "timestamp": "2025-08-12T19:09:49.212229",
+      "response_data": null,
+      "error": "HTTP 422: {'error': 'HTTPException', 'message': 'Invalid token format', 'status_code': 422, 'error_id': '029f4ee0-7839-41b7-a7b8-7a7a327a0831', 'timestamp': '2025-08-12T19:09:49.211504', 'path': '/api/v1/users/me'}"
+    },
+    {
+      "endpoint": "/api/v1/users/",
+      "method": "GET",
+      "success": false,
+      "status_code": 422,
+      "duration_ms": 16.75,
+      "timestamp": "2025-08-12T19:09:49.229056",
+      "response_data": null,
+      "error": "HTTP 422: {'error': 'HTTPException', 'message': 'Invalid token format', 'status_code': 422, 'error_id': '789f292d-dc91-45fa-b510-155d1f64548b', 'timestamp': '2025-08-12T19:09:49.228364', 'path': '/api/v1/users/'}"
+    },
+    {
+      "endpoint": "/api/v1/users/search",
+      "method": "POST",
+      "success": false,
+      "status_code": 422,
+      "duration_ms": 16.47,
+      "timestamp": "2025-08-12T19:09:49.245596",
+      "response_data": null,
+      "error": "HTTP 422: {'error': 'HTTPException', 'message': 'Invalid token format', 'status_code': 422, 'error_id': '90d83e01-2ccd-46f3-bbb9-f0f8c38fc04a', 'timestamp': '2025-08-12T19:09:49.245001', 'path': '/api/v1/users/search'}"
+    },
+    {
+      "endpoint": "/api/v1/users/stats",
+      "method": "GET",
+      "success": false,
+      "status_code": 422,
+      "duration_ms": 16.69,
+      "timestamp": "2025-08-12T19:09:49.262343",
+      "response_data": null,
+      "error": "HTTP 422: {'error': 'HTTPException', 'message': 'Invalid token format', 'status_code': 422, 'error_id': 'c5f1f019-7476-4cc8-9a3d-09fcf2b282df', 'timestamp': '2025-08-12T19:09:49.261759', 'path': '/api/v1/users/stats'}"
+    },
+    {
+      "endpoint": "/api/v1/users/5a3f1a94-c86e-438e-b04b-b280758c2898",
+      "method": "GET",
+      "success": false,
+      "status_code": 422,
+      "duration_ms": 16.09,
+      "timestamp": "2025-08-12T19:09:49.278493",
+      "response_data": null,
+      "error": "HTTP 422: {'error': 'HTTPException', 'message': 'Invalid token format', 'status_code': 422, 'error_id': 'd91cc910-8522-4e0f-9ac1-34a3c2ea7650', 'timestamp': '2025-08-12T19:09:49.277941', 'path': '/api/v1/users/5a3f1a94-c86e-438e-b04b-b280758c2898'}"
+    }
+  ],
+  "test_config": {
+    "base_url": "http://localhost:8081",
+    "test_email": "test_7ntimwnv@example.com",
+    "user_id": "5a3f1a94-c86e-438e-b04b-b280758c2898",
+    "session_id": null,
+    "timestamp": "2025-08-12T19:09:49.278560"
+  }
+}

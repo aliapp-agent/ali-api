@@ -54,7 +54,8 @@ async def deep_health_check(request: Request) -> JSONResponse:
             "error": None,
         }
         try:
-            from app.services.rag import rag_service
+            from app.services import get_rag_service
+            rag_service = get_rag_service()
 
             rag_health = await rag_service.health_check()
             rag_details.update(rag_health)

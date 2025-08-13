@@ -1,0 +1,1075 @@
+{
+  "summary": {
+    "total_tests": 44,
+    "passed": 18,
+    "failed": 26,
+    "success_rate": "40.9%",
+    "total_duration_ms": 28968.64,
+    "avg_duration_ms": 658.38
+  },
+  "categories": {
+    "Health": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0
+    },
+    "Auth": {
+      "total": 6,
+      "passed": 6,
+      "failed": 0
+    },
+    "Chatbot": {
+      "total": 9,
+      "passed": 6,
+      "failed": 3
+    },
+    "RAG": {
+      "total": 4,
+      "passed": 2,
+      "failed": 2
+    },
+    "Documents": {
+      "total": 5,
+      "passed": 0,
+      "failed": 5
+    },
+    "Dashboard": {
+      "total": 11,
+      "passed": 1,
+      "failed": 10
+    },
+    "Users": {
+      "total": 6,
+      "passed": 0,
+      "failed": 6
+    }
+  },
+  "test_details": [
+    {
+      "endpoint": "/health",
+      "method": "GET",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 4097.79,
+      "timestamp": "2025-08-12T19:22:04.514447",
+      "response_data": {
+        "status": "healthy",
+        "version": "1.0.0",
+        "environment": "development",
+        "components": {
+          "api": "healthy",
+          "database": "healthy",
+          "rag_service": "healthy",
+          "agno_agent": "healthy"
+        },
+        "component_details": {
+          "database": {
+            "status": "healthy"
+          },
+          "rag_service": {
+            "status": "healthy",
+            "qdrant_connection": "ok",
+            "collection": "aguas_claras",
+            "collection_exists": "yes",
+            "vector_count": "47458",
+            "embedding_model": "all-MiniLM-L6-v2"
+          },
+          "agno_agent": {
+            "status": "healthy",
+            "agent_ready": true,
+            "tools_count": 2,
+            "memory_configured": true
+          }
+        },
+        "timestamp": "2025-08-12T19:22:04.513199",
+        "uptime_seconds": 31.106739
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/health/deep",
+      "method": "GET",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 4174.47,
+      "timestamp": "2025-08-12T19:22:08.689006",
+      "response_data": {
+        "status": "healthy",
+        "version": "1.0.0",
+        "environment": "development",
+        "timestamp": "2025-08-12T19:22:08.687913",
+        "uptime_seconds": 35.281452,
+        "health_check_duration_ms": 4160.89,
+        "components": {
+          "api": "healthy",
+          "database": "healthy",
+          "rag_service": "healthy",
+          "agno_agent": "healthy"
+        },
+        "component_details": {
+          "database": {
+            "firestore": "healthy",
+            "type": "firebase"
+          },
+          "rag_service": {
+            "status": "healthy",
+            "elasticsearch": "unknown",
+            "index": "unknown",
+            "error": null,
+            "qdrant_connection": "ok",
+            "collection": "aguas_claras",
+            "collection_exists": "yes",
+            "vector_count": "47458",
+            "embedding_model": "all-MiniLM-L6-v2"
+          },
+          "agno_agent": {
+            "status": "healthy",
+            "agent_ready": true,
+            "tools_count": 2,
+            "error": null,
+            "memory_configured": true
+          },
+          "system": {
+            "memory": {
+              "total_mb": 63758.11,
+              "available_mb": 47814.61,
+              "used_percent": 25.0
+            },
+            "disk": {
+              "total_gb": 226.08,
+              "free_gb": 51.14,
+              "used_percent": 72.27
+            },
+            "cpu": {
+              "usage_percent": 2.1,
+              "load_average": [
+                1.02001953125,
+                0.93115234375,
+                0.88330078125
+              ]
+            },
+            "process": {
+              "pid": 29029,
+              "threads": 70
+            }
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/health",
+      "method": "GET",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 12.47,
+      "timestamp": "2025-08-12T19:22:08.701553",
+      "response_data": {
+        "status": "healthy",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/auth/register",
+      "method": "POST",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 928.58,
+      "timestamp": "2025-08-12T19:22:09.630199",
+      "response_data": {
+        "id": "9e491ebe-1850-4cce-b969-7ce11b713935",
+        "email": "test_avrj4wjk@example.com",
+        "token": {
+          "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5ZTQ5MWViZS0xODUwLTRjY2UtYjk2OS03Y2UxMWI3MTM5MzUiLCJleHAiOjE3NTc2MjkzMjksImlhdCI6MTc1NTAzNzMyOSwianRpIjoiOWU0OTFlYmUtMTg1MC00Y2NlLWI5NjktN2NlMTFiNzEzOTM1LTE3NTUwMzczMjkuNjI4NTA2LTlmZjdmN2Y2MDA4ZmZmZWMiLCJ0eXBlIjoiYWNjZXNzX3Rva2VuIn0.seZ6gspOzDccXfa5BKVWIUvbdiUfzq9sKJQ_jEEvS0w",
+          "token_type": "bearer",
+          "expires_at": "2025-09-11T22:22:09.628503Z"
+        }
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/auth/login",
+      "method": "POST",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 207.11,
+      "timestamp": "2025-08-12T19:22:09.837393",
+      "response_data": {
+        "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5ZTQ5MWViZS0xODUwLTRjY2UtYjk2OS03Y2UxMWI3MTM5MzUiLCJleHAiOjE3NTc2MjkzMjksImlhdCI6MTc1NTAzNzMyOSwianRpIjoiOWU0OTFlYmUtMTg1MC00Y2NlLWI5NjktN2NlMTFiNzEzOTM1LTE3NTUwMzczMjkuODM1MDg4LTdkNTU4ZGUyNmNjZjI3NTEiLCJ0eXBlIjoiYWNjZXNzX3Rva2VuIn0.SEry1g6V51fPGeSqUNzHTp-gmoOmr2uzPcYSM3dy4dY",
+        "token_type": "bearer",
+        "expires_at": "2025-09-11T22:22:09.835086Z"
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/auth/session",
+      "method": "POST",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 919.57,
+      "timestamp": "2025-08-12T19:22:10.757057",
+      "response_data": {
+        "session_id": "75ecb24c-2652-4ade-a467-7a9088edfe5c",
+        "name": "Chat Session 2025-08-12 22:22",
+        "token": {
+          "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NWVjYjI0Yy0yNjUyLTRhZGUtYTQ2Ny03YTkwODhlZGZlNWMiLCJleHAiOjE3NTc2MjkzMzAsImlhdCI6MTc1NTAzNzMzMCwianRpIjoiNzVlY2IyNGMtMjY1Mi00YWRlLWE0NjctN2E5MDg4ZWRmZTVjLTE3NTUwMzczMzAuNzU1MDgtMjdmNDg4NWFiNTM2MDAwOSIsInR5cGUiOiJhY2Nlc3NfdG9rZW4ifQ.FjRn8_j4IRzqLaRKMe14jtEhzicEzIG4YAuCr6S_1pg",
+          "token_type": "bearer",
+          "expires_at": "2025-09-11T22:22:10.755072Z"
+        }
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/auth/sessions",
+      "method": "GET",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 896.62,
+      "timestamp": "2025-08-12T19:22:11.653756",
+      "response_data": [],
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/auth/forgot-password",
+      "method": "POST",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 657.47,
+      "timestamp": "2025-08-12T19:22:12.311308",
+      "response_data": {
+        "message": "If an account with that email exists, a password reset link has been sent",
+        "success": true
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/auth/logout",
+      "method": "POST",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 304.31,
+      "timestamp": "2025-08-12T19:22:12.615700",
+      "response_data": {
+        "message": "Successfully logged out",
+        "success": true
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/chatbot/chat",
+      "method": "POST",
+      "success": false,
+      "status_code": 500,
+      "duration_ms": 886.11,
+      "timestamp": "2025-08-12T19:22:13.501893",
+      "response_data": null,
+      "error": "HTTP 500: {'error': 'HTTPException', 'message': 'Session with ID 75ecb24c-2652-4ade-a467-7a9088edfe5c not found', 'status_code': 500, 'error_id': '8f1ba4a5-7c3c-4795-a5ce-401eed14d78b', 'timestamp': '2025-08-12T19:22:13.500980', 'path': '/api/v1/chatbot/chat'}"
+    },
+    {
+      "endpoint": "/api/v1/chatbot/chat/stream",
+      "method": "POST",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 920.8,
+      "timestamp": "2025-08-12T19:22:14.422823",
+      "response_data": "data: {\"content\": \"Stream error: Session with ID 75ecb24c-2652-4ade-a467-7a9088edfe5c not found\", \"done\": true}\n\n",
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/chatbot/messages",
+      "method": "GET",
+      "success": false,
+      "status_code": 500,
+      "duration_ms": 886.48,
+      "timestamp": "2025-08-12T19:22:15.309391",
+      "response_data": null,
+      "error": "HTTP 500: {'error': 'HTTPException', 'message': 'Session with ID 75ecb24c-2652-4ade-a467-7a9088edfe5c not found', 'status_code': 500, 'error_id': '662aa5f2-9132-48fd-a0c3-a11f42567a85', 'timestamp': '2025-08-12T19:22:15.308474', 'path': '/api/v1/chatbot/messages'}"
+    },
+    {
+      "endpoint": "/api/v1/chatbot/messages",
+      "method": "DELETE",
+      "success": false,
+      "status_code": 500,
+      "duration_ms": 537.04,
+      "timestamp": "2025-08-12T19:22:15.846535",
+      "response_data": null,
+      "error": "HTTP 500: {'error': 'HTTPException', 'message': \"'Memory' object has no attribute 'aclear'\", 'status_code': 500, 'error_id': 'ce8095f1-12a4-4561-a8f5-e8b55467a1da', 'timestamp': '2025-08-12T19:22:15.845167', 'path': '/api/v1/chatbot/messages'}"
+    },
+    {
+      "endpoint": "/api/v1/chatbot/history",
+      "method": "POST",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 383.73,
+      "timestamp": "2025-08-12T19:22:16.230404",
+      "response_data": {
+        "messages": [
+          {
+            "id": "56d2f876-37cc-4337-a316-7e0da48deca0",
+            "role": "user",
+            "content": "Sample message 0",
+            "timestamp": "2025-08-12T19:22:16.229413",
+            "session_id": "75ecb24c-2652-4ade-a467-7a9088edfe5c",
+            "user_id": "9e491ebe-1850-4cce-b969-7ce11b713935",
+            "tokens": 10,
+            "processing_time": null,
+            "model_used": null,
+            "context_documents": [],
+            "confidence_score": null
+          },
+          {
+            "id": "3d459359-e0b0-4114-8b2a-791809ab7922",
+            "role": "assistant",
+            "content": "Sample message 1",
+            "timestamp": "2025-08-12T19:22:16.229420",
+            "session_id": "75ecb24c-2652-4ade-a467-7a9088edfe5c",
+            "user_id": "9e491ebe-1850-4cce-b969-7ce11b713935",
+            "tokens": 10,
+            "processing_time": 0.5,
+            "model_used": "agno-1.0",
+            "context_documents": [],
+            "confidence_score": 0.9
+          },
+          {
+            "id": "19156e0e-ccb2-4a59-a399-51f18ec9c490",
+            "role": "user",
+            "content": "Sample message 2",
+            "timestamp": "2025-08-12T19:22:16.229424",
+            "session_id": "75ecb24c-2652-4ade-a467-7a9088edfe5c",
+            "user_id": "9e491ebe-1850-4cce-b969-7ce11b713935",
+            "tokens": 10,
+            "processing_time": null,
+            "model_used": null,
+            "context_documents": [],
+            "confidence_score": null
+          },
+          {
+            "id": "03ef7dce-e0d8-4394-911b-d0498d0e70c2",
+            "role": "assistant",
+            "content": "Sample message 3",
+            "timestamp": "2025-08-12T19:22:16.229427",
+            "session_id": "75ecb24c-2652-4ade-a467-7a9088edfe5c",
+            "user_id": "9e491ebe-1850-4cce-b969-7ce11b713935",
+            "tokens": 10,
+            "processing_time": 0.5,
+            "model_used": "agno-1.0",
+            "context_documents": [],
+            "confidence_score": 0.9
+          },
+          {
+            "id": "3417e70a-d92d-4154-88bd-7ee844f3b5b4",
+            "role": "user",
+            "content": "Sample message 4",
+            "timestamp": "2025-08-12T19:22:16.229430",
+            "session_id": "75ecb24c-2652-4ade-a467-7a9088edfe5c",
+            "user_id": "9e491ebe-1850-4cce-b969-7ce11b713935",
+            "tokens": 10,
+            "processing_time": null,
+            "model_used": null,
+            "context_documents": [],
+            "confidence_score": null
+          },
+          {
+            "id": "d89403b5-f3d1-4c25-b335-9dfd2292658e",
+            "role": "assistant",
+            "content": "Sample message 5",
+            "timestamp": "2025-08-12T19:22:16.229433",
+            "session_id": "75ecb24c-2652-4ade-a467-7a9088edfe5c",
+            "user_id": "9e491ebe-1850-4cce-b969-7ce11b713935",
+            "tokens": 10,
+            "processing_time": 0.5,
+            "model_used": "agno-1.0",
+            "context_documents": [],
+            "confidence_score": 0.9
+          },
+          {
+            "id": "e6cacced-77ba-4a5a-8ea0-6311cbb19f5e",
+            "role": "user",
+            "content": "Sample message 6",
+            "timestamp": "2025-08-12T19:22:16.229435",
+            "session_id": "75ecb24c-2652-4ade-a467-7a9088edfe5c",
+            "user_id": "9e491ebe-1850-4cce-b969-7ce11b713935",
+            "tokens": 10,
+            "processing_time": null,
+            "model_used": null,
+            "context_documents": [],
+            "confidence_score": null
+          },
+          {
+            "id": "f706a39d-bf3e-454c-b6f4-f4a193cb905f",
+            "role": "assistant",
+            "content": "Sample message 7",
+            "timestamp": "2025-08-12T19:22:16.229438",
+            "session_id": "75ecb24c-2652-4ade-a467-7a9088edfe5c",
+            "user_id": "9e491ebe-1850-4cce-b969-7ce11b713935",
+            "tokens": 10,
+            "processing_time": 0.5,
+            "model_used": "agno-1.0",
+            "context_documents": [],
+            "confidence_score": 0.9
+          },
+          {
+            "id": "c848a35b-dc90-42b1-a976-dd6dcbfeb193",
+            "role": "user",
+            "content": "Sample message 8",
+            "timestamp": "2025-08-12T19:22:16.229440",
+            "session_id": "75ecb24c-2652-4ade-a467-7a9088edfe5c",
+            "user_id": "9e491ebe-1850-4cce-b969-7ce11b713935",
+            "tokens": 10,
+            "processing_time": null,
+            "model_used": null,
+            "context_documents": [],
+            "confidence_score": null
+          },
+          {
+            "id": "498349d3-473d-4725-a5bd-abf276ff9dbb",
+            "role": "assistant",
+            "content": "Sample message 9",
+            "timestamp": "2025-08-12T19:22:16.229443",
+            "session_id": "75ecb24c-2652-4ade-a467-7a9088edfe5c",
+            "user_id": "9e491ebe-1850-4cce-b969-7ce11b713935",
+            "tokens": 10,
+            "processing_time": 0.5,
+            "model_used": "agno-1.0",
+            "context_documents": [],
+            "confidence_score": 0.9
+          }
+        ],
+        "total_count": 50,
+        "has_more": true,
+        "session_info": {
+          "session_id": "75ecb24c-2652-4ade-a467-7a9088edfe5c",
+          "session_name": "Chat Session",
+          "created_at": "2025-08-12T19:22:16.229450",
+          "message_count": 50
+        }
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/chatbot/search",
+      "method": "POST",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 508.29,
+      "timestamp": "2025-08-12T19:22:16.738779",
+      "response_data": [
+        {
+          "message": {
+            "id": "f2f2ddb7-50d7-426f-b1a4-bee02a81b92f",
+            "role": "assistant",
+            "content": "This is a relevant response containing 'teste' in the context.",
+            "timestamp": "2025-08-12T19:22:16.737764",
+            "session_id": "75ecb24c-2652-4ade-a467-7a9088edfe5c",
+            "user_id": "9e491ebe-1850-4cce-b969-7ce11b713935",
+            "tokens": 25,
+            "processing_time": 1.2,
+            "model_used": "agno-1.0",
+            "context_documents": [
+              "44f0bc9d-6110-42f5-ac0e-021f1a4be7a9"
+            ],
+            "confidence_score": 0.85
+          },
+          "relevance_score": 0.9,
+          "context_snippet": "...containing 'teste' in the context...",
+          "session_name": "Chat Session"
+        },
+        {
+          "message": {
+            "id": "9b513afe-7dc2-44f7-8227-08051b109039",
+            "role": "assistant",
+            "content": "This is a relevant response containing 'teste' in the context.",
+            "timestamp": "2025-08-12T19:22:16.737797",
+            "session_id": "75ecb24c-2652-4ade-a467-7a9088edfe5c",
+            "user_id": "9e491ebe-1850-4cce-b969-7ce11b713935",
+            "tokens": 25,
+            "processing_time": 1.2,
+            "model_used": "agno-1.0",
+            "context_documents": [
+              "5d1393ae-af71-4c52-bedd-647925cb2a92"
+            ],
+            "confidence_score": 0.85
+          },
+          "relevance_score": 0.8,
+          "context_snippet": "...containing 'teste' in the context...",
+          "session_name": "Chat Session"
+        },
+        {
+          "message": {
+            "id": "9ca7ff4e-9620-441c-9b5d-d2cb598f25d3",
+            "role": "assistant",
+            "content": "This is a relevant response containing 'teste' in the context.",
+            "timestamp": "2025-08-12T19:22:16.737809",
+            "session_id": "75ecb24c-2652-4ade-a467-7a9088edfe5c",
+            "user_id": "9e491ebe-1850-4cce-b969-7ce11b713935",
+            "tokens": 25,
+            "processing_time": 1.2,
+            "model_used": "agno-1.0",
+            "context_documents": [
+              "e406743a-fb39-400f-8a22-52c4ba06cb1d"
+            ],
+            "confidence_score": 0.85
+          },
+          "relevance_score": 0.7,
+          "context_snippet": "...containing 'teste' in the context...",
+          "session_name": "Chat Session"
+        },
+        {
+          "message": {
+            "id": "b3738808-607d-4530-8930-52792dccff39",
+            "role": "assistant",
+            "content": "This is a relevant response containing 'teste' in the context.",
+            "timestamp": "2025-08-12T19:22:16.737817",
+            "session_id": "75ecb24c-2652-4ade-a467-7a9088edfe5c",
+            "user_id": "9e491ebe-1850-4cce-b969-7ce11b713935",
+            "tokens": 25,
+            "processing_time": 1.2,
+            "model_used": "agno-1.0",
+            "context_documents": [
+              "49200df0-7a50-4af1-a8d8-c1736a0795a3"
+            ],
+            "confidence_score": 0.85
+          },
+          "relevance_score": 0.6,
+          "context_snippet": "...containing 'teste' in the context...",
+          "session_name": "Chat Session"
+        },
+        {
+          "message": {
+            "id": "2b65ff01-98b8-4571-b2d1-586b1625bd74",
+            "role": "assistant",
+            "content": "This is a relevant response containing 'teste' in the context.",
+            "timestamp": "2025-08-12T19:22:16.737825",
+            "session_id": "75ecb24c-2652-4ade-a467-7a9088edfe5c",
+            "user_id": "9e491ebe-1850-4cce-b969-7ce11b713935",
+            "tokens": 25,
+            "processing_time": 1.2,
+            "model_used": "agno-1.0",
+            "context_documents": [
+              "5464e188-8cc0-48ab-894c-22e27a32e052"
+            ],
+            "confidence_score": 0.85
+          },
+          "relevance_score": 0.5,
+          "context_snippet": "...containing 'teste' in the context...",
+          "session_name": "Chat Session"
+        }
+      ],
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/chatbot/metrics",
+      "method": "GET",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 386.45,
+      "timestamp": "2025-08-12T19:22:17.125314",
+      "response_data": {
+        "total_messages": 1250,
+        "total_sessions": 75,
+        "avg_messages_per_session": 16.7,
+        "avg_response_time": 1.8,
+        "most_active_users": [
+          {
+            "user_id": "9e491ebe-1850-4cce-b969-7ce11b713935",
+            "message_count": 45
+          },
+          {
+            "user_id": 2,
+            "message_count": 38
+          },
+          {
+            "user_id": 3,
+            "message_count": 32
+          }
+        ],
+        "popular_topics": [
+          {
+            "topic": "documentos legislativos",
+            "count": 125
+          },
+          {
+            "topic": "pesquisa jurídica",
+            "count": 89
+          },
+          {
+            "topic": "análise de contratos",
+            "count": 67
+          }
+        ],
+        "model_usage": {
+          "agno-1.0": 85.2,
+          "agno-0.9": 14.8
+        },
+        "daily_stats": [
+          {
+            "date": "2025-01-20",
+            "messages": 45,
+            "sessions": 8
+          },
+          {
+            "date": "2025-01-21",
+            "messages": 52,
+            "sessions": 9
+          },
+          {
+            "date": "2025-01-22",
+            "messages": 38,
+            "sessions": 6
+          }
+        ],
+        "token_usage": {
+          "total_tokens": 125000,
+          "avg_tokens_per_message": 28.5,
+          "cost_estimate_usd": 12.5
+        }
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/chatbot/insights",
+      "method": "GET",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 490.63,
+      "timestamp": "2025-08-12T19:22:17.616025",
+      "response_data": {
+        "insights": [
+          {
+            "insight_type": "usage_pattern",
+            "title": "Peak Usage Hours",
+            "description": "Most chat activity occurs between 9-11 AM and 2-4 PM",
+            "confidence": 0.92,
+            "data": {
+              "peak_hours": [
+                9,
+                10,
+                14,
+                15
+              ],
+              "activity_score": 85
+            },
+            "generated_at": "2025-08-12T19:22:17.615104"
+          },
+          {
+            "insight_type": "topic_trend",
+            "title": "Growing Interest in Contract Analysis",
+            "description": "Questions about contract analysis have increased 35% this month",
+            "confidence": 0.87,
+            "data": {
+              "growth_rate": 0.35,
+              "topic": "contract_analysis"
+            },
+            "generated_at": "2025-08-12T19:22:17.615107"
+          },
+          {
+            "insight_type": "user_behavior",
+            "title": "Users Prefer Shorter Responses",
+            "description": "Messages under 200 words receive 45% higher satisfaction ratings",
+            "confidence": 0.79,
+            "data": {
+              "optimal_length": 150,
+              "satisfaction_boost": 0.45
+            },
+            "generated_at": "2025-08-12T19:22:17.615107"
+          }
+        ],
+        "summary": "Overall chat engagement is high with users actively seeking legal document assistance. Peak usage aligns with business hours, and there's growing demand for contract analysis features.",
+        "recommendations": [
+          "Consider adding more contract analysis templates",
+          "Optimize response length to 150-200 words for better engagement",
+          "Schedule system maintenance outside peak hours (9-11 AM, 2-4 PM)",
+          "Develop specialized workflows for legal document processing"
+        ],
+        "generated_at": "2025-08-12T19:22:17.615108"
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/chatbot/export",
+      "method": "POST",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 394.73,
+      "timestamp": "2025-08-12T19:22:18.010832",
+      "response_data": {
+        "success": true,
+        "file_url": "/api/v1/chatbot/downloads/05941aca-3f8e-44d2-9815-c53ecc01163e.json",
+        "file_size": 25600,
+        "message_count": 150,
+        "export_format": "json",
+        "expires_at": "2025-08-13T19:22:18.009950"
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/rag/health",
+      "method": "GET",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 543.16,
+      "timestamp": "2025-08-12T19:22:18.554072",
+      "response_data": {
+        "status": "healthy",
+        "qdrant_connection": "ok",
+        "collection": "aguas_claras",
+        "collection_exists": "yes",
+        "vector_count": "47458",
+        "embedding_model": "all-MiniLM-L6-v2"
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/rag/search",
+      "method": "POST",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 562.96,
+      "timestamp": "2025-08-12T19:22:19.117119",
+      "response_data": [
+        {
+          "id": "07d1467f-3155-5ddb-bb94-aa07fc86ee30",
+          "title": "Sem título",
+          "content": "",
+          "source_type": "",
+          "summary": "",
+          "municipio": "",
+          "legislatura": "",
+          "autor": "",
+          "categoria": "",
+          "status": "",
+          "tipo_documento": "",
+          "date": null,
+          "tokens": 0,
+          "file_path": "",
+          "score": 0.71078
+        },
+        {
+          "id": "b99343a9-57f1-595f-8867-721796eca9a4",
+          "title": "Sem título",
+          "content": "",
+          "source_type": "",
+          "summary": "",
+          "municipio": "",
+          "legislatura": "",
+          "autor": "",
+          "categoria": "",
+          "status": "",
+          "tipo_documento": "",
+          "date": null,
+          "tokens": 0,
+          "file_path": "",
+          "score": 0.67452383
+        },
+        {
+          "id": "c5ef9cf0-e9d1-5549-b8d3-a0885dac1ccb",
+          "title": "Sem título",
+          "content": "",
+          "source_type": "",
+          "summary": "",
+          "municipio": "",
+          "legislatura": "",
+          "autor": "",
+          "categoria": "",
+          "status": "",
+          "tipo_documento": "",
+          "date": null,
+          "tokens": 0,
+          "file_path": "",
+          "score": 0.67452383
+        },
+        {
+          "id": "5a55149a-2569-5b82-950f-ed88d14ad30b",
+          "title": "Sem título",
+          "content": "",
+          "source_type": "",
+          "summary": "",
+          "municipio": "",
+          "legislatura": "",
+          "autor": "",
+          "categoria": "",
+          "status": "",
+          "tipo_documento": "",
+          "date": null,
+          "tokens": 0,
+          "file_path": "",
+          "score": 0.66668606
+        },
+        {
+          "id": "4af925e5-da1d-591f-92e4-4ae2c20c511f",
+          "title": "Sem título",
+          "content": "",
+          "source_type": "",
+          "summary": "",
+          "municipio": "",
+          "legislatura": "",
+          "autor": "",
+          "categoria": "",
+          "status": "",
+          "tipo_documento": "",
+          "date": null,
+          "tokens": 0,
+          "file_path": "",
+          "score": 0.6536367
+        }
+      ],
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/rag/upload",
+      "method": "POST",
+      "success": false,
+      "status_code": 422,
+      "duration_ms": 326.14,
+      "timestamp": "2025-08-12T19:22:19.443341",
+      "response_data": null,
+      "error": "HTTP 422: {'error': 'ValidationError', 'message': 'Request validation failed', 'details': {'errors': [{'field': '', 'message': 'Input should be a valid dictionary or object to extract fields from', 'type': 'model_attributes_type'}], 'error_id': '608f2a7d-5c11-4b22-89f7-9636312a0488'}, 'timestamp': '2025-08-12T19:22:19.442431', 'path': '/api/v1/rag/upload'}"
+    },
+    {
+      "endpoint": "/api/v1/documents/health",
+      "method": "GET",
+      "success": false,
+      "status_code": 404,
+      "duration_ms": 567.95,
+      "timestamp": "2025-08-12T19:22:20.011378",
+      "response_data": null,
+      "error": "HTTP 404: {'error': 'HTTPException', 'message': 'User not found', 'status_code': 404, 'error_id': '5d2669ab-6fa8-4619-9f88-fae0967229e4', 'timestamp': '2025-08-12T19:22:20.010480', 'path': '/api/v1/documents/health'}"
+    },
+    {
+      "endpoint": "/api/v1/documents/",
+      "method": "GET",
+      "success": false,
+      "status_code": 405,
+      "duration_ms": 12.0,
+      "timestamp": "2025-08-12T19:22:20.023449",
+      "response_data": null,
+      "error": "HTTP 405: {'detail': 'Method Not Allowed'}"
+    },
+    {
+      "endpoint": "/api/v1/documents/upload",
+      "method": "POST",
+      "success": false,
+      "status_code": 404,
+      "duration_ms": 309.57,
+      "timestamp": "2025-08-12T19:22:20.333084",
+      "response_data": null,
+      "error": "HTTP 404: {'error': 'HTTPException', 'message': 'User not found', 'status_code': 404, 'error_id': 'd5b56669-311e-4a71-a4e6-f66c86d97ee7', 'timestamp': '2025-08-12T19:22:20.332204', 'path': '/api/v1/documents/upload'}"
+    },
+    {
+      "endpoint": "/api/v1/documents/search",
+      "method": "POST",
+      "success": false,
+      "status_code": 404,
+      "duration_ms": 583.79,
+      "timestamp": "2025-08-12T19:22:20.916952",
+      "response_data": null,
+      "error": "HTTP 404: {'error': 'HTTPException', 'message': 'User not found', 'status_code': 404, 'error_id': 'f87ec7b2-c5a8-45dd-9176-d776a1c52f49', 'timestamp': '2025-08-12T19:22:20.916089', 'path': '/api/v1/documents/search'}"
+    },
+    {
+      "endpoint": "/api/v1/documents/rag/search",
+      "method": "POST",
+      "success": false,
+      "status_code": 500,
+      "duration_ms": 463.03,
+      "timestamp": "2025-08-12T19:22:21.380119",
+      "response_data": null,
+      "error": "HTTP 500: {'error': 'InternalServerError', 'message': 'Internal server error: 60 validation errors:\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 0, \\'categoria\\'), \\'msg\\': \"Input should be \\'lei\\', \\'decreto\\', \\'portaria\\', \\'resolucao\\', \\'instrucao_normativa\\', \\'circular\\', \\'oficio\\', \\'memorando\\', \\'parecer\\', \\'relatorio\\', \\'ata\\', \\'edital\\', \\'contrato\\', \\'convenio\\' or \\'outros\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'lei\\', \\'decreto\\', \\'portaria\\', \\'resolucao\\', \\'instrucao_normativa\\', \\'circular\\', \\'oficio\\', \\'memorando\\', \\'parecer\\', \\'relatorio\\', \\'ata\\', \\'edital\\', \\'contrato\\', \\'convenio\\' or \\'outros\\'\"}}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 0, \\'tipo_documento\\'), \\'msg\\': \"Input should be \\'pdf\\', \\'docx\\', \\'txt\\', \\'html\\', \\'upload\\', \\'scraped\\' or \\'manual\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'pdf\\', \\'docx\\', \\'txt\\', \\'html\\', \\'upload\\', \\'scraped\\' or \\'manual\\'\"}}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 0, \\'status\\'), \\'msg\\': \"Input should be \\'active\\', \\'inactive\\', \\'draft\\', \\'archived\\' or \\'deleted\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'active\\', \\'inactive\\', \\'draft\\', \\'archived\\' or \\'deleted\\'\"}}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 0, \\'created_at\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'7f1c8d39-7018-5700-8ad7-ffaf45fecc3e\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.331449)}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 0, \\'updated_at\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'7f1c8d39-7018-5700-8ad7-ffaf45fecc3e\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.331449)}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 0, \\'relevance_score\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'7f1c8d39-7018-5700-8ad7-ffaf45fecc3e\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.331449)}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 1, \\'categoria\\'), \\'msg\\': \"Input should be \\'lei\\', \\'decreto\\', \\'portaria\\', \\'resolucao\\', \\'instrucao_normativa\\', \\'circular\\', \\'oficio\\', \\'memorando\\', \\'parecer\\', \\'relatorio\\', \\'ata\\', \\'edital\\', \\'contrato\\', \\'convenio\\' or \\'outros\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'lei\\', \\'decreto\\', \\'portaria\\', \\'resolucao\\', \\'instrucao_normativa\\', \\'circular\\', \\'oficio\\', \\'memorando\\', \\'parecer\\', \\'relatorio\\', \\'ata\\', \\'edital\\', \\'contrato\\', \\'convenio\\' or \\'outros\\'\"}}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 1, \\'tipo_documento\\'), \\'msg\\': \"Input should be \\'pdf\\', \\'docx\\', \\'txt\\', \\'html\\', \\'upload\\', \\'scraped\\' or \\'manual\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'pdf\\', \\'docx\\', \\'txt\\', \\'html\\', \\'upload\\', \\'scraped\\' or \\'manual\\'\"}}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 1, \\'status\\'), \\'msg\\': \"Input should be \\'active\\', \\'inactive\\', \\'draft\\', \\'archived\\' or \\'deleted\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'active\\', \\'inactive\\', \\'draft\\', \\'archived\\' or \\'deleted\\'\"}}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 1, \\'created_at\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'8df65a59-89a0-52cc-9a0f-85a27f8f86f4\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 1, \\'updated_at\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'8df65a59-89a0-52cc-9a0f-85a27f8f86f4\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 1, \\'relevance_score\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'8df65a59-89a0-52cc-9a0f-85a27f8f86f4\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 2, \\'categoria\\'), \\'msg\\': \"Input should be \\'lei\\', \\'decreto\\', \\'portaria\\', \\'resolucao\\', \\'instrucao_normativa\\', \\'circular\\', \\'oficio\\', \\'memorando\\', \\'parecer\\', \\'relatorio\\', \\'ata\\', \\'edital\\', \\'contrato\\', \\'convenio\\' or \\'outros\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'lei\\', \\'decreto\\', \\'portaria\\', \\'resolucao\\', \\'instrucao_normativa\\', \\'circular\\', \\'oficio\\', \\'memorando\\', \\'parecer\\', \\'relatorio\\', \\'ata\\', \\'edital\\', \\'contrato\\', \\'convenio\\' or \\'outros\\'\"}}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 2, \\'tipo_documento\\'), \\'msg\\': \"Input should be \\'pdf\\', \\'docx\\', \\'txt\\', \\'html\\', \\'upload\\', \\'scraped\\' or \\'manual\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'pdf\\', \\'docx\\', \\'txt\\', \\'html\\', \\'upload\\', \\'scraped\\' or \\'manual\\'\"}}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 2, \\'status\\'), \\'msg\\': \"Input should be \\'active\\', \\'inactive\\', \\'draft\\', \\'archived\\' or \\'deleted\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'active\\', \\'inactive\\', \\'draft\\', \\'archived\\' or \\'deleted\\'\"}}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 2, \\'created_at\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'4ddef887-f582-5b1f-90f8-867a3662559a\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 2, \\'updated_at\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'4ddef887-f582-5b1f-90f8-867a3662559a\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 2, \\'relevance_score\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'4ddef887-f582-5b1f-90f8-867a3662559a\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 3, \\'categoria\\'), \\'msg\\': \"Input should be \\'lei\\', \\'decreto\\', \\'portaria\\', \\'resolucao\\', \\'instrucao_normativa\\', \\'circular\\', \\'oficio\\', \\'memorando\\', \\'parecer\\', \\'relatorio\\', \\'ata\\', \\'edital\\', \\'contrato\\', \\'convenio\\' or \\'outros\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'lei\\', \\'decreto\\', \\'portaria\\', \\'resolucao\\', \\'instrucao_normativa\\', \\'circular\\', \\'oficio\\', \\'memorando\\', \\'parecer\\', \\'relatorio\\', \\'ata\\', \\'edital\\', \\'contrato\\', \\'convenio\\' or \\'outros\\'\"}}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 3, \\'tipo_documento\\'), \\'msg\\': \"Input should be \\'pdf\\', \\'docx\\', \\'txt\\', \\'html\\', \\'upload\\', \\'scraped\\' or \\'manual\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'pdf\\', \\'docx\\', \\'txt\\', \\'html\\', \\'upload\\', \\'scraped\\' or \\'manual\\'\"}}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 3, \\'status\\'), \\'msg\\': \"Input should be \\'active\\', \\'inactive\\', \\'draft\\', \\'archived\\' or \\'deleted\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'active\\', \\'inactive\\', \\'draft\\', \\'archived\\' or \\'deleted\\'\"}}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 3, \\'created_at\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'9346450b-3f20-571f-be85-7bff6217a2ef\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 3, \\'updated_at\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'9346450b-3f20-571f-be85-7bff6217a2ef\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 3, \\'relevance_score\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'9346450b-3f20-571f-be85-7bff6217a2ef\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 4, \\'categoria\\'), \\'msg\\': \"Input should be \\'lei\\', \\'decreto\\', \\'portaria\\', \\'resolucao\\', \\'instrucao_normativa\\', \\'circular\\', \\'oficio\\', \\'memorando\\', \\'parecer\\', \\'relatorio\\', \\'ata\\', \\'edital\\', \\'contrato\\', \\'convenio\\' or \\'outros\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'lei\\', \\'decreto\\', \\'portaria\\', \\'resolucao\\', \\'instrucao_normativa\\', \\'circular\\', \\'oficio\\', \\'memorando\\', \\'parecer\\', \\'relatorio\\', \\'ata\\', \\'edital\\', \\'contrato\\', \\'convenio\\' or \\'outros\\'\"}}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 4, \\'tipo_documento\\'), \\'msg\\': \"Input should be \\'pdf\\', \\'docx\\', \\'txt\\', \\'html\\', \\'upload\\', \\'scraped\\' or \\'manual\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'pdf\\', \\'docx\\', \\'txt\\', \\'html\\', \\'upload\\', \\'scraped\\' or \\'manual\\'\"}}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 4, \\'status\\'), \\'msg\\': \"Input should be \\'active\\', \\'inactive\\', \\'draft\\', \\'archived\\' or \\'deleted\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'active\\', \\'inactive\\', \\'draft\\', \\'archived\\' or \\'deleted\\'\"}}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 4, \\'created_at\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'acbe6314-6728-53f5-be50-9ab1f45bb989\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 4, \\'updated_at\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'acbe6314-6728-53f5-be50-9ab1f45bb989\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 4, \\'relevance_score\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'acbe6314-6728-53f5-be50-9ab1f45bb989\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 5, \\'categoria\\'), \\'msg\\': \"Input should be \\'lei\\', \\'decreto\\', \\'portaria\\', \\'resolucao\\', \\'instrucao_normativa\\', \\'circular\\', \\'oficio\\', \\'memorando\\', \\'parecer\\', \\'relatorio\\', \\'ata\\', \\'edital\\', \\'contrato\\', \\'convenio\\' or \\'outros\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'lei\\', \\'decreto\\', \\'portaria\\', \\'resolucao\\', \\'instrucao_normativa\\', \\'circular\\', \\'oficio\\', \\'memorando\\', \\'parecer\\', \\'relatorio\\', \\'ata\\', \\'edital\\', \\'contrato\\', \\'convenio\\' or \\'outros\\'\"}}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 5, \\'tipo_documento\\'), \\'msg\\': \"Input should be \\'pdf\\', \\'docx\\', \\'txt\\', \\'html\\', \\'upload\\', \\'scraped\\' or \\'manual\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'pdf\\', \\'docx\\', \\'txt\\', \\'html\\', \\'upload\\', \\'scraped\\' or \\'manual\\'\"}}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 5, \\'status\\'), \\'msg\\': \"Input should be \\'active\\', \\'inactive\\', \\'draft\\', \\'archived\\' or \\'deleted\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'active\\', \\'inactive\\', \\'draft\\', \\'archived\\' or \\'deleted\\'\"}}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 5, \\'created_at\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'8dc300de-9695-5e60-9949-70fba5e2ae72\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 5, \\'updated_at\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'8dc300de-9695-5e60-9949-70fba5e2ae72\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 5, \\'relevance_score\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'8dc300de-9695-5e60-9949-70fba5e2ae72\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 6, \\'categoria\\'), \\'msg\\': \"Input should be \\'lei\\', \\'decreto\\', \\'portaria\\', \\'resolucao\\', \\'instrucao_normativa\\', \\'circular\\', \\'oficio\\', \\'memorando\\', \\'parecer\\', \\'relatorio\\', \\'ata\\', \\'edital\\', \\'contrato\\', \\'convenio\\' or \\'outros\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'lei\\', \\'decreto\\', \\'portaria\\', \\'resolucao\\', \\'instrucao_normativa\\', \\'circular\\', \\'oficio\\', \\'memorando\\', \\'parecer\\', \\'relatorio\\', \\'ata\\', \\'edital\\', \\'contrato\\', \\'convenio\\' or \\'outros\\'\"}}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 6, \\'tipo_documento\\'), \\'msg\\': \"Input should be \\'pdf\\', \\'docx\\', \\'txt\\', \\'html\\', \\'upload\\', \\'scraped\\' or \\'manual\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'pdf\\', \\'docx\\', \\'txt\\', \\'html\\', \\'upload\\', \\'scraped\\' or \\'manual\\'\"}}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 6, \\'status\\'), \\'msg\\': \"Input should be \\'active\\', \\'inactive\\', \\'draft\\', \\'archived\\' or \\'deleted\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'active\\', \\'inactive\\', \\'draft\\', \\'archived\\' or \\'deleted\\'\"}}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 6, \\'created_at\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'931158a8-c987-5294-9e24-d8851d8b687c\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 6, \\'updated_at\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'931158a8-c987-5294-9e24-d8851d8b687c\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 6, \\'relevance_score\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'931158a8-c987-5294-9e24-d8851d8b687c\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 7, \\'categoria\\'), \\'msg\\': \"Input should be \\'lei\\', \\'decreto\\', \\'portaria\\', \\'resolucao\\', \\'instrucao_normativa\\', \\'circular\\', \\'oficio\\', \\'memorando\\', \\'parecer\\', \\'relatorio\\', \\'ata\\', \\'edital\\', \\'contrato\\', \\'convenio\\' or \\'outros\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'lei\\', \\'decreto\\', \\'portaria\\', \\'resolucao\\', \\'instrucao_normativa\\', \\'circular\\', \\'oficio\\', \\'memorando\\', \\'parecer\\', \\'relatorio\\', \\'ata\\', \\'edital\\', \\'contrato\\', \\'convenio\\' or \\'outros\\'\"}}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 7, \\'tipo_documento\\'), \\'msg\\': \"Input should be \\'pdf\\', \\'docx\\', \\'txt\\', \\'html\\', \\'upload\\', \\'scraped\\' or \\'manual\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'pdf\\', \\'docx\\', \\'txt\\', \\'html\\', \\'upload\\', \\'scraped\\' or \\'manual\\'\"}}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 7, \\'status\\'), \\'msg\\': \"Input should be \\'active\\', \\'inactive\\', \\'draft\\', \\'archived\\' or \\'deleted\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'active\\', \\'inactive\\', \\'draft\\', \\'archived\\' or \\'deleted\\'\"}}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 7, \\'created_at\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'ed80432e-95c3-56ad-81fa-0484bdd93899\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 7, \\'updated_at\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'ed80432e-95c3-56ad-81fa-0484bdd93899\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 7, \\'relevance_score\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'ed80432e-95c3-56ad-81fa-0484bdd93899\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 8, \\'categoria\\'), \\'msg\\': \"Input should be \\'lei\\', \\'decreto\\', \\'portaria\\', \\'resolucao\\', \\'instrucao_normativa\\', \\'circular\\', \\'oficio\\', \\'memorando\\', \\'parecer\\', \\'relatorio\\', \\'ata\\', \\'edital\\', \\'contrato\\', \\'convenio\\' or \\'outros\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'lei\\', \\'decreto\\', \\'portaria\\', \\'resolucao\\', \\'instrucao_normativa\\', \\'circular\\', \\'oficio\\', \\'memorando\\', \\'parecer\\', \\'relatorio\\', \\'ata\\', \\'edital\\', \\'contrato\\', \\'convenio\\' or \\'outros\\'\"}}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 8, \\'tipo_documento\\'), \\'msg\\': \"Input should be \\'pdf\\', \\'docx\\', \\'txt\\', \\'html\\', \\'upload\\', \\'scraped\\' or \\'manual\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'pdf\\', \\'docx\\', \\'txt\\', \\'html\\', \\'upload\\', \\'scraped\\' or \\'manual\\'\"}}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 8, \\'status\\'), \\'msg\\': \"Input should be \\'active\\', \\'inactive\\', \\'draft\\', \\'archived\\' or \\'deleted\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'active\\', \\'inactive\\', \\'draft\\', \\'archived\\' or \\'deleted\\'\"}}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 8, \\'created_at\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'7f000aa1-74b3-5980-a42d-49db94ccdab2\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 8, \\'updated_at\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'7f000aa1-74b3-5980-a42d-49db94ccdab2\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 8, \\'relevance_score\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'7f000aa1-74b3-5980-a42d-49db94ccdab2\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.32563096)}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 9, \\'categoria\\'), \\'msg\\': \"Input should be \\'lei\\', \\'decreto\\', \\'portaria\\', \\'resolucao\\', \\'instrucao_normativa\\', \\'circular\\', \\'oficio\\', \\'memorando\\', \\'parecer\\', \\'relatorio\\', \\'ata\\', \\'edital\\', \\'contrato\\', \\'convenio\\' or \\'outros\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'lei\\', \\'decreto\\', \\'portaria\\', \\'resolucao\\', \\'instrucao_normativa\\', \\'circular\\', \\'oficio\\', \\'memorando\\', \\'parecer\\', \\'relatorio\\', \\'ata\\', \\'edital\\', \\'contrato\\', \\'convenio\\' or \\'outros\\'\"}}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 9, \\'tipo_documento\\'), \\'msg\\': \"Input should be \\'pdf\\', \\'docx\\', \\'txt\\', \\'html\\', \\'upload\\', \\'scraped\\' or \\'manual\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'pdf\\', \\'docx\\', \\'txt\\', \\'html\\', \\'upload\\', \\'scraped\\' or \\'manual\\'\"}}\\n  {\\'type\\': \\'enum\\', \\'loc\\': (\\'response\\', 9, \\'status\\'), \\'msg\\': \"Input should be \\'active\\', \\'inactive\\', \\'draft\\', \\'archived\\' or \\'deleted\\'\", \\'input\\': \\'\\', \\'ctx\\': {\\'expected\\': \"\\'active\\', \\'inactive\\', \\'draft\\', \\'archived\\' or \\'deleted\\'\"}}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 9, \\'created_at\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'83da3ac5-76c4-569d-8f8b-60439a704f1f\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.30888212)}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 9, \\'updated_at\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'83da3ac5-76c4-569d-8f8b-60439a704f1f\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.30888212)}\\n  {\\'type\\': \\'missing\\', \\'loc\\': (\\'response\\', 9, \\'relevance_score\\'), \\'msg\\': \\'Field required\\', \\'input\\': DocumentSearchResult(id=\\'83da3ac5-76c4-569d-8f8b-60439a704f1f\\', title=\\'Sem título\\', content=\\'\\', source_type=\\'\\', summary=\\'\\', municipio=\\'\\', legislatura=\\'\\', autor=\\'\\', categoria=\\'\\', status=\\'\\', tipo_documento=\\'\\', date=None, tokens=0, file_path=\\'\\', score=0.30888212)}\\n', 'error_id': '064a11ee-cfe1-41d7-a77c-c45ba1b0761a', 'timestamp': '2025-08-12T19:22:21.379366', 'path': '/api/v1/documents/rag/search'}"
+    },
+    {
+      "endpoint": "/api/v1/documents/stats",
+      "method": "GET",
+      "success": false,
+      "status_code": 404,
+      "duration_ms": 426.49,
+      "timestamp": "2025-08-12T19:22:21.806721",
+      "response_data": null,
+      "error": "HTTP 404: {'error': 'HTTPException', 'message': 'User not found', 'status_code': 404, 'error_id': '8a1c3442-f5ef-4a3f-9c30-e219ad8253ab', 'timestamp': '2025-08-12T19:22:21.805883', 'path': '/api/v1/documents/stats'}"
+    },
+    {
+      "endpoint": "/api/v1/dashboard/health",
+      "method": "GET",
+      "success": true,
+      "status_code": 200,
+      "duration_ms": 11.99,
+      "timestamp": "2025-08-12T19:22:21.818802",
+      "response_data": {
+        "status": "healthy",
+        "total_users": 1247,
+        "total_documents": 15673,
+        "api_calls_today": 12847,
+        "uptime_hours": 2184.5,
+        "service": "dashboard",
+        "timestamp": 1755037341.8182433
+      },
+      "error": null
+    },
+    {
+      "endpoint": "/api/v1/dashboard/overview",
+      "method": "GET",
+      "success": false,
+      "status_code": 404,
+      "duration_ms": 452.63,
+      "timestamp": "2025-08-12T19:22:22.271496",
+      "response_data": null,
+      "error": "HTTP 404: {'error': 'HTTPException', 'message': 'User not found', 'status_code': 404, 'error_id': 'cf020886-f5ae-428b-9ba8-4380bc07fb21', 'timestamp': '2025-08-12T19:22:22.270633', 'path': '/api/v1/dashboard/overview'}"
+    },
+    {
+      "endpoint": "/api/v1/dashboard/analytics/chat",
+      "method": "GET",
+      "success": false,
+      "status_code": 404,
+      "duration_ms": 445.67,
+      "timestamp": "2025-08-12T19:22:22.717242",
+      "response_data": null,
+      "error": "HTTP 404: {'error': 'HTTPException', 'message': 'User not found', 'status_code': 404, 'error_id': 'dc313292-a70a-4ce8-8553-11125733e394', 'timestamp': '2025-08-12T19:22:22.716400', 'path': '/api/v1/dashboard/analytics/chat'}"
+    },
+    {
+      "endpoint": "/api/v1/dashboard/analytics/documents",
+      "method": "GET",
+      "success": false,
+      "status_code": 404,
+      "duration_ms": 440.5,
+      "timestamp": "2025-08-12T19:22:23.157827",
+      "response_data": null,
+      "error": "HTTP 404: {'error': 'HTTPException', 'message': 'User not found', 'status_code': 404, 'error_id': '9366aca0-6d7d-49c5-aaa5-8b701c5e6d8b', 'timestamp': '2025-08-12T19:22:23.156866', 'path': '/api/v1/dashboard/analytics/documents'}"
+    },
+    {
+      "endpoint": "/api/v1/dashboard/analytics/users",
+      "method": "GET",
+      "success": false,
+      "status_code": 404,
+      "duration_ms": 456.25,
+      "timestamp": "2025-08-12T19:22:23.614171",
+      "response_data": null,
+      "error": "HTTP 404: {'error': 'HTTPException', 'message': 'User not found', 'status_code': 404, 'error_id': 'fc051213-40d6-4f2d-aba6-6b7ea8e2724d', 'timestamp': '2025-08-12T19:22:23.613349', 'path': '/api/v1/dashboard/analytics/users'}"
+    },
+    {
+      "endpoint": "/api/v1/dashboard/financial",
+      "method": "GET",
+      "success": false,
+      "status_code": 404,
+      "duration_ms": 432.64,
+      "timestamp": "2025-08-12T19:22:24.046892",
+      "response_data": null,
+      "error": "HTTP 404: {'error': 'HTTPException', 'message': 'User not found', 'status_code': 404, 'error_id': '3f9b0c57-1be5-49f8-bedc-e24973487c8f', 'timestamp': '2025-08-12T19:22:24.045861', 'path': '/api/v1/dashboard/financial'}"
+    },
+    {
+      "endpoint": "/api/v1/dashboard/performance",
+      "method": "GET",
+      "success": false,
+      "status_code": 404,
+      "duration_ms": 465.81,
+      "timestamp": "2025-08-12T19:22:24.512784",
+      "response_data": null,
+      "error": "HTTP 404: {'error': 'HTTPException', 'message': 'User not found', 'status_code': 404, 'error_id': '1bce96ef-ed4a-4d59-98c0-3b88a5c9ba0d', 'timestamp': '2025-08-12T19:22:24.511952', 'path': '/api/v1/dashboard/performance'}"
+    },
+    {
+      "endpoint": "/api/v1/dashboard/security",
+      "method": "GET",
+      "success": false,
+      "status_code": 404,
+      "duration_ms": 428.69,
+      "timestamp": "2025-08-12T19:22:24.941549",
+      "response_data": null,
+      "error": "HTTP 404: {'error': 'HTTPException', 'message': 'User not found', 'status_code': 404, 'error_id': 'c8c866b9-e086-472d-87ab-01f80b3e6f52', 'timestamp': '2025-08-12T19:22:24.940706', 'path': '/api/v1/dashboard/security'}"
+    },
+    {
+      "endpoint": "/api/v1/dashboard/charts/usage",
+      "method": "GET",
+      "success": false,
+      "status_code": 404,
+      "duration_ms": 462.5,
+      "timestamp": "2025-08-12T19:22:25.404127",
+      "response_data": null,
+      "error": "HTTP 404: {'error': 'HTTPException', 'message': 'User not found', 'status_code': 404, 'error_id': 'abb0a1de-035d-45fa-9967-8732683e8416', 'timestamp': '2025-08-12T19:22:25.403263', 'path': '/api/v1/dashboard/charts/usage'}"
+    },
+    {
+      "endpoint": "/api/v1/dashboard/charts/performance",
+      "method": "GET",
+      "success": false,
+      "status_code": 404,
+      "duration_ms": 418.75,
+      "timestamp": "2025-08-12T19:22:25.822966",
+      "response_data": null,
+      "error": "HTTP 404: {'error': 'HTTPException', 'message': 'User not found', 'status_code': 404, 'error_id': 'aaf13712-242d-493d-b58d-04e962f8a8a7', 'timestamp': '2025-08-12T19:22:25.822148', 'path': '/api/v1/dashboard/charts/performance'}"
+    },
+    {
+      "endpoint": "/api/v1/dashboard/charts/financial",
+      "method": "GET",
+      "success": false,
+      "status_code": 404,
+      "duration_ms": 527.19,
+      "timestamp": "2025-08-12T19:22:26.350245",
+      "response_data": null,
+      "error": "HTTP 404: {'error': 'HTTPException', 'message': 'User not found', 'status_code': 404, 'error_id': 'b362763a-f602-46bc-9ded-ecf244476e9f', 'timestamp': '2025-08-12T19:22:26.349395', 'path': '/api/v1/dashboard/charts/financial'}"
+    },
+    {
+      "endpoint": "/api/v1/users/health",
+      "method": "GET",
+      "success": false,
+      "status_code": 403,
+      "duration_ms": 355.86,
+      "timestamp": "2025-08-12T19:22:26.706202",
+      "response_data": null,
+      "error": "HTTP 403: {'error': 'HTTPException', 'message': 'Permission denied', 'status_code': 403, 'error_id': '41d08cc4-a5d0-4d81-82b9-11011f732d4e', 'timestamp': '2025-08-12T19:22:26.705245', 'path': '/api/v1/users/health'}"
+    },
+    {
+      "endpoint": "/api/v1/users/me",
+      "method": "GET",
+      "success": false,
+      "status_code": 403,
+      "duration_ms": 529.54,
+      "timestamp": "2025-08-12T19:22:27.235819",
+      "response_data": null,
+      "error": "HTTP 403: {'error': 'HTTPException', 'message': 'Permission denied', 'status_code': 403, 'error_id': '7cd56ed2-f533-4312-8970-b784f56753e5', 'timestamp': '2025-08-12T19:22:27.234995', 'path': '/api/v1/users/me'}"
+    },
+    {
+      "endpoint": "/api/v1/users/",
+      "method": "GET",
+      "success": false,
+      "status_code": 403,
+      "duration_ms": 355.22,
+      "timestamp": "2025-08-12T19:22:27.591123",
+      "response_data": null,
+      "error": "HTTP 403: {'error': 'HTTPException', 'message': 'Permission denied', 'status_code': 403, 'error_id': 'e374577c-e48c-49c3-ac35-2a98abfff31f', 'timestamp': '2025-08-12T19:22:27.590251', 'path': '/api/v1/users/'}"
+    },
+    {
+      "endpoint": "/api/v1/users/search",
+      "method": "POST",
+      "success": false,
+      "status_code": 403,
+      "duration_ms": 535.86,
+      "timestamp": "2025-08-12T19:22:28.127061",
+      "response_data": null,
+      "error": "HTTP 403: {'error': 'HTTPException', 'message': 'Permission denied', 'status_code': 403, 'error_id': 'e9b19a69-6cd2-412e-b3f3-b7f9f536c13a', 'timestamp': '2025-08-12T19:22:28.126228', 'path': '/api/v1/users/search'}"
+    },
+    {
+      "endpoint": "/api/v1/users/stats",
+      "method": "GET",
+      "success": false,
+      "status_code": 403,
+      "duration_ms": 349.53,
+      "timestamp": "2025-08-12T19:22:28.476670",
+      "response_data": null,
+      "error": "HTTP 403: {'error': 'HTTPException', 'message': 'Permission denied', 'status_code': 403, 'error_id': 'cdab6393-f72f-434d-85b8-a16df433cced', 'timestamp': '2025-08-12T19:22:28.475791', 'path': '/api/v1/users/stats'}"
+    },
+    {
+      "endpoint": "/api/v1/users/9e491ebe-1850-4cce-b969-7ce11b713935",
+      "method": "GET",
+      "success": false,
+      "status_code": 404,
+      "duration_ms": 912.27,
+      "timestamp": "2025-08-12T19:22:29.389021",
+      "response_data": null,
+      "error": "HTTP 404: {'error': 'HTTPException', 'message': 'User not found', 'status_code': 404, 'error_id': '7721ac96-32f4-4db1-8e59-87814f29dd8f', 'timestamp': '2025-08-12T19:22:29.388183', 'path': '/api/v1/users/9e491ebe-1850-4cce-b969-7ce11b713935'}"
+    }
+  ],
+  "test_config": {
+    "base_url": "http://localhost:8081",
+    "test_email": "test_avrj4wjk@example.com",
+    "user_id": "9e491ebe-1850-4cce-b969-7ce11b713935",
+    "session_id": "75ecb24c-2652-4ade-a467-7a9088edfe5c",
+    "timestamp": "2025-08-12T19:22:29.389116"
+  }
+}

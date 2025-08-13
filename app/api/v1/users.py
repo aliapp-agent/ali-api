@@ -118,7 +118,7 @@ async def create_user(
 @limiter.limit("100/minute")
 async def get_user(
     request: Request,
-    user_id: int,
+    user_id: str,
     current_user: User = Depends(get_current_user),
 ):
     """Get a user by ID.
@@ -151,7 +151,7 @@ async def get_user(
 @limiter.limit("30/minute")
 async def update_user(
     request: Request,
-    user_id: int,
+    user_id: str,
     update_data: UserUpdate,
     current_user: User = Depends(get_current_user),
 ):
@@ -198,7 +198,7 @@ async def update_user(
 @limiter.limit("20/minute")
 async def delete_user(
     request: Request,
-    user_id: int,
+    user_id: str,
     hard_delete: bool = Query(
         False, description="Perform hard delete instead of soft delete"
     ),
@@ -424,7 +424,7 @@ async def bulk_delete_users(
 @limiter.limit("100/minute")
 async def check_user_permission(
     request: Request,
-    user_id: int,
+    user_id: str,
     permission_check: UserPermissionCheck,
     current_user: User = Depends(get_current_user),
 ):
@@ -459,7 +459,7 @@ async def check_user_permission(
 @limiter.limit("100/minute")
 async def get_user_permissions(
     request: Request,
-    user_id: int,
+    user_id: str,
     current_user: User = Depends(get_current_user),
 ):
     """Get all permissions for a user.

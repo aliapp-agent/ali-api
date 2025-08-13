@@ -25,7 +25,7 @@ class FirestoreSessionRepository(BaseFirestoreRepository, SessionRepositoryInter
 
     def __init__(self):
         """Initialize Firestore Session Repository."""
-        super().__init__("chat_sessions")
+        super().__init__("sessions")
 
     async def create_session(self, session: SessionEntity) -> SessionEntity:
         """Create a new chat session.
@@ -45,6 +45,25 @@ class FirestoreSessionRepository(BaseFirestoreRepository, SessionRepositoryInter
 
         return session
 
+    async def get_by_id(self, session_id: str) -> Optional[SessionEntity]:
+        """Get session by ID (interface method).
+
+        Args:
+            session_id: Session ID
+
+        Returns:
+            Optional[SessionEntity]: Session entity or None if not found
+        """
+        # Call BaseFirestoreRepository.get_by_id() directly (not the current method)
+        data = await super().get_by_id(session_id)
+        if data:
+            print(f"DEBUG: Raw session data from Firestore: {data}")
+            entity = self.to_entity(data)
+            print(f"DEBUG: Converted SessionEntity: {entity}")
+            print(f"DEBUG: Entity type: {type(entity)}")
+            return entity
+        return None
+
     async def get_session_by_id(self, session_id: str) -> Optional[SessionEntity]:
         """Get session by ID.
 
@@ -54,10 +73,7 @@ class FirestoreSessionRepository(BaseFirestoreRepository, SessionRepositoryInter
         Returns:
             Optional[SessionEntity]: Session entity or None if not found
         """
-        data = await self.get_by_id(session_id)
-        if data:
-            return self.to_entity(data)
-        return None
+        return await self.get_by_id(session_id)
 
     async def update_session(self, session: SessionEntity) -> SessionEntity:
         """Update session.
@@ -271,18 +287,37 @@ class FirestoreSessionRepository(BaseFirestoreRepository, SessionRepositoryInter
         Returns:
             SessionEntity: Session entity instance
         """
+        # Handle both old domain format and new auth format
+        session_id = data.get("id")  # This comes from BaseFirestoreRepository.get_by_id()
+        
+        if "metadata" in data and isinstance(data.get("metadata"), dict):
+            # Auth system format - has metadata structure
+            name = data.get("metadata", {}).get("name", "")
+            status = "active" if data.get("is_active", True) else "inactive"
+        else:
+            # Original domain format
+            name = data.get("name", "")
+            status = data.get("status", "active")
+            
+        # Convert DatetimeWithNanoseconds to datetime
+        def convert_datetime(dt):
+            if hasattr(dt, 'timestamp'):
+                from datetime import datetime
+                return datetime.fromtimestamp(dt.timestamp())
+            return dt
+            
         return SessionEntity(
-            id=data.get("id"),
+            id=session_id,
             user_id=data.get("user_id"),
-            name=data.get("name", ""),
+            name=name,
             session_type=data.get("session_type", "chat"),
-            status=data.get("status", "active"),
+            status=status,
             context=data.get("context"),
             message_count=data.get("message_count", 0),
             total_tokens=data.get("total_tokens", 0),
             total_response_time=data.get("total_response_time", 0.0),
-            created_at=data.get("created_at"),
-            updated_at=data.get("updated_at"),
+            created_at=convert_datetime(data.get("created_at")),
+            updated_at=convert_datetime(data.get("updated_at")),
         )
 
     def from_entity(self, entity: SessionEntity) -> Dict[str, Any]:

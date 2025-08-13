@@ -97,7 +97,7 @@ class UserResponse(BaseModel):
         token: Authentication token
     """
 
-    id: int = Field(..., description="User's ID")
+    id: str = Field(..., description="User's ID")
     email: str = Field(..., description="User's email address")
     token: Token = Field(..., description="Authentication token")
 

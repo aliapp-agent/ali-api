@@ -13,6 +13,7 @@ from app.api.v1.documents import router as documents_router
 # from app.api.v1.firebase_auth import router as firebase_auth_router
 from app.api.v1.rag import router as rag_router  # Legacy support
 from app.api.v1.users import router as users_router
+from app.api.v1.whatsapp import router as whatsapp_router
 from app.core.logging import logger
 
 api_router = APIRouter()
@@ -24,6 +25,7 @@ api_router.include_router(dashboard_router, prefix="/dashboard", tags=["dashboar
 api_router.include_router(documents_router, prefix="/documents", tags=["documents"])
 api_router.include_router(rag_router, prefix="/rag", tags=["rag"])  # Legacy support
 api_router.include_router(users_router, prefix="/users", tags=["users"])
+api_router.include_router(whatsapp_router, prefix="/whatsapp", tags=["whatsapp"])
 
 
 @api_router.get("/health")

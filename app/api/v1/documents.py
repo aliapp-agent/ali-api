@@ -50,7 +50,7 @@ from app.schemas.documents import (
 )
 from app.services.document_processor import DocumentProcessor
 from app.services.documents_service import documents_service
-from app.services.rag import rag_service
+from app.services import get_rag_service
 
 router = APIRouter()
 doc_processor = DocumentProcessor()
@@ -506,6 +506,7 @@ async def rag_search_documents(
     """
     try:
         # Use the RAG service for backward compatibility
+        rag_service = get_rag_service()
         results = await rag_service.search_legislative_documents(
             query=search_request.query,
             max_results=search_request.max_results,
@@ -529,6 +530,7 @@ async def documents_health():
     """
     try:
         # Check Elasticsearch connection
+        rag_service = get_rag_service()
         health_status = await rag_service.health_check()
 
         # Add documents service specific checks

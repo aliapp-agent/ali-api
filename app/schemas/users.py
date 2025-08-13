@@ -272,7 +272,7 @@ class UserSearchRequest(BaseModel):
 class UserBulkOperation(BaseModel):
     """Schema for bulk user operations."""
 
-    user_ids: List[int] = Field(..., description="User IDs", min_items=1, max_items=100)
+    user_ids: List[str] = Field(..., description="User IDs", min_items=1, max_items=100)
     operation: str = Field(..., description="Operation type")
 
     @field_validator("operation")
@@ -339,7 +339,7 @@ class UserActivity(BaseModel):
     """Schema for user activity tracking."""
 
     id: int = Field(..., description="Activity ID")
-    user_id: int = Field(..., description="User ID")
+    user_id: str = Field(..., description="User ID")
     activity_type: str = Field(..., description="Activity type")
     description: str = Field(..., description="Activity description")
     metadata: dict = Field(default_factory=dict, description="Additional metadata")

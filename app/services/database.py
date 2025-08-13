@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 
 from google.cloud.firestore_v1.base_query import FieldFilter
 
-from app.core.config import settings
+from app.core.config import settings, Environment
 from app.core.firebase import get_firestore
 from app.core.logging import logger
 from app.models.session import Session
@@ -231,12 +231,26 @@ class DatabaseService:
             email: User email address
             
         Returns:
-            User document data if found, None otherwise
+            Dict with user_id as key and user data as value, or None if not found
         """
         try:
+            query = self.db.collection("users")
             filters = [FieldFilter("email", "==", email)]
-            users = await self.query_documents("users", filters=filters, limit=1)
-            return users[0] if users else None
+            for filter_obj in filters:
+                query = query.where(filter=filter_obj)
+            query = query.limit(1)
+            
+            # Execute query
+            docs = await asyncio.get_event_loop().run_in_executor(
+                None, query.stream
+            )
+            
+            # Convert to list and get first document with ID
+            docs_list = list(docs)
+            if docs_list:
+                doc = docs_list[0]
+                return {doc.id: doc.to_dict()}
+            return None
         except Exception as e:
             logger.error(
                 "database_get_user_by_email_failed",
@@ -314,20 +328,43 @@ class DatabaseService:
             Session object if found, None otherwise
         """
         from app.models.session import Session
+        from app.core.logging import logger
         
+        logger.info(f"Attempting to get session: {session_id}")
         session_data = await self.get_document("sessions", session_id)
+        logger.info(f"Session data from Firebase: {session_data}")
+        
         if not session_data:
+            logger.warning(f"Session {session_id} not found in Firebase")
             return None
             
+        # Convert Firebase data to proper format before creating Session object
+        clean_session_data = {}
+        
+        for key, value in session_data.items():
+            # Convert DatetimeWithNanoseconds to datetime
+            if hasattr(value, 'timestamp'):
+                from datetime import datetime
+                clean_session_data[key] = datetime.fromtimestamp(value.timestamp())
+            else:
+                clean_session_data[key] = value
+            
         # Convert to Session object
-        return Session(
-            session_id=session_id,
-            user_id=session_data["user_id"],
-            created_at=session_data["created_at"],
-            updated_at=session_data["updated_at"],
-            is_active=session_data.get("is_active", True),
-            metadata=session_data.get("metadata", {})
-        )
+        try:
+            session_obj = Session(
+                session_id=session_id,
+                user_id=clean_session_data["user_id"],
+                created_at=clean_session_data["created_at"],
+                updated_at=clean_session_data["updated_at"],
+                is_active=clean_session_data.get("is_active", True),
+                metadata=clean_session_data.get("metadata", {})
+            )
+            logger.info(f"Successfully created Session object: {session_obj.session_id}")
+            return session_obj
+        except Exception as e:
+            logger.error(f"Error creating Session object: {e}")
+            logger.error(f"Clean session data: {clean_session_data}")
+            return None
     
     async def create_session(self, session_id: str, user_id: str) -> "Session":
         """Create a new session document.

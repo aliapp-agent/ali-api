@@ -79,6 +79,7 @@ class Settings(BaseSettings):
         env="DESCRIPTION",
     )
     API_V1_STR: str = Field(default="/api/v1", env="API_V1_STR")
+    APP_BASE_URL: str = Field(default="", env="APP_BASE_URL")
     DEBUG: bool = Field(default=False, env="DEBUG")
 
     # Firebase is now the primary database - PostgreSQL removed

@@ -536,8 +536,9 @@ async def health_check(request: Request) -> JSONResponse:
         rag_health = {}
         rag_healthy = True
         try:
-            from app.services.rag import rag_service
+            from app.services import get_rag_service
 
+            rag_service = get_rag_service()
             rag_health = await rag_service.health_check()
             rag_healthy = rag_health.get("status") == "healthy"
         except Exception as e:
