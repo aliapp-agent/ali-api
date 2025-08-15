@@ -300,3 +300,24 @@ data/local/
 # Production test reports and sensitive JSON files
 production_test_report_*.json
 *production*.json
+
+# Development and build scripts
+docker-build.sh
+docker-compose-up.sh
+docker-run.sh
+docker-test.sh
+evolution_api_secrets_setup.sh
+
+# Temporary development files
+AGNO_AGENT_FIXES.md
+env-vars.yaml
+
+# AgnoAgent data and storage
+data/
+storage/
+
+# Virtual environment (if not already covered)
+.venv/
+
+# Cloud Build alternative configs  
+cloudbuild-simple.yaml
