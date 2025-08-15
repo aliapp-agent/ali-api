@@ -1,3 +1,4 @@
+
 """API v1 router configuration.
 
 This module sets up the main API router and includes all sub-routers for different
@@ -15,7 +16,7 @@ from app.api.v1.rag import router as rag_router  # Legacy support
 from app.api.v1.users import router as users_router
 from app.api.v1.whatsapp import router as whatsapp_router
 from app.core.logging import logger
-from app.dependencies import get_agno_agent
+from app.api.v1.whatsapp import get_agno_agent
 
 api_router = APIRouter()
 

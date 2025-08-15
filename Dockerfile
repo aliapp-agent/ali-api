@@ -22,7 +22,6 @@ ENV APP_ENV=${APP_ENV} \
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
-    curl \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
@@ -54,9 +53,9 @@ RUN chown -R appuser:appuser /app
 # Switch to non-root user for security
 USER appuser
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:${PORT}/health || exit 1
+# Health check (using Python instead of curl for lighter container)
+HEALTHCHECK --interval=30s --timeout=15s --start-period=180s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:${PORT}/health', timeout=10)" || exit 1
 
 # Expose port
 EXPOSE ${PORT}

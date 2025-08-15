@@ -25,7 +25,7 @@ from app.core.config import settings
 from app.core.limiter import limiter
 from app.core.logging import logger
 from app.core.metrics import setup_metrics
-from app.core.middleware import MetricsMiddleware
+from app.core.metrics_middleware import MetricsMiddleware
 from app.shared.constants.http import (
     HTTP_422_UNPROCESSABLE_ENTITY,
     HTTP_500_INTERNAL_SERVER_ERROR,
@@ -46,7 +46,7 @@ _database_available = False
 load_dotenv()
 
 
-async def initialize_agno_agent_with_retry(app: FastAPI, max_retries: int = 5, base_delay: float = 2.0) -> None:
+async def initialize_agno_agent_with_retry(app: FastAPI, max_retries: int = 2, base_delay: float = 0.5) -> None:
     """
     Initialize AgnoAgent with exponential backoff retry.
     
@@ -564,23 +564,6 @@ async def general_exception_handler(request: Request, exc: Exception):
     return response
 
 
-# Set up CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS_LIST,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allow_headers=[
-        "Accept",
-        "Accept-Language",
-        "Content-Type",
-        "Authorization",
-        "X-Requested-With",
-        "X-API-Key",
-        "Cache-Control",
-    ],
-    expose_headers=["X-Total-Count", "X-Rate-Limit-Remaining"],
-)
 
 # Include API router
 app.include_router(api_router, prefix=settings.API_V1_STR)
