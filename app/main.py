@@ -73,10 +73,9 @@ async def initialize_agno_agent_with_retry(app: FastAPI, max_retries: int = 1, b
             
             # Initialize AgnoAgent
             agno_agent = AgnoAgent()
-            await agno_agent.initialize()
             
             # Perform health check to ensure AgnoAgent is fully operational
-            health_result = await agno_agent.health_check()
+            health_result = agno_agent.health_check()
             if health_result.get("status") != "healthy":
                 raise Exception(f"AgnoAgent health check failed: {health_result}")
             
@@ -180,10 +179,18 @@ async def lifespan(app: FastAPI):
     # Initialize AgnoAgent - Allow app to start even if AgnoAgent fails
     try:
         await initialize_agno_agent_with_retry(app)
+        logger.info("agno_agent_successfully_stored_in_app_state")
     except Exception as e:
-        logger.error("agno_agent_initialization_failed_non_blocking", error=str(e))
-        # Set a placeholder so the app can still start
-        app.state.agno_agent = None
+        logger.error("agno_agent_initialization_failed_non_blocking", error=str(e), exc_info=True)
+        # Create a basic fallback agent
+        try:
+            from app.core.agno.graph import AgnoAgent
+            fallback_agent = AgnoAgent()
+            app.state.agno_agent = fallback_agent
+            logger.warning("using_fallback_agno_agent")
+        except Exception as fallback_error:
+            logger.error("fallback_agno_agent_failed", error=str(fallback_error))
+            app.state.agno_agent = None
     
     yield
     
@@ -647,7 +654,7 @@ async def health_check(request: Request) -> JSONResponse:
             from app.core.agno.graph import AgnoAgent
 
             agent = AgnoAgent()
-            agno_health = await agent.health_check()
+            agno_health = agent.health_check()
             agno_healthy = agno_health.get("status") == "healthy"
         except Exception as e:
             logger.warning("agno_health_check_failed", error=str(e))

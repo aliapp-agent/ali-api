@@ -91,15 +91,9 @@ async def process_whatsapp_message(
         session_id = f"whatsapp_{phone_number}"
 
         # Process message with AgnoAgent
-        response = await agno_agent.process_message(
+        response = agno_agent.get_response(
             message=message_text,
-            session_id=session_id,
-            metadata={
-                "source": "whatsapp",
-                "phone_number": phone_number,
-                "message_id": message_id,
-                "timestamp": datetime.now().isoformat()
-            }
+            user_id=phone_number
         )
 
         if response and response.get('response'):

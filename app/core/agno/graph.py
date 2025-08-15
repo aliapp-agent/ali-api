@@ -196,12 +196,7 @@ class OptimizedAgnoAgent:
             # Configuração otimizada da memória
             self.memory = Memory(
                 model=memory_model,
-                db=memory_db,
-                # Configurações de performance
-                create_user_memories=True,
-                update_user_memories=True,
-                # Limitar número de memórias para performance
-                num_memories=50
+                db=memory_db
             )
             
             logger.info("Memória otimizada configurada com sucesso")
@@ -240,14 +235,9 @@ class OptimizedAgnoAgent:
             
         except Exception as e:
             logger.error(f"Erro na configuração do storage: {e}")
-            # Fallback: storage em memória temporário
-            try:
-                from agno.storage.memory import MemoryStorage
-                self.storage = MemoryStorage()
-                logger.warning("Usando storage em memória como fallback")
-            except Exception as fallback_error:
-                logger.error(f"Falha no fallback de storage: {fallback_error}")
-                self.storage = None
+            # Fallback: sem storage
+            logger.warning("Storage não disponível - continuando sem persistência")
+            self.storage = None
     
     def _optimize_storage_indexes(self) -> None:
         """Otimiza índices do storage para melhor performance."""
@@ -287,14 +277,13 @@ class OptimizedAgnoAgent:
                 except Exception as e:
                     logger.warning(f"Falha ao configurar RAG Tool: {e}")
             
-            # WhatsApp Tool
-            if (hasattr(settings, 'WHATSAPP_TOKEN') and settings.WHATSAPP_TOKEN and
-                hasattr(settings, 'WHATSAPP_PHONE_ID') and settings.WHATSAPP_PHONE_ID):
+            # WhatsApp Tool - usar Evolution API ao invés de WhatsApp Business API
+            if (hasattr(settings, 'EVOLUTION_API_URL') and settings.EVOLUTION_API_URL and
+                hasattr(settings, 'EVOLUTION_API_KEY') and settings.EVOLUTION_API_KEY):
                 try:
-                    whatsapp_client = WhatsAppClient()
-                    whatsapp_tool = WhatsAppTool(whatsapp_client)
+                    from app.core.agno.tools.whatsapp_tool import whatsapp_tool
                     self.tools.append(whatsapp_tool)
-                    logger.info("WhatsApp Tool configurada")
+                    logger.info("WhatsApp Tool (Evolution API) configurada")
                 except Exception as e:
                     logger.warning(f"Falha ao configurar WhatsApp Tool: {e}")
             
@@ -530,17 +519,16 @@ QUALIDADE:
             return []
         
         try:
-            # Implementar busca no storage
-            sessions = self.storage.read_sessions(
-                session_id=self.session_id,
-                limit=limit
-            )
+            # Histórico básico usando memória se disponível
+            if hasattr(self.agent, 'runs') and self.agent.runs:
+                recent_runs = self.agent.runs[-limit:] if len(self.agent.runs) > limit else self.agent.runs
+                return [{
+                    "role": "user" if run.get("message") else "assistant",
+                    "content": run.get("message", "") or run.get("response", ""),
+                    "timestamp": run.get("created_at", "")
+                } for run in recent_runs]
             
-            return [{
-                "role": session.get("role", "unknown"),
-                "content": session.get("content", ""),
-                "timestamp": session.get("created_at", "")
-            } for session in sessions]
+            return []
             
         except Exception as e:
             logger.error(f"Erro ao obter histórico: {e}")
@@ -556,12 +544,13 @@ QUALIDADE:
             return False
         
         try:
-            # Limpar sessões do storage
-            self.storage.delete_sessions(session_id=self.session_id)
-            
             # Limpar memória se disponível
-            if self.memory:
+            if self.memory and hasattr(self.memory, 'clear'):
                 self.memory.clear()
+            
+            # Limpar runs do agente se disponível
+            if hasattr(self.agent, 'runs'):
+                self.agent.runs = []
             
             logger.info(f"Histórico limpo para sessão: {self.session_id}")
             return True
@@ -643,6 +632,9 @@ def get_agno_agent(session_id: str = "default_session") -> OptimizedAgnoAgent:
     
     return _agno_agent_instance
 
+
+# Alias para compatibilidade
+AgnoAgent = OptimizedAgnoAgent
 
 # Funções de conveniência para compatibilidade com código existente
 def get_response(message: str, user_id: str = None, session_id: str = "default_session") -> Optional[str]:

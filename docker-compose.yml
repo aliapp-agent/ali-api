@@ -12,8 +12,6 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      # Development hot-reload (comment out for production)
-      - ./app:/app/app:ro
       # Persistent data volumes
       - ./logs:/app/logs
       - ./data:/app/data
@@ -64,6 +62,16 @@ services:
       
       # Agno configuration
       - AGNO_MEMORY_PATH=/app/data/agno_memory.db
+      
+      # Evolution API (WhatsApp) configuration
+      - EVOLUTION_API_URL=${EVOLUTION_API_URL}
+      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY}
+      - EVOLUTION_INSTANCE=${EVOLUTION_INSTANCE:-Ali-app-evolution}
+      
+      # Langfuse configuration
+      - LANGFUSE_HOST=${LANGFUSE_HOST:-https://cloud.langfuse.com}
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY}
       
       # Rate limiting
       - RATE_LIMIT_DEFAULT=${RATE_LIMIT_DEFAULT:-1000 per day,200 per hour}
