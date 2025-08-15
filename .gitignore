@@ -321,3 +321,61 @@ storage/
 
 # Cloud Build alternative configs  
 cloudbuild-simple.yaml
+
+# Files removed for production optimization
+# Test and evaluation directories
+tests/
+evals/
+
+# Development configuration files
+Makefile
+docker-compose.yml
+pytest.ini
+
+# Example and template files
+*.example
+!requirements*.txt.example
+firebase-credentials.json.example
+.env.example
+
+# Monitoring configurations (optional)
+grafana/
+prometheus/
+k8s-health-config.yaml
+
+# Development scripts and tools
+setup_dev.py
+diagnose.py
+simple_session_test.py
+
+# Backup and temporary files
+*.bak
+*.backup
+*.old
+*.tmp
+*.temp
+
+# Markdown files
+*.md
+
+# Arquivos de teste e utilitários
+arquivos/
+
+# Development dependencies
+# requirements-evolution.txt (consolidado no requirements.txt principal)
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
