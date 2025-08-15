@@ -222,7 +222,7 @@ async def register_user(request: Request, user_data: UserCreate):
         raise HTTPException(status_code=422, detail=str(ve))
 
 
-@router.post("/login", response_model=schemas.Token)
+@router.post("/login", response_model=TokenResponse)
 @limiter.limit(settings.RATE_LIMIT_ENDPOINTS["login"][0])
 async def login(
     request: Request,

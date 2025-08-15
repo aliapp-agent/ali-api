@@ -68,13 +68,31 @@ class AgnoAgent:  # noqa: D101
         """
 
         try:
+            # Validate tools before building agent
+            valid_tools = []
+            for tool in self.tools:
+                if tool is not None:
+                    valid_tools.append(tool)
+                else:
+                    logger.warning("skipping_null_tool", tools_available=len(self.tools))
+            
+            if not valid_tools:
+                raise Exception("No valid tools available for AgnoAgent")
+            
+            # Validate LLM configuration
+            if not settings.LLM_API_KEY:
+                raise Exception("LLM_API_KEY is required but not configured")
+            
+            if not settings.LLM_MODEL:
+                raise Exception("LLM_MODEL is required but not configured")
+            
             self.agent = Agent(
                 model=OpenAIChat(
                     id=settings.LLM_MODEL,
                     api_key=settings.LLM_API_KEY,
                     temperature=settings.DEFAULT_LLM_TEMPERATURE,
                 ),
-                tools=self.tools,  # type: ignore
+                tools=valid_tools,  # type: ignore
                 instructions=enhanced_prompt,
                 description="Ali API Assistant com RAG - Assistente inteligente com acesso à base de conhecimento",
                 memory=memory,
@@ -84,9 +102,19 @@ class AgnoAgent:  # noqa: D101
                 enable_user_memories=True,
                 markdown=True,
             )
+            
+            logger.info(
+                "agno_agent_built_successfully",
+                tools_count=len(valid_tools),
+                model=settings.LLM_MODEL,
+                memory_enabled=memory is not None,
+                storage_enabled=storage is not None
+            )
+            
         except Exception as e:
-            logger.error("failed_to_build_agent", error=str(e))
-            self.agent = None
+            logger.error("failed_to_build_agent", error=str(e), exc_info=True)
+            # DO NOT silently continue - this should fail initialization
+            raise Exception(f"Critical error building AgnoAgent: {str(e)}") from e
 
     async def get_response(
         self,
@@ -96,7 +124,8 @@ class AgnoAgent:  # noqa: D101
     ) -> list[dict]:
         """Get response from the agent for given messages."""
         if self.agent is None:
-            self._build_agent()
+            logger.error("agno_agent_not_available_for_response")
+            raise Exception("AgnoAgent is not available - initialization failed")
 
         try:
             if self.agent and hasattr(self.agent, 'model'):
@@ -121,7 +150,8 @@ class AgnoAgent:  # noqa: D101
         user_id: Optional[str] = None,
     ) -> AsyncGenerator[str, None]:
         if self.agent is None:
-            self._build_agent()
+            logger.error("agno_agent_not_available_for_streaming")
+            raise Exception("AgnoAgent is not available - initialization failed")
 
         try:
             if self.agent and hasattr(self.agent, 'arun'):
@@ -144,7 +174,8 @@ class AgnoAgent:  # noqa: D101
 
     async def get_chat_history(self, session_id: str) -> list[Message]:  # noqa: D102
         if self.agent is None:
-            self._build_agent()
+            logger.error("agno_agent_not_available_for_chat_history")
+            raise Exception("AgnoAgent is not available - initialization failed")
 
         if self.agent and hasattr(self.agent, 'memory') and self.agent.memory:
             try:
@@ -157,7 +188,8 @@ class AgnoAgent:  # noqa: D101
 
     async def clear_chat_history(self, session_id: str) -> None:  # noqa: D102
         if self.agent is None:
-            self._build_agent()
+            logger.error("agno_agent_not_available_for_clear_history")
+            raise Exception("AgnoAgent is not available - initialization failed")
 
         try:
             if self.agent and hasattr(self.agent, 'memory') and self.agent.memory:
@@ -184,7 +216,8 @@ class AgnoAgent:  # noqa: D101
             dict: Resposta processada com metadata
         """
         if self.agent is None:
-            self._build_agent()
+            logger.error("agno_agent_not_available_for_processing")
+            raise Exception("AgnoAgent is not available - initialization failed")
 
         try:
             # Criar mensagem no formato esperado
@@ -271,7 +304,11 @@ class AgnoAgent:  # noqa: D101
         """Verifica se o agente está funcionando corretamente."""
         try:
             if self.agent is None:
-                self._build_agent()
+                return {
+                    "status": "unhealthy",
+                    "error": "AgnoAgent is not initialized",
+                    "agent_ready": False,
+                }
 
             # Teste simples
             await self.agent.arun(

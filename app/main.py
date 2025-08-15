@@ -1,5 +1,6 @@
 """This file contains the main application entry point."""
 
+import asyncio
 import os
 import traceback
 import uuid
@@ -45,6 +46,123 @@ _database_available = False
 load_dotenv()
 
 
+async def initialize_agno_agent_with_retry(app: FastAPI, max_retries: int = 5, base_delay: float = 2.0) -> None:
+    """
+    Initialize AgnoAgent with exponential backoff retry.
+    
+    CRITICAL: Application MUST NOT start without a working AgnoAgent.
+    This function will crash the application if AgnoAgent cannot be initialized.
+    
+    Args:
+        app: FastAPI application instance
+        max_retries: Maximum number of retry attempts
+        base_delay: Base delay in seconds for exponential backoff
+    """
+    from app.core.agno.graph import AgnoAgent
+    
+    for attempt in range(max_retries + 1):
+        try:
+            logger.info(
+                "initializing_agno_agent",
+                attempt=attempt + 1,
+                max_attempts=max_retries + 1
+            )
+            
+            # Validate critical dependencies before initialization
+            await validate_agno_dependencies()
+            
+            # Initialize AgnoAgent
+            agno_agent = AgnoAgent()
+            await agno_agent.initialize()
+            
+            # Perform health check to ensure AgnoAgent is fully operational
+            health_result = await agno_agent.health_check()
+            if health_result.get("status") != "healthy":
+                raise Exception(f"AgnoAgent health check failed: {health_result}")
+            
+            # Store in application state
+            app.state.agno_agent = agno_agent
+            
+            logger.info(
+                "agno_agent_initialized_successfully",
+                attempt=attempt + 1,
+                health_status=health_result
+            )
+            return
+            
+        except Exception as e:
+            logger.error(
+                "agno_agent_initialization_attempt_failed",
+                attempt=attempt + 1,
+                max_attempts=max_retries + 1,
+                error=str(e),
+                exc_info=True
+            )
+            
+            if attempt >= max_retries:
+                logger.critical(
+                    "agno_agent_initialization_failed_permanently",
+                    total_attempts=max_retries + 1,
+                    error=str(e)
+                )
+                # FAIL-FAST: Application CANNOT run without AgnoAgent
+                raise RuntimeError(
+                    f"CRITICAL: AgnoAgent failed to initialize after {max_retries + 1} attempts. "
+                    f"Application cannot start without a working AgnoAgent. Last error: {str(e)}"
+                ) from e
+            
+            # Exponential backoff
+            delay = base_delay * (2 ** attempt)
+            logger.info(
+                "retrying_agno_agent_initialization",
+                delay_seconds=delay,
+                next_attempt=attempt + 2
+            )
+            await asyncio.sleep(delay)
+
+
+async def validate_agno_dependencies() -> None:
+    """
+    Validate all critical dependencies required for AgnoAgent.
+    
+    Raises:
+        Exception: If any critical dependency is missing or invalid
+    """
+    logger.info("validating_agno_dependencies")
+    
+    # Check LLM API Key
+    if not settings.LLM_API_KEY:
+        raise Exception("LLM_API_KEY is required but not configured")
+    
+    # Check Evolution API configuration
+    if not settings.EVOLUTION_API_URL:
+        raise Exception("EVOLUTION_API_URL is required but not configured")
+    if not settings.EVOLUTION_API_KEY:
+        raise Exception("EVOLUTION_API_KEY is required but not configured")
+    if not settings.EVOLUTION_INSTANCE:
+        raise Exception("EVOLUTION_INSTANCE is required but not configured")
+    
+    # Check memory path is writable
+    memory_path = settings.AGNO_MEMORY_PATH or "/app/data/agent.db"
+    memory_dir = os.path.dirname(memory_path)
+    if not os.path.exists(memory_dir):
+        try:
+            os.makedirs(memory_dir, exist_ok=True)
+        except Exception as e:
+            raise Exception(f"Cannot create AgnoAgent memory directory {memory_dir}: {e}")
+    
+    if not os.access(memory_dir, os.W_OK):
+        raise Exception(f"AgnoAgent memory directory {memory_dir} is not writable")
+    
+    logger.info(
+        "agno_dependencies_validated",
+        llm_api_key_configured=bool(settings.LLM_API_KEY),
+        evolution_api_configured=bool(settings.EVOLUTION_API_URL and settings.EVOLUTION_API_KEY),
+        memory_path=memory_path,
+        memory_dir_writable=os.access(memory_dir, os.W_OK)
+    )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Handle application startup and shutdown events."""
@@ -59,24 +177,8 @@ async def lifespan(app: FastAPI):
         startup_time=app.state.start_time.isoformat(),
     )
     
-    # Initialize AgnoAgent
-    try:
-        from app.core.agno.graph import AgnoAgent
-        logger.info("initializing_agno_agent")
-        
-        agno_agent = AgnoAgent()
-        await agno_agent.initialize()
-        app.state.agno_agent = agno_agent
-        
-        logger.info("agno_agent_initialized_successfully")
-    except Exception as e:
-        logger.error(
-            "agno_agent_initialization_failed",
-            error=str(e),
-            exc_info=True
-        )
-        # Don't fail the application startup, but log the error
-        app.state.agno_agent = None
+    # Initialize AgnoAgent - CRITICAL: Application must not start without AgnoAgent
+    await initialize_agno_agent_with_retry(app)
     
     yield
     
@@ -124,6 +226,10 @@ app.add_middleware(
 # Set up rate limiter exception handler
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Add AgnoAgent auto-recovery middleware
+from app.core.middleware.agno_recovery import AgnoRecoveryMiddleware
+app.add_middleware(AgnoRecoveryMiddleware, check_interval=300)  # Check every 5 minutes
 
 
 # Exception handlers

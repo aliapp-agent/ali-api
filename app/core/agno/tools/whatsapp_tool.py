@@ -99,7 +99,8 @@ try:
         name="send_whatsapp_message",
         description="Send a text message via WhatsApp using Evolution API. Requires a formatted phone number (e.g., '5511999999999') and message content.",
     )
+    logger.info("whatsapp_tool_created_successfully")
 except Exception as e:
-    logger.error("failed_to_create_whatsapp_tool", error=str(e))
-    # Create a dummy tool as fallback
-    whatsapp_tool = None
+    logger.error("failed_to_create_whatsapp_tool", error=str(e), exc_info=True)
+    # DO NOT create dummy tool - this should fail AgnoAgent initialization
+    raise Exception(f"Critical error creating WhatsApp tool: {str(e)}") from e

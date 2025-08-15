@@ -1,3 +1,4 @@
+
 """Application configuration management.
 
 This module handles environment-specific configuration loading, parsing, and management
@@ -89,16 +90,6 @@ class Settings(BaseSettings):
         default="./data/agno_memory.db", env="AGNO_MEMORY_PATH"
     )
 
-    # Elasticsearch Configuration
-    ELASTICSEARCH_URL: str = Field(
-        default="http://localhost:9200", env="ELASTICSEARCH_URL"
-    )
-    ELASTICSEARCH_TIMEOUT: int = Field(default=30, env="ELASTICSEARCH_TIMEOUT")
-    ELASTICSEARCH_MAX_RETRIES: int = Field(default=3, env="ELASTICSEARCH_MAX_RETRIES")
-    ELASTICSEARCH_INDEX_NAME: str = Field(
-        default="agua-clara-ms", env="ELASTICSEARCH_INDEX_NAME"
-    )
-    ELASTICSEARCH_API_KEY: str = Field(default="", env="ELASTICSEARCH_API_KEY")
 
     # RAG Configuration
     RAG_INDEX_NAME: str = Field(default="agua-clara-ms", env="RAG_INDEX_NAME")
