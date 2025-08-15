@@ -296,3 +296,7 @@ qdrant/
 # Runtime data
 storage/
 data/local/
+
+# Production test reports and sensitive JSON files
+production_test_report_*.json
+*production*.json

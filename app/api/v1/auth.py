@@ -88,22 +88,22 @@ async def get_current_user(
             )
 
         # Verify user exists in database
+        user_id_int = int(user_id)
         if db_service is None:
             raise HTTPException(
                 status_code=503,
                 detail="Database service not available",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        user_data = await db_service.get_user(user_id)
-        if user_data is None:
-            logger.error("user_not_found", user_id=user_id)
+        user = await db_service.get_user(user_id_int)
+        if user is None:
+            logger.error("user_not_found", user_id=user_id_int)
             raise HTTPException(
                 status_code=404,
                 detail="User not found",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        user = User.from_dict(user_id, user_data)
         return user
     except ValueError as ve:
         logger.error("token_validation_failed", error=str(ve), exc_info=True)
@@ -207,32 +207,9 @@ async def register_user(request: Request, user_data: UserCreate):
                 detail="Database service not available",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        
-        # Generate Firebase UID
-        user_id = str(uuid.uuid4())
-        
-        # Create user data
-        from datetime import datetime
-        now = datetime.utcnow()
-        user_data = {
-            "email": sanitized_email,
-            "hashed_password": User.hash_password(password),
-            "role": "viewer",
-            "status": "active",
-            "is_active": True,
-            "is_verified": False,
-            "created_at": now,
-            "updated_at": now,
-            "login_count": 0,
-        }
-        
-        # Save to Firebase
-        success = await db_service.create_user(user_id, user_data)
-        if not success:
-            raise HTTPException(status_code=500, detail="Failed to create user")
-        
-        # Create User object for response
-        user = User.from_dict(user_id, user_data)
+        user = await db_service.create_user(
+            email=sanitized_email, password=User.hash_password(password)
+        )
 
         # Create access token
         token = create_access_token(str(user.id))
@@ -245,7 +222,7 @@ async def register_user(request: Request, user_data: UserCreate):
         raise HTTPException(status_code=422, detail=str(ve))
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=schemas.Token)
 @limiter.limit(settings.RATE_LIMIT_ENDPOINTS["login"][0])
 async def login(
     request: Request,
@@ -267,8 +244,6 @@ async def login(
     Raises:
         HTTPException: If credentials are invalid
     """
-    logger.info("login_attempt", email=username)
-    
     try:
         # Sanitize inputs
         username = sanitize_string(username)
@@ -277,110 +252,34 @@ async def login(
 
         # Verify grant type
         if grant_type != "password":
-            logger.warning("invalid_grant_type", grant_type=grant_type)
             raise HTTPException(
                 status_code=400,
                 detail="Unsupported grant type. Must be 'password'",
             )
 
         if db_service is None:
-            logger.error("database_service_unavailable")
             raise HTTPException(
                 status_code=503,
                 detail="Database service not available",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-            
-        # Test database connection before proceeding
-        try:
-            user_data = await db_service.get_user_by_email(username)
-        except Exception as db_error:
-            logger.error("database_connection_error", error=str(db_error), email=username, exc_info=True)
-            raise HTTPException(
-                status_code=503,
-                detail="Database service error",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-            
-        if not user_data:
-            logger.warning("user_not_found", email=username)
+        user = await db_service.get_user_by_email(username)
+        if not user or not user.verify_password(password):
             raise HTTPException(
                 status_code=401,
                 detail="Incorrect email or password",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        
-        # Convert user data to User object
-        user_id = next(iter(user_data.keys())) if isinstance(user_data, dict) and user_data else None
-        if not user_id:
-            logger.warning("user_id_not_found", email=username)
-            raise HTTPException(
-                status_code=401,
-                detail="Incorrect email or password",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        
-        # Convert Firebase data to proper format before creating User object
-        raw_user_data = user_data[user_id]
-        clean_user_data = {}
-        
-        for key, value in raw_user_data.items():
-            # Convert DatetimeWithNanoseconds to datetime
-            if hasattr(value, 'timestamp'):
-                from datetime import datetime
-                clean_user_data[key] = datetime.fromtimestamp(value.timestamp())
-            else:
-                clean_user_data[key] = value
-            
-        user = User.from_dict(user_id, clean_user_data)
-            
-        # Verify password
-        try:
-            if not user.verify_password(password):
-                logger.warning("password_verification_failed", email=username)
-                raise HTTPException(
-                    status_code=401,
-                    detail="Incorrect email or password",
-                    headers={"WWW-Authenticate": "Bearer"},
-                )
-        except Exception as pwd_error:
-            logger.error("password_verification_error", error=str(pwd_error), email=username, exc_info=True)
-            raise HTTPException(
-                status_code=500,
-                detail="Authentication service error",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        # Create access token
-        try:
-            token = create_access_token(str(user.id))
-        except Exception as token_error:
-            logger.error("token_creation_failed", error=str(token_error), user_id=user.id, exc_info=True)
-            raise HTTPException(
-                status_code=500,
-                detail="Token creation failed",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-            
-        logger.info("login_successful", user_id=user.id, email=username)
-        
+        token = create_access_token(str(user.id))
         return TokenResponse(
             access_token=token.access_token,
             token_type="bearer",
             expires_at=token.expires_at,
         )
-    except HTTPException:
-        raise
     except ValueError as ve:
-        logger.error("login_validation_failed", error=str(ve), email=username, exc_info=True)
+        logger.error("login_validation_failed", error=str(ve), exc_info=True)
         raise HTTPException(status_code=422, detail=str(ve))
-    except Exception as e:
-        logger.error("login_unexpected_error", error=str(e), email=username, exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail="Internal server error",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
 
 
 @router.post("/session", response_model=SessionResponse)
@@ -407,18 +306,15 @@ async def create_session(user: User = Depends(get_current_user)):
         # Create access token for the session
         token = create_access_token(session_id)
 
-        # Get session name from metadata
-        session_name = session.metadata.get("name", "Chat Session")
-        
         logger.info(
             "session_created",
             session_id=session_id,
             user_id=user.id,
-            name=session_name,
+            name=session.name,
             expires_at=token.expires_at.isoformat(),
         )
 
-        return SessionResponse(session_id=session_id, name=session_name, token=token)
+        return SessionResponse(session_id=session_id, name=session.name, token=token)
     except ValueError as ve:
         logger.error(
             "session_creation_validation_failed",
@@ -449,9 +345,10 @@ async def update_session_name(
         # Sanitize inputs
         sanitized_session_id = sanitize_string(session_id)
         sanitized_name = sanitize_string(name)
+        sanitized_current_session = sanitize_string(current_session.id)
 
         # Verify the session ID matches the authenticated session
-        if sanitized_session_id != current_session.session_id:
+        if sanitized_session_id != sanitized_current_session:
             raise HTTPException(status_code=403, detail="Cannot modify other sessions")
 
         # Update the session name
@@ -467,9 +364,7 @@ async def update_session_name(
         token = create_access_token(sanitized_session_id)
 
         return SessionResponse(
-            session_id=sanitized_session_id, 
-            name=session.metadata.get("name", "Chat Session"), 
-            token=token
+            session_id=sanitized_session_id, name=session.name, token=token
         )
     except ValueError as ve:
         logger.error(
@@ -497,9 +392,10 @@ async def delete_session(
     try:
         # Sanitize inputs
         sanitized_session_id = sanitize_string(session_id)
+        sanitized_current_session = sanitize_string(current_session.id)
 
         # Verify the session ID matches the authenticated session
-        if sanitized_session_id != current_session.session_id:
+        if sanitized_session_id != sanitized_current_session:
             raise HTTPException(status_code=403, detail="Cannot delete other sessions")
 
         # Delete the session
@@ -542,9 +438,9 @@ async def get_user_sessions(user: User = Depends(get_current_user)):
         sessions = await db_service.get_user_sessions(user.id)
         return [
             SessionResponse(
-                session_id=sanitize_string(session.session_id),
-                name=sanitize_string(session.metadata.get("name", "Chat Session")),
-                token=create_access_token(session.session_id),
+                session_id=sanitize_string(session.id),
+                name=sanitize_string(session.name),
+                token=create_access_token(session.id),
             )
             for session in sessions
         ]
@@ -618,15 +514,13 @@ async def refresh_token(
                 detail="Database service not available",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        user_data = await db_service.get_user(user_id)
-        if not user_data:
+        user = await db_service.get_user(int(user_id))
+        if not user:
             raise HTTPException(
                 status_code=404,
                 detail="User not found",
             )
 
-        user = User.from_dict(user_id, user_data)
-        
         # Create new access token
         token = create_access_token(str(user.id))
 

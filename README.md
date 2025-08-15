@@ -1,6 +1,6 @@
 # Ali API
 
-Uma API FastAPI robusta e pronta para produção com integração Agno e Langfuse.
+API FastAPI com integração LLM e WhatsApp para chatbot inteligente.
 
 ## 🚀 Início Rápido
 
@@ -17,42 +17,35 @@ uv run python -m app.main
 
 ## 📚 Documentação
 
-Toda a documentação detalhada está disponível na pasta [`docs/`](./docs/):
-
-- **[Arquitetura](./docs/ARCHITECTURE.md)** - Visão geral da arquitetura do sistema
-- **[Deploy](./docs/DEPLOY.md)** - Guia de deployment e configuração
-- **[Integração Frontend](./docs/FRONTEND_INTEGRATION.md)** - Como integrar com frontend
-- **[TODO Produção](./docs/PRODUCTION_TODO.md)** - Lista de tarefas críticas para deploy
+- **[Arquitetura](./docs/ARCHITECTURE.md)** - Visão geral do sistema
+- **[Deploy](./docs/DEPLOY.md)** - Guia de deployment GCP
+- **[Integração Frontend](./docs/FRONTEND_INTEGRATION.md)** - Como integrar frontend
+- **[TODO Produção](./docs/PRODUCTION_TODO.md)** - Tarefas críticas para deploy
 
 ## 🛠️ Desenvolvimento
 
 ```bash
-# Executar testes
-uv run pytest
-
 # Executar com hot reload
 uv run uvicorn app.main:app --reload
 
-# Verificar saúde da aplicação
+# Executar testes
+uv run pytest
+
+# Verificar saúde
 curl http://localhost:8000/health
 ```
 
 ## 📋 Funcionalidades
 
-- ✅ FastAPI com documentação automática
-- ✅ Integração com Agno para agentes de IA
-- ✅ Sistema RAG com Elasticsearch
-- ✅ **Integração WhatsApp via Evolution API**
-- ✅ Observabilidade com Langfuse
-- ✅ Autenticação JWT
-- ✅ Rate limiting
-- ✅ Métricas e monitoramento
-- ✅ Testes automatizados
+- ✅ FastAPI com LangGraph/Agno
+- ✅ Autenticação JWT + PostgreSQL
+- ✅ Chat streaming com OpenAI
+- ✅ **Integração WhatsApp**
+- ✅ Observabilidade Langfuse
+- ✅ Rate limiting e métricas
 - ✅ Docker e CI/CD
 
-## 📱 WhatsApp Integration
-
-Configure e teste a integração com WhatsApp via Evolution API:
+## 📱 WhatsApp
 
 ```bash
 # Configurar WhatsApp
@@ -62,15 +55,12 @@ python scripts/setup_whatsapp.py
 python scripts/test_whatsapp.py --full-test
 ```
 
-Veja a [documentação completa](./docs/WHATSAPP_SETUP.md) para mais detalhes.
-
-## 🔗 Links Úteis
+## 🔗 Endpoints
 
 - **API Docs**: http://localhost:8000/docs
 - **Health Check**: http://localhost:8000/health
 - **Metrics**: http://localhost:8000/metrics
-- **WhatsApp Webhook Test**: http://localhost:8000/api/v1/whatsapp/webhook/test
 
 ---
 
-**Versão**: 1.0.0 | **Licença**: MIT
+**v1.0.0** | **MIT**

@@ -1,49 +1,25 @@
-# Configuração do WhatsApp via Evolution API
+# WhatsApp Setup - Evolution API
 
-Este documento descreve como configurar e testar a integração da Ali API com WhatsApp usando a Evolution API.
+## 🔧 Configuração Rápida
 
-## 📋 Pré-requisitos
-
-1. **Evolution API** rodando e configurada
-2. **Instância do WhatsApp** criada na Evolution API
-3. **Webhook** configurado para receber eventos
-4. **Variáveis de ambiente** configuradas
-
-## 🔧 Configuração
-
-### 1. Variáveis de Ambiente
-
-Adicione as seguintes variáveis no seu arquivo `.env`:
-
+### 1. Variáveis .env
 ```bash
-# Evolution API Configuration (WhatsApp)
+# Evolution API
 EVOLUTION_API_URL=https://your-evolution-api-domain.com
 EVOLUTION_INSTANCE=your-instance-name
 EVOLUTION_API_KEY=your-api-key
 ```
 
-**Exemplo:**
+### 2. Criar Instância
 ```bash
-EVOLUTION_API_URL=https://api.evolution.com
-EVOLUTION_INSTANCE=minha-instancia
-EVOLUTION_API_KEY=B6D711FCDE4D4FD5936544120E713976
-```
-
-### 2. Criar Instância na Evolution API
-
-```bash
-curl -X POST "https://your-evolution-api-domain.com/instance/create-instance-basic" \
+curl -X POST "${EVOLUTION_API_URL}/instance/create-instance-basic" \
   -H "Content-Type: application/json" \
-  -H "apikey: YOUR_API_KEY" \
+  -H "apikey: ${EVOLUTION_API_KEY}" \
   -d '{
     "instanceName": "minha-instancia",
     "webhook": {
       "url": "https://your-ali-api-domain.com/api/v1/whatsapp/webhook/evolution",
-      "events": [
-        "MESSAGES_UPSERT",
-        "CONNECTION_UPDATE",
-        "QRCODE_UPDATED"
-      ]
+      "events": ["MESSAGES_UPSERT", "CONNECTION_UPDATE", "QRCODE_UPDATED"]
     }
   }'
 ```

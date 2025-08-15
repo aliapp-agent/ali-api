@@ -1,51 +1,26 @@
-# 🔧 Guia de Troubleshooting - Ali API
+# 🔧 Troubleshooting - Ali API
 
-Este documento contém soluções para os problemas mais comuns encontrados no Ali API.
+## 🚨 Problemas Comuns
 
-## 🚨 Problemas Críticos Identificados
-
-### 1. Erro 500 no Endpoint de Login
-
-**Sintoma**: `/api/v1/auth/login` retorna erro 500 Internal Server Error
-
-**Possíveis Causas**:
-- Variáveis de ambiente não configuradas
-- Problemas de conexão com Firebase/Firestore
-- JWT_SECRET_KEY não definido
-- Credenciais do Firebase inválidas
-
-**Soluções**:
-
+### 1. Erro 500 Login
+**Causa**: JWT_SECRET_KEY ou Firebase mal configurados
 ```bash
-# 1. Verificar variáveis de ambiente
-gcloud run services describe ali-api-production --region=us-central1 --project=ali-api-production-459480858531 --format='value(spec.template.spec.template.spec.containers[0].env[].name)'
+# Verificar logs
+gcloud logs read "resource.type=cloud_run_revision AND severity>=ERROR" --limit=20
 
-# 2. Verificar logs de erro
-gcloud logging read 'resource.type="cloud_run_revision" AND resource.labels.service_name="ali-api-production" AND severity>=ERROR' --limit=20 --project=ali-api-production-459480858531
-
-# 3. Testar endpoint localmente
-curl -X POST https://ali-api-production-459480858531.us-central1.run.app/api/v1/auth/login \
+# Testar endpoint
+curl -X POST https://your-api-url/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"password"}' \
-  -v
+  -d '{"email":"test@example.com","password":"password"}'
 ```
 
-### 2. Endpoint de Saúde Detalhado (404)
+### 2. Health Check 404
+**Causa**: Endpoint não deployado
+**Solução**: Redeploy com correções
 
-**Sintoma**: `/api/v1/health/detailed` retorna 404 Not Found
-
-**Causa**: Endpoint não foi deployado para produção
-
-**Solução**: Fazer novo deploy com as correções implementadas
-
-### 3. Erro 422 no Login
-
-**Sintoma**: Todas as tentativas de login retornam 422 Unprocessable Entity
-
-**Causa**: Validação de schema falhando
-
-**Solução**: Verificar se o payload está no formato correto:
-
+### 3. Erro 422 Login
+**Causa**: Schema inválido
+**Formato correto**:
 ```json
 {
   "email": "user@example.com",

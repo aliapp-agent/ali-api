@@ -1,141 +1,90 @@
-# 📋 TO-DO LIST - Produção Ali API
+# 📋 Produção Ali API - TODO
 
-## 🔥 **ALTA PRIORIDADE (Crítico para Deploy)**
+## 🔥 CRÍTICO
 
-### 1. Configuração de Infraestrutura GCP
-- [ ] Executar `./scripts/setup-gcp.sh` para criar recursos GCP
-- [ ] Configurar projeto GCP com billing ativado
-- [ ] Criar Cloud SQL PostgreSQL instance
-- [ ] Configurar Artifact Registry para Docker images
-- [ ] Configurar Cloud Run para hosting
-- [ ] Configurar Secret Manager para secrets
+### 1. Infraestrutura GCP
+- [ ] Executar `./scripts/setup-gcp.sh`
+- [ ] Configurar billing no projeto GCP
+- [ ] Criar Cloud SQL PostgreSQL
+- [ ] Configurar Artifact Registry
+- [ ] Configurar Cloud Run
+- [ ] Configurar Secret Manager
 
-### 2. Configuração de Secrets e Variáveis de Ambiente
-- [ ] Configurar secrets no GitHub Actions:
+### 2. Secrets
+- [ ] GitHub Actions secrets:
   - [ ] `GCP_PROJECT_ID`
   - [ ] `GCP_SERVICE_ACCOUNT_KEY`
-  - [ ] `POSTGRES_PASSWORD`
   - [ ] `OPENAI_API_KEY`
-  - [ ] `ANTHROPIC_API_KEY`
   - [ ] `LANGFUSE_SECRET_KEY`
-  - [ ] `LANGFUSE_PUBLIC_KEY`
-- [ ] Atualizar `.env` com valores de produção reais
-- [ ] Configurar secrets no Google Secret Manager
+- [ ] Google Secret Manager
+- [ ] Atualizar `.env` produção
 
 ### 3. Banco de Dados
-- [ ] Executar migrações Alembic em produção
-- [ ] Configurar connection pooling adequado
-- [ ] Testar conectividade com Cloud SQL
+- [ ] Executar migrações Alembic
+- [ ] Configurar connection pooling
+- [ ] Testar conectividade Cloud SQL
 - [ ] Configurar backup automático
 
-### 4. Deploy Pipeline
-- [ ] Testar workflow de deploy em staging
-- [ ] Validar build do Docker container
-- [ ] Testar deploy no Cloud Run
-- [ ] Configurar domínio customizado
-- [ ] Configurar HTTPS/SSL
+### 4. Deploy
+- [ ] Testar workflow staging
+- [ ] Validar build Docker
+- [ ] Deploy Cloud Run
+- [ ] Configurar domínio/HTTPS
 
-## ⚡ **MÉDIA PRIORIDADE (Importante para Estabilidade)**
+## ⚡ IMPORTANTE
 
 ### 5. Segurança
-- [ ] Configurar CORS adequadamente para produção
-- [ ] Implementar rate limiting robusto
-- [ ] Configurar firewall rules no GCP
-- [ ] Audit de segurança das dependências
-- [ ] Configurar autenticação JWT robusta
-- [ ] Implementar RBAC (Role-Based Access Control)
+- [ ] Configurar CORS produção
+- [ ] Rate limiting robusto
+- [ ] Firewall rules GCP
+- [ ] Audit dependências
+- [ ] JWT robusta + RBAC
 
-### 6. Monitoramento e Observabilidade
-- [ ] Configurar alertas no Google Cloud Monitoring
-- [ ] Configurar dashboards Grafana personalizados
-- [ ] Implementar health checks mais robustos
-- [ ] Configurar log aggregation
-- [ ] Configurar métricas customizadas
-- [ ] Implementar distributed tracing
+### 6. Monitoramento
+- [ ] Alertas Cloud Monitoring
+- [ ] Dashboards Grafana
+- [ ] Health checks robustos
+- [ ] Log aggregation
+- [ ] Métricas customizadas
 
-### 7. Performance e Escalabilidade
-- [ ] Configurar auto-scaling no Cloud Run
-- [ ] Otimizar queries de banco de dados
-- [ ] Implementar cache (Redis/Memcached)
-- [ ] Configurar CDN para assets estáticos
-- [ ] Load testing com ferramentas como k6 ou Artillery
-- [ ] Profiling de performance da aplicação
+### 7. Performance
+- [ ] Auto-scaling Cloud Run
+- [ ] Otimizar queries DB
+- [ ] Cache Redis
+- [ ] Load testing
+- [ ] Profiling performance
 
 ### 8. Testes
-- [ ] Executar todos os testes unitários
-- [ ] Implementar testes de integração no pipeline
-- [ ] Testes de carga e stress
-- [ ] Testes de segurança (OWASP)
-- [ ] Testes de disaster recovery
+- [ ] Testes unitários
+- [ ] Testes integração
+- [ ] Testes carga/stress
+- [ ] Security scan OWASP
 
-## 🔧 **BAIXA PRIORIDADE (Melhorias)**
+## 🔧 MELHORIAS
 
-### 9. CI/CD Avançado
-- [ ] Implementar blue-green deployment
-- [ ] Configurar rollback automático
-- [ ] Implementar canary deployments
-- [ ] Configurar feature flags
-- [ ] Implementar automated testing em múltiplos ambientes
+### 9. CI/CD
+- [ ] Blue-green deployment
+- [ ] Rollback automático
+- [ ] Canary deployments
+- [ ] Feature flags
 
-### 10. Documentação
-- [ ] Documentação completa da API (OpenAPI/Swagger)
-- [ ] Runbooks para operações
-- [ ] Documentação de troubleshooting
-- [ ] Guias de desenvolvimento
-- [ ] Documentação de arquitetura atualizada
+### 10. Backup/DR
+- [ ] Backup automático DB
+- [ ] Procedimentos restore
+- [ ] Plano disaster recovery
+- [ ] Replicação cross-region
 
-### 11. Backup e Disaster Recovery
-- [ ] Configurar backup automático do banco
-- [ ] Implementar backup de arquivos/dados
-- [ ] Testar procedimentos de restore
-- [ ] Documentar plano de disaster recovery
-- [ ] Configurar replicação cross-region
+## 📊 CHECKLIST PRÉ-DEPLOY
 
-### 12. Compliance e Governança
-- [ ] Implementar logging de auditoria
-- [ ] Configurar retenção de logs
-- [ ] Implementar data governance
-- [ ] Configurar compliance LGPD/GDPR
-- [ ] Implementar data encryption at rest
-
-## 📊 **CHECKLIST DE VALIDAÇÃO PRÉ-DEPLOY**
-
-### Antes do Deploy de Produção:
-- [ ] Todos os testes passando
-- [ ] Secrets configurados e testados
-- [ ] Banco de dados migrado e testado
-- [ ] Monitoramento funcionando
+- [ ] Todos testes passando
+- [ ] Secrets configurados
+- [ ] DB migrado
+- [ ] Monitoramento ativo
 - [ ] Alertas configurados
 - [ ] Backup testado
-- [ ] Rollback plan documentado
-- [ ] Load testing realizado
-- [ ] Security scan realizado
-- [ ] Documentação atualizada
-
-## 🎯 **CRONOGRAMA SUGERIDO**
-
-### Semana 1: Infraestrutura Base
-- Configurar GCP e recursos básicos
-- Configurar secrets e variáveis
-- Deploy inicial em staging
-
-### Semana 2: Segurança e Monitoramento
-- Implementar segurança robusta
-- Configurar monitoramento completo
-- Testes de carga
-
-### Semana 3: Otimização e Testes
-- Otimizações de performance
-- Testes completos
-- Documentação
-
-### Semana 4: Deploy e Validação
-- Deploy de produção
-- Monitoramento pós-deploy
-- Ajustes finais
+- [ ] Load testing OK
+- [ ] Security scan OK
 
 ---
 
 **Status:** 🔴 Não iniciado | 🟡 Em progresso | 🟢 Concluído
-
-**Última atualização:** $(date)

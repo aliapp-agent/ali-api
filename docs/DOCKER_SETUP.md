@@ -1,53 +1,38 @@
 # Docker Setup - Ali API
 
-Este documento explica como configurar e executar a Ali API usando Docker e Docker Compose.
+## 🚀 Quick Start
 
-## Arquivos de Configuração
-
-### 1. `Dockerfile`
-- **Status**: ✅ Atualizado e correto
-- **Características**:
-  - Multi-stage build para otimização
-  - Usa Python 3.13.2-slim
-  - Instala `uv` para gerenciamento de dependências
-  - Inclui `psycopg2-binary` para PostgreSQL
-  - Configuração de usuário não-root para segurança
-  - Healthcheck integrado
-
-### 2. `docker-compose.yml`
-- **Status**: ✅ Atualizado
-- **Características**:
-  - Serviço principal da aplicação
-  - Configuração de rede `ali-network`
-  - Dependência do PostgreSQL
-  - Variáveis de ambiente configuradas
-  - Volumes para desenvolvimento
-
-### 3. `docker-compose.postgres.yml`
-- **Status**: ✅ Criado
-- **Características**:
-  - Serviço PostgreSQL 15-alpine
-  - Configuração de banco de dados
-  - Script de inicialização automática
-  - pgAdmin opcional para administração
-  - Volumes persistentes
-
-## Como Usar
-
-### Opção 1: Aplicação + PostgreSQL (Recomendado para desenvolvimento)
-
+### Desenvolvimento Completo (App + PostgreSQL)
 ```bash
-# Subir aplicação com PostgreSQL
+# Subir todos os serviços
 docker-compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
 
 # Verificar logs
-docker-compose -f docker-compose.yml -f docker-compose.postgres.yml logs -f
+docker-compose logs -f ali-api
 
 # Parar serviços
-docker-compose -f docker-compose.yml -f docker-compose.postgres.yml down
+docker-compose down
 ```
 
-### Opção 2: Apenas Aplicação (PostgreSQL externo)
+### Apenas Aplicação (PostgreSQL externo)
+```bash
+# Configurar DATABASE_URL no .env primeiro
+docker-compose up -d ali-api
+```
+
+## 🔧 Configurações
+
+### docker-compose.yml
+- ✅ Aplicação principal
+- ✅ Rede ali-network
+- ✅ Volumes desenvolvimento
+- ✅ Healthcheck integrado
+
+### docker-compose.postgres.yml
+- ✅ PostgreSQL 15-alpine
+- ✅ pgAdmin opcional
+- ✅ Volumes persistentes
+- ✅ Init script automático
 
 ```bash
 # Configurar POSTGRES_URL no .env

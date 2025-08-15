@@ -1,52 +1,29 @@
-# 🔥 Firebase Setup Guide
+# 🔥 Firebase Setup
 
-Este guia detalha como configurar Firebase para a Ali API.
+## 1. Criar Projeto
+1. Acesse [Firebase Console](https://console.firebase.google.com/)
+2. Criar projeto: `ali-api-project`
+3. Habilitar Google Analytics (opcional)
 
-## 1. Criar Projeto Firebase
+## 2. Serviços
+### Authentication
+- Habilitar Email/Password
+- Opcional: Google, Anonymous
 
-1. Acesse o [Firebase Console](https://console.firebase.google.com/)
-2. Clique em "Criar projeto" ou "Add project"
-3. Nome do projeto: `ali-api-project` (ou nome de sua escolha)
-4. Habilite Google Analytics (opcional)
-5. Aguarde a criação do projeto
+### Firestore Database
+- Create database (test mode)
+- Localização: `us-central1`
 
-## 2. Habilitar Serviços Firebase
+### Storage
+- Get started (test mode)
+- Localização: `us-central1`
 
-### 2.1 Firebase Authentication
-1. No console Firebase, vá para **Authentication**
-2. Clique em "Get started"
-3. Na aba **Sign-in method**, habilite:
-   - Email/Password
-   - Google (opcional)
-   - Anonymous (opcional para testes)
+## 3. Credenciais
+1. **Project Settings** > **Service accounts**
+2. **Generate new private key**
+3. Salvar como `firebase-credentials.json`
 
-### 2.2 Cloud Firestore
-1. Vá para **Firestore Database**
-2. Clique em "Create database"
-3. Escolha "Start in test mode" (por enquanto)
-4. Selecione localização: `us-central1`
-
-### 2.3 Cloud Storage
-1. Vá para **Storage**
-2. Clique em "Get started"
-3. Escolha "Start in test mode"
-4. Selecione localização: `us-central1`
-
-### 2.4 Cloud Logging
-1. No [Google Cloud Console](https://console.cloud.google.com/)
-2. Navegue para **Logging** > **Logs Explorer**
-3. O serviço é habilitado automaticamente
-
-## 3. Configurar Credenciais
-
-### 3.1 Service Account Key
-1. No Firebase Console, vá para **Project Settings** (ícone de engrenagem)
-2. Aba **Service accounts**
-3. Clique em "Generate new private key"
-4. Salve o arquivo como `firebase-credentials.json` na raiz do projeto
-
-### 3.2 Configurar Variáveis de Ambiente
-Copie `.env.firebase` para `.env` e atualize:
+## 4. Variáveis .env
 
 ```bash
 FIREBASE_PROJECT_ID=seu-project-id
