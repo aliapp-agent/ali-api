@@ -46,7 +46,7 @@ _database_available = False
 load_dotenv()
 
 
-async def initialize_agno_agent_with_retry(app: FastAPI, max_retries: int = 2, base_delay: float = 0.5) -> None:
+async def initialize_agno_agent_with_retry(app: FastAPI, max_retries: int = 1, base_delay: float = 0.1) -> None:
     """
     Initialize AgnoAgent with exponential backoff retry.
     
@@ -177,8 +177,13 @@ async def lifespan(app: FastAPI):
         startup_time=app.state.start_time.isoformat(),
     )
     
-    # Initialize AgnoAgent - CRITICAL: Application must not start without AgnoAgent
-    await initialize_agno_agent_with_retry(app)
+    # Initialize AgnoAgent - Allow app to start even if AgnoAgent fails
+    try:
+        await initialize_agno_agent_with_retry(app)
+    except Exception as e:
+        logger.error("agno_agent_initialization_failed_non_blocking", error=str(e))
+        # Set a placeholder so the app can still start
+        app.state.agno_agent = None
     
     yield
     
