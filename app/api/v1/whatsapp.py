@@ -326,7 +326,29 @@ async def handle_message_upsert(
         background_tasks: FastAPI background tasks
     """
     try:
-        messages = data.get('data', {}).get('messages', [])
+        # Evolution API V2 envia array direto em 'data'
+        messages_data = data.get('data', [])
+        
+        # Suporte para ambos os formatos (V1 e V2)
+        if isinstance(messages_data, dict):
+            # Formato antigo: data.messages
+            messages = messages_data.get('messages', [])
+        elif isinstance(messages_data, list):
+            # Formato novo: data é array direto
+            messages = messages_data
+        else:
+            messages = []
+            logger.warning(
+                "unexpected_webhook_data_format",
+                data_type=type(messages_data).__name__,
+                data_preview=str(messages_data)[:200]
+            )
+
+        logger.info(
+            "processing_messages",
+            message_count=len(messages),
+            data_type=type(messages_data).__name__
+        )
 
         for message_data in messages:
             # Skip messages sent by us (fromMe = True)

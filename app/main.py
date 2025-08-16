@@ -25,7 +25,6 @@ from app.core.config import settings
 from app.core.limiter import limiter
 from app.core.logging import logger
 from app.core.metrics import setup_metrics
-from app.core.metrics_middleware import MetricsMiddleware
 from app.shared.constants.http import (
     HTTP_422_UNPROCESSABLE_ENTITY,
     HTTP_500_INTERNAL_SERVER_ERROR,
@@ -209,9 +208,6 @@ app = FastAPI(
 # Set up Prometheus metrics
 setup_metrics(app)
 
-# Add custom metrics middleware
-app.add_middleware(MetricsMiddleware)
-
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
@@ -239,9 +235,7 @@ app.add_middleware(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Add AgnoAgent auto-recovery middleware
-from app.core.middleware.agno_recovery import AgnoRecoveryMiddleware
-app.add_middleware(AgnoRecoveryMiddleware, check_interval=300)  # Check every 5 minutes
+# AgnoAgent auto-recovery middleware removed - module doesn't exist
 
 
 # Exception handlers
