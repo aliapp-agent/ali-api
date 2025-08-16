@@ -1,5 +1,6 @@
 """This file contains the main application entry point."""
 
+# from app.core.middleware.agno_recovery import AgnoRecoveryMiddleware
 import asyncio
 import os
 import traceback
@@ -25,7 +26,7 @@ from app.core.config import settings
 from app.core.limiter import limiter
 from app.core.logging import logger
 from app.core.metrics import setup_metrics
-from app.core.metrics_middleware import MetricsMiddleware
+# from app.core.metrics_middleware import MetricsMiddleware
 from app.shared.constants.http import (
     HTTP_422_UNPROCESSABLE_ENTITY,
     HTTP_500_INTERNAL_SERVER_ERROR,
@@ -49,17 +50,18 @@ load_dotenv()
 async def initialize_agno_agent_with_retry(app: FastAPI, max_retries: int = 1, base_delay: float = 0.1) -> None:
     """
     Initialize AgnoAgent with exponential backoff retry.
-    
+
     CRITICAL: Application MUST NOT start without a working AgnoAgent.
     This function will crash the application if AgnoAgent cannot be initialized.
-    
+
     Args:
         app: FastAPI application instance
         max_retries: Maximum number of retry attempts
         base_delay: Base delay in seconds for exponential backoff
     """
-    from app.core.agno.improved_agent import get_improved_agno_agent
-    
+    # from app.core.agno.improved_agent import get_improved_agno_agent
+    from app.core.agno.graph import get_agno_agent
+
     for attempt in range(max_retries + 1):
         try:
             logger.info(
@@ -67,28 +69,30 @@ async def initialize_agno_agent_with_retry(app: FastAPI, max_retries: int = 1, b
                 attempt=attempt + 1,
                 max_attempts=max_retries + 1
             )
-            
+
             # Validate critical dependencies before initialization
             await validate_agno_dependencies()
-            
+
             # Initialize ImprovedAgnoAgent
-            agno_agent = get_improved_agno_agent(session_id="main_session")
-            
+            # agno_agent = get_improved_agno_agent(session_id="main_session")
+            agno_agent = get_agno_agent(session_id="main_session")
+
             # Perform health check to ensure AgnoAgent is fully operational
             health_result = agno_agent.health_check()
             if health_result.get("status") != "healthy":
-                raise Exception(f"AgnoAgent health check failed: {health_result}")
-            
+                raise Exception(
+                    f"AgnoAgent health check failed: {health_result}")
+
             # Store in application state
             app.state.agno_agent = agno_agent
-            
+
             logger.info(
                 "agno_agent_initialized_successfully",
                 attempt=attempt + 1,
                 health_status=health_result
             )
             return
-            
+
         except Exception as e:
             logger.error(
                 "agno_agent_initialization_attempt_failed",
@@ -97,7 +101,7 @@ async def initialize_agno_agent_with_retry(app: FastAPI, max_retries: int = 1, b
                 error=str(e),
                 exc_info=True
             )
-            
+
             if attempt >= max_retries:
                 logger.critical(
                     "agno_agent_initialization_failed_permanently",
@@ -106,10 +110,12 @@ async def initialize_agno_agent_with_retry(app: FastAPI, max_retries: int = 1, b
                 )
                 # FAIL-FAST: Application CANNOT run without AgnoAgent
                 raise RuntimeError(
-                    f"CRITICAL: AgnoAgent failed to initialize after {max_retries + 1} attempts. "
-                    f"Application cannot start without a working AgnoAgent. Last error: {str(e)}"
+                    f"CRITICAL: AgnoAgent failed to initialize after {
+                        max_retries + 1} attempts. "
+                    f"Application cannot start without a working AgnoAgent. Last error: {
+                        str(e)}"
                 ) from e
-            
+
             # Exponential backoff
             delay = base_delay * (2 ** attempt)
             logger.info(
@@ -123,16 +129,16 @@ async def initialize_agno_agent_with_retry(app: FastAPI, max_retries: int = 1, b
 async def validate_agno_dependencies() -> None:
     """
     Validate all critical dependencies required for AgnoAgent.
-    
+
     Raises:
         Exception: If any critical dependency is missing or invalid
     """
     logger.info("validating_agno_dependencies")
-    
+
     # Check LLM API Key
     if not settings.LLM_API_KEY:
         raise Exception("LLM_API_KEY is required but not configured")
-    
+
     # Check Evolution API configuration
     if not settings.EVOLUTION_API_URL:
         raise Exception("EVOLUTION_API_URL is required but not configured")
@@ -140,7 +146,7 @@ async def validate_agno_dependencies() -> None:
         raise Exception("EVOLUTION_API_KEY is required but not configured")
     if not settings.EVOLUTION_INSTANCE:
         raise Exception("EVOLUTION_INSTANCE is required but not configured")
-    
+
     # Check memory path is writable
     memory_path = settings.AGNO_MEMORY_PATH or "/app/data/agent.db"
     memory_dir = os.path.dirname(memory_path)
@@ -148,15 +154,18 @@ async def validate_agno_dependencies() -> None:
         try:
             os.makedirs(memory_dir, exist_ok=True)
         except Exception as e:
-            raise Exception(f"Cannot create AgnoAgent memory directory {memory_dir}: {e}")
-    
+            raise Exception(f"Cannot create AgnoAgent memory directory {
+                            memory_dir}: {e}")
+
     if not os.access(memory_dir, os.W_OK):
-        raise Exception(f"AgnoAgent memory directory {memory_dir} is not writable")
-    
+        raise Exception(f"AgnoAgent memory directory {
+                        memory_dir} is not writable")
+
     logger.info(
         "agno_dependencies_validated",
         llm_api_key_configured=bool(settings.LLM_API_KEY),
-        evolution_api_configured=bool(settings.EVOLUTION_API_URL and settings.EVOLUTION_API_KEY),
+        evolution_api_configured=bool(
+            settings.EVOLUTION_API_URL and settings.EVOLUTION_API_KEY),
         memory_path=memory_path,
         memory_dir_writable=os.access(memory_dir, os.W_OK)
     )
@@ -175,25 +184,28 @@ async def lifespan(app: FastAPI):
         api_prefix=settings.API_V1_STR,
         startup_time=app.state.start_time.isoformat(),
     )
-    
+
     # Initialize AgnoAgent - Allow app to start even if AgnoAgent fails
     try:
         await initialize_agno_agent_with_retry(app)
         logger.info("agno_agent_successfully_stored_in_app_state")
     except Exception as e:
-        logger.error("agno_agent_initialization_failed_non_blocking", error=str(e), exc_info=True)
+        logger.error("agno_agent_initialization_failed_non_blocking",
+                     error=str(e), exc_info=True)
         # Create a basic fallback agent
         try:
             from app.core.agno.improved_agent import get_improved_agno_agent
-            fallback_agent = get_improved_agno_agent(session_id="fallback_session")
+            fallback_agent = get_improved_agno_agent(
+                session_id="fallback_session")
             app.state.agno_agent = fallback_agent
             logger.warning("using_fallback_agno_agent")
         except Exception as fallback_error:
-            logger.error("fallback_agno_agent_failed", error=str(fallback_error))
+            logger.error("fallback_agno_agent_failed",
+                         error=str(fallback_error))
             app.state.agno_agent = None
-    
+
     yield
-    
+
     # Cleanup on shutdown
     logger.info("application_shutdown")
 
@@ -210,7 +222,7 @@ app = FastAPI(
 setup_metrics(app)
 
 # Add custom metrics middleware
-app.add_middleware(MetricsMiddleware)
+# app.add_middleware(MetricsMiddleware)
 
 # Configure CORS
 app.add_middleware(
@@ -240,8 +252,8 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Add AgnoAgent auto-recovery middleware
-from app.core.middleware.agno_recovery import AgnoRecoveryMiddleware
-app.add_middleware(AgnoRecoveryMiddleware, check_interval=300)  # Check every 5 minutes
+# Check every 5 minutes
+# app.add_middleware(AgnoRecoveryMiddleware, check_interval=300)
 
 
 # Exception handlers
@@ -576,7 +588,6 @@ async def general_exception_handler(request: Request, exc: Exception):
     return response
 
 
-
 # Include API router
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
@@ -624,14 +635,18 @@ async def health_check(request: Request) -> JSONResponse:
                 db_service = DatabaseService()
                 db_healthy = await db_service.health_check()
                 if not db_healthy:
-                    db_health = {"status": "unhealthy", "error": "Firebase connection failed"}
+                    db_health = {"status": "unhealthy",
+                                 "error": "Firebase connection failed"}
             else:
                 db_healthy = False
-                db_health = {"status": "unhealthy", "error": "Firebase client not initialized"}
+                db_health = {"status": "unhealthy",
+                             "error": "Firebase client not initialized"}
         except Exception as e:
-            logger.error("database_health_check_failed", error=str(e), exc_info=True)
+            logger.error("database_health_check_failed",
+                         error=str(e), exc_info=True)
             db_healthy = False
-            db_health = {"status": "unhealthy", "error": f"Database initialization failed: {str(e)}"}
+            db_health = {"status": "unhealthy",
+                         "error": f"Database initialization failed: {str(e)}"}
 
         # Check RAG service health
         rag_health = {}
@@ -682,7 +697,8 @@ async def health_check(request: Request) -> JSONResponse:
         critical_healthy = all(
             components[comp] == "healthy" for comp in critical_components
         )
-        all_healthy = all(status == "healthy" for status in components.values())
+        all_healthy = all(
+            status == "healthy" for status in components.values())
 
         if all_healthy:
             overall_status = "healthy"
@@ -810,7 +826,8 @@ async def detailed_health_check(request: Request) -> JSONResponse:
                     health_details["checks"]["firebase_config"]["status"] = "healthy"
                 except Exception as fs_error:
                     health_details["checks"]["firebase_config"]["details"]["firestore_accessible"] = False
-                    health_details["checks"]["firebase_config"]["details"]["firestore_error"] = str(fs_error)
+                    health_details["checks"]["firebase_config"]["details"]["firestore_error"] = str(
+                        fs_error)
                     health_details["checks"]["firebase_config"]["status"] = "unhealthy"
             else:
                 health_details["checks"]["firebase_config"]["details"]["firestore_client"] = False

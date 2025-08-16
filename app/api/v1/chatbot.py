@@ -15,7 +15,8 @@ from fastapi import (
 from fastapi.responses import StreamingResponse
 
 from app.api.v1.auth import get_current_session
-from app.core.agno.improved_agent import get_improved_agno_agent
+# from app.core.agno.improved_agent import get_improved_agno_agent
+from app.core.agno.graph import get_agno_agent
 from app.core.config import settings
 from app.core.dependencies import DatabaseServiceDep, MessageServiceDep
 from app.core.limiter import limiter
@@ -38,7 +39,8 @@ from app.schemas.chat import (
 from app.shared.constants.http import CONTENT_TYPE_SSE
 
 router = APIRouter()
-agent = get_improved_agno_agent(session_id="chatbot_session")
+agent = get_agno_agent(session_id="chatbot_session")
+# agent = get_improved_agno_agent(session_id="chatbot_session")
 
 
 @router.post("/chat", response_model=ChatResponse)
@@ -73,9 +75,11 @@ async def chat(
         )
 
         # Get the last user message from the request
-        user_messages = [msg for msg in chat_request.messages if msg.role == "user"]
+        user_messages = [
+            msg for msg in chat_request.messages if msg.role == "user"]
         if not user_messages:
-            raise HTTPException(status_code=400, detail="No user message found")
+            raise HTTPException(
+                status_code=400, detail="No user message found")
 
         last_user_message = user_messages[-1]
 
@@ -108,8 +112,9 @@ async def chat(
 
         for assistant_msg in assistant_messages:
             # Extract token count from the message content (approximation)
-            tokens_used = len(assistant_msg.content.split()) * 1.3  # Rough estimate
-            
+            tokens_used = len(assistant_msg.content.split()
+                              ) * 1.3  # Rough estimate
+
             assistant_message_entity = await message_service.create_assistant_message(
                 session_id=session.id,
                 user_id=session.user_id,
@@ -119,7 +124,7 @@ async def chat(
                 processing_time=processing_time,
                 confidence_score=0.9,  # Default confidence
             )
-            
+
             stored_messages.append(assistant_message_entity)
 
             logger.info(
@@ -181,7 +186,8 @@ async def chat_stream(
             )
 
             # Get the last user message from the request
-            user_messages = [msg for msg in chat_request.messages if msg.role == "user"]
+            user_messages = [
+                msg for msg in chat_request.messages if msg.role == "user"]
             if not user_messages:
                 error_data = StreamResponse(
                     type="error",
@@ -209,13 +215,13 @@ async def chat_stream(
             # Start streaming response
             start_time = time.time()
             full_content = ""
-            
+
             # Get streaming response from Agno
             async for token in agent.get_stream_response(
                 chat_request.messages, session.id, user_id=session.user_id
             ):
                 full_content += token
-                
+
                 # Send token to client
                 stream_data = StreamResponse(
                     type="token",
@@ -228,7 +234,7 @@ async def chat_stream(
 
             # Store complete assistant message in Firebase
             tokens_used = len(full_content.split()) * 1.3  # Rough estimate
-            
+
             assistant_message_entity = await message_service.create_assistant_message(
                 session_id=session.id,
                 user_id=session.user_id,
@@ -384,13 +390,13 @@ async def clear_chat_history(
 
         # Clear from agent's memory first
         await agent.clear_chat_history(session.id)
-        
+
         # Clear messages from Firebase using the message service
         messages_cleared = await message_service.clear_session_messages(
             session_id=session.id,
             user_id=session.user_id,
         )
-        
+
         logger.info(
             "chat_history_cleared",
             session_id=session.id,
@@ -467,7 +473,8 @@ async def get_chat_history(
         return ChatHistoryResponse(
             messages=messages,
             total_count=total_count,
-            has_more=(history_request.offset + history_request.limit) < total_count,
+            has_more=(history_request.offset +
+                      history_request.limit) < total_count,
             session_info={
                 "session_id": session.id,
                 "session_name": getattr(session, "name", "Chat Session"),
@@ -535,7 +542,8 @@ async def search_chat_history(
                 ChatSearchResult(
                     message=message,
                     relevance_score=0.9 - (i * 0.1),
-                    context_snippet=f"...containing '{search_request.query}' in the context...",
+                    context_snippet=f"...containing '{
+                        search_request.query}' in the context...",
                     session_name=getattr(session, "name", "Chat Session"),
                 )
             )
@@ -646,7 +654,8 @@ async def export_chat_data(
 
         # Simulate file generation
         file_id = str(uuid.uuid4())
-        file_url = f"/api/v1/chatbot/downloads/{file_id}.{export_request.format}"
+        file_url = f"/api/v1/chatbot/downloads/{
+            file_id}.{export_request.format}"
         message_count = 150
 
         return ChatExportResponse(
@@ -749,7 +758,7 @@ async def test_chat(
     chat_request: ChatRequest,
 ):
     """Test endpoint for chat functionality without authentication.
-    
+
     This endpoint is available only in development environment.
     It allows testing the Agno Agent without requiring authentication.
 
@@ -766,7 +775,7 @@ async def test_chat(
     # Only allow in development environment
     if settings.APP_ENV.value != "development":
         raise HTTPException(
-            status_code=404, 
+            status_code=404,
             detail="Endpoint not available in production"
         )
 
@@ -785,9 +794,11 @@ async def test_chat(
         )
 
         # Get the last user message from the request
-        user_messages = [msg for msg in chat_request.messages if msg.role == "user"]
+        user_messages = [
+            msg for msg in chat_request.messages if msg.role == "user"]
         if not user_messages:
-            raise HTTPException(status_code=400, detail="No user message found")
+            raise HTTPException(
+                status_code=400, detail="No user message found")
 
         last_user_message = user_messages[-1]
 
@@ -847,4 +858,5 @@ async def test_chat(
             error=str(e),
             exc_info=True,
         )
-        raise HTTPException(status_code=500, detail=f"Test chat error: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Test chat error: {str(e)}")
