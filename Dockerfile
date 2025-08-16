@@ -1,49 +1,66 @@
-# Single-Stage Dockerfile with uv
-FROM python:3.12-slim
+# Ali API - Optimized Production Dockerfile
+FROM python:3.13.1-slim
 
-# Set essential environment variables for production
-ENV PYTHONUNBUFFERED=1 \
-    APP_ENV=production \
+# Build metadata
+LABEL maintainer="Ali API Team"
+LABEL version="1.0.0"
+LABEL description="Ali API - FastAPI with Agno and Firebase"
+
+# Set environment variables
+ARG APP_ENV=production
+ENV APP_ENV=${APP_ENV} \
+    PYTHONFAULTHANDLER=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONHASHSEED=random \
+    PYTHONPATH=/app \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=on \
     PORT=8080 \
-    PATH="/root/.local/bin:${PATH}"
+    HF_HOME=/app/tmp
 
-# Set the working directory for the application
-WORKDIR /app
-
-# Install system dependencies, install uv, and then clean up.
-# This is done in a single RUN command to reduce layer size.
-# We remove curl and ca-certificates after use to keep the image smaller.
+# Install system dependencies and uv
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl ca-certificates && \
     curl -LsSf https://astral.sh/uv/install.sh | sh && \
     apt-get purge -y --auto-remove curl && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy requirements file and install dependencies.
-# This is done before copying the rest of the code to leverage Docker caching.
-COPY requirements.txt .
-RUN uv pip sync --system --no-cache requirements.txt
+# Add uv to the system's PATH so it can be found in subsequent commands
+ENV PATH="/root/.local/bin:${PATH}"
 
-# Copy the rest of the application code
+# Create app user for security
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Set working directory
+WORKDIR /app
+
+# Copy dependency file first (for better Docker layer caching)
+COPY requirements.txt ./
+
+# Install dependencies with uv
+RUN echo "=== INSTALLING DEPENDENCIES WITH UV ===" && \
+    uv pip sync --system --no-cache requirements.txt && \
+    echo "SUCCESS: Dependencies installed with UV"
+
+# Copy application code
 COPY . .
 
-# Create a non-root user, create necessary directories, and set permissions.
-# Combining these commands reduces the number of layers in the final image.
-RUN groupadd --system appgroup && \
-    useradd --system -g appgroup --shell /sbin/nologin appuser && \
-    mkdir -p /app/logs /app/data && \
-    chown -R appuser:appgroup /app && \
-    chmod -R 775 /app
+# Create necessary directories with proper permissions
+RUN mkdir -p /app/logs /app/data /app/tmp && \
+    chmod 777 /app/logs /app/data /app/tmp
 
-# Switch to the non-root user for security
+# Set up permissions
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user for security
 USER appuser
 
-# Expose the port the application will run on
+# Health check (using Python instead of curl for lighter container)
+HEALTHCHECK --interval=30s --timeout=15s --start-period=180s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:${PORT}/health', timeout=10)" || exit 1
+
+# Expose port
 EXPOSE ${PORT}
 
-# Healthcheck to verify that the application is running correctly
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD python -c "import urllib.request; exit(0) if urllib.request.urlopen('http://localhost:${PORT}/health').getcode() == 200 else exit(1)"
-
-# Command to run the application using uvicorn
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Optimized startup command using standard Python
+CMD ["sh", "-c", "python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --workers 1"]
