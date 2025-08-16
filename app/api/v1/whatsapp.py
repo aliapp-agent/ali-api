@@ -79,50 +79,152 @@ async def process_whatsapp_message(
         agno_agent: AgnoAgent instance
         background_tasks: FastAPI background tasks
     """
+    import asyncio
+    import time
+    
+    start_time = time.time()
+    
     try:
         logger.info(
-            "processing_whatsapp_message",
+            "processing_whatsapp_message_started",
             phone_number=phone_number,
             message_id=message_id,
-            message_preview=message_text[:100] + "..." if len(message_text) > 100 else message_text
+            message_length=len(message_text),
+            message_preview=message_text[:100] + "..." if len(message_text) > 100 else message_text,
+            start_time=start_time
         )
+
+        # Verificar se agente está disponível
+        if not agno_agent or not agno_agent.is_available():
+            logger.error(
+                "agno_agent_not_available_for_whatsapp",
+                phone_number=phone_number,
+                message_id=message_id
+            )
+            return
 
         # Create a session ID based on phone number
         session_id = f"whatsapp_{phone_number}"
-
-        # Process message with AgnoAgent
-        response = agno_agent.get_response(
-            message=message_text,
-            user_id=phone_number
+        
+        # Health check do agente antes do processamento
+        agent_health = agno_agent.health_check()
+        logger.info(
+            "agno_agent_health_before_processing",
+            phone_number=phone_number,
+            message_id=message_id,
+            health_status=agent_health.get("status", "unknown")
         )
 
-        if response and response.get('response'):
-            # Format phone number for sending
-            formatted_phone = format_phone_number(phone_number)
-
+        # Process message with AgnoAgent with timeout
+        response = None
+        processing_start = time.time()
+        
+        try:
+            # Usar run_in_executor para rodar o méto-do síncrono de forma não-bloqueante
+            loop = asyncio.get_event_loop()
+            response = await asyncio.wait_for(
+                loop.run_in_executor(
+                    None,
+                    lambda: agno_agent.get_response(
+                        message=message_text,
+                        user_id=phone_number
+                    )
+                ),
+                timeout=25.0  # 25 segundos de timeout
+            )
+            
+            processing_time = time.time() - processing_start
             logger.info(
-                "sending_whatsapp_response",
-                phone_number=formatted_phone,
-                response_preview=response['response'][:100] + "..." if len(response['response']) > 100 else response['response']
+                "agno_response_generated",
+                phone_number=phone_number,
+                message_id=message_id,
+                processing_time_seconds=processing_time,
+                response_type=type(response).__name__,
+                response_length=len(str(response)) if response else 0
+            )
+            
+        except asyncio.TimeoutError:
+            processing_time = time.time() - processing_start
+            logger.error(
+                "agno_response_timeout",
+                phone_number=phone_number,
+                message_id=message_id,
+                timeout_seconds=25.0,
+                processing_time_seconds=processing_time
+            )
+            return
+            
+        except Exception as processing_error:
+            processing_time = time.time() - processing_start
+            logger.error(
+                "agno_response_error",
+                phone_number=phone_number,
+                message_id=message_id,
+                processing_time_seconds=processing_time,
+                error=str(processing_error),
+                error_type=type(processing_error).__name__
+            )
+            return
+
+        # Verificar resposta
+        if response:
+            # Resposta pode ser string direta ou dict com 'response'
+            response_text = None
+            if isinstance(response, str):
+                response_text = response
+            elif isinstance(response, dict) and 'response' in response:
+                response_text = response['response']
+            elif hasattr(response, 'content'):
+                response_text = response.content
+            else:
+                response_text = str(response)
+
+            if response_text and response_text.strip():
+                # Format phone number for logging
+                formatted_phone = format_phone_number(phone_number)
+
+                logger.info(
+                    "whatsapp_response_ready",
+                    phone_number=formatted_phone,
+                    message_id=message_id,
+                    response_length=len(response_text),
+                    response_preview=response_text[:100] + "..." if len(response_text) > 100 else response_text
+                )
+                
+                # Nota: AgnoAgent com whatsapp_tool deve enviar automaticamente
+                # Aqui só registramos que a resposta foi gerada
+            else:
+                logger.warning(
+                    "agno_response_empty",
+                    phone_number=phone_number,
+                    message_id=message_id,
+                    response_raw=str(response)[:200]
+                )
+        else:
+            logger.warning(
+                "agno_response_none",
+                phone_number=phone_number,
+                message_id=message_id
             )
 
-            # The whatsapp_tool will be called by AgnoAgent if needed
-            # We don't need to manually send the message here as the agent
-            # will use the available tools including whatsapp_tool
-
+        total_time = time.time() - start_time
         logger.info(
             "whatsapp_message_processed_successfully",
             phone_number=phone_number,
             message_id=message_id,
+            total_time_seconds=total_time,
             response_generated=bool(response)
         )
 
     except Exception as e:
+        total_time = time.time() - start_time
         logger.error(
             "error_processing_whatsapp_message",
             phone_number=phone_number,
             message_id=message_id,
+            total_time_seconds=total_time,
             error=str(e),
+            error_type=type(e).__name__,
             traceback=traceback.format_exc()
         )
 

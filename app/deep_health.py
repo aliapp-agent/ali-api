@@ -70,10 +70,10 @@ async def deep_health_check(request: Request) -> JSONResponse:
             "error": None,
         }
         try:
-            from app.core.agno.graph import AgnoAgent
+            from app.core.agno.improved_agent import get_improved_agno_agent
 
-            agent = AgnoAgent()
-            agno_health = await agent.health_check()
+            agent = get_improved_agno_agent(session_id="deep_health_session")
+            agno_health = agent.health_check()  # Remove await - não é async
             agno_details.update(agno_health)
         except Exception as e:
             agno_details["error"] = str(e)

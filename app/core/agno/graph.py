@@ -48,33 +48,19 @@ STORAGE_DB_PATH = BASE_DIR / "data" / "agno_storage.db"
 MEMORY_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
-class RAGSearchTool(Function):
-    """Ferramenta de busca RAG seguindo padrões do Agno."""
+def create_rag_search_function(qdrant_client, collection_name: str = "documents"):
+    """Cria função de busca RAG compatível com o Agno."""
     
-    def __init__(self, qdrant_client, collection_name: str = "documents"):
-        """Inicializa a ferramenta RAG.
-        
-        Args:
-            qdrant_client: Cliente Qdrant configurado
-            collection_name: Nome da collection no Qdrant
-        """
-        super().__init__(
-            name="rag_search",
-            description="Busca informações na base de conhecimento usando RAG"
-        )
-        self.qdrant_client = qdrant_client
-        self.collection_name = collection_name
-        self.embedding_model = None
-        
-        # Inicializar modelo de embedding se disponível
-        try:
-            from sentence_transformers import SentenceTransformer
-            self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-            logger.info("Modelo de embedding carregado")
-        except ImportError:
-            logger.warning("sentence-transformers não disponível")
+    # Inicializar modelo de embedding
+    embedding_model = None
+    try:
+        from sentence_transformers import SentenceTransformer
+        embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+        logger.info("Modelo de embedding carregado para RAG")
+    except ImportError:
+        logger.warning("sentence-transformers não disponível para RAG")
     
-    def run(self, query: str, limit: int = 5) -> str:
+    def rag_search(query: str, limit: int = 5) -> str:
         """Executa busca RAG.
         
         Args:
@@ -85,15 +71,15 @@ class RAGSearchTool(Function):
             Resultados da busca formatados
         """
         try:
-            if not self.embedding_model:
+            if not embedding_model:
                 return "Modelo de embedding não disponível"
             
             # Gerar embedding da query
-            query_vector = self.embedding_model.encode(query).tolist()
+            query_vector = embedding_model.encode(query).tolist()
             
             # Buscar no Qdrant
-            results = self.qdrant_client.search(
-                collection_name=self.collection_name,
+            results = qdrant_client.search(
+                collection_name=collection_name,
                 query_vector=query_vector,
                 limit=limit
             )
@@ -114,6 +100,8 @@ class RAGSearchTool(Function):
         except Exception as e:
             logger.error(f"Erro na busca RAG: {e}")
             return f"Erro na busca: {str(e)}"
+    
+    return rag_search
 
 
 class WhatsAppTool(Function):
@@ -268,9 +256,14 @@ class OptimizedAgnoAgent:
                         url=settings.QDRANT_URL,
                         api_key=settings.QDRANT_API_KEY
                     )
-                    rag_tool = RAGSearchTool(
+                    rag_search_func = create_rag_search_function(
                         qdrant_client=qdrant_client,
                         collection_name=getattr(settings, 'QDRANT_COLLECTION_NAME', 'documents')
+                    )
+                    rag_tool = Function(
+                        function=rag_search_func,
+                        name="rag_search",
+                        description="Busca informações na base de conhecimento usando RAG"
                     )
                     self.tools.append(rag_tool)
                     logger.info("RAG Search Tool configurada")
@@ -382,7 +375,10 @@ QUALIDADE:
                     id=settings.LLM_MODEL,
                     api_key=settings.LLM_API_KEY,
                     temperature=settings.DEFAULT_LLM_TEMPERATURE,
-                    max_tokens=settings.MAX_TOKENS
+                    max_tokens=min(settings.MAX_TOKENS, 500),  # Limitar para respostas mais rápidas
+                    timeout=30.0,  # Timeout de 30 segundos
+                    max_retries=3,  # Máximo 3 tentativas
+                    # stream=False   # Parâmetro não suportado na inicialização
                 )
             
             else:
@@ -393,7 +389,13 @@ QUALIDADE:
             # Fallback para modelo básico com configuração mínima
             if settings.LLM_API_KEY:
                 os.environ["OPENAI_API_KEY"] = settings.LLM_API_KEY
-                return OpenAIChat(id="gpt-4o-mini", api_key=settings.LLM_API_KEY)
+                return OpenAIChat(
+                    id="gpt-4o-mini", 
+                    api_key=settings.LLM_API_KEY,
+                    timeout=30.0,
+                    max_retries=2,
+                    max_tokens=300
+                )
             else:
                 raise ValueError("Impossível configurar modelo: LLM_API_KEY ausente")
     
@@ -427,7 +429,7 @@ QUALIDADE:
         return self.agent is not None
     
     def get_response(self, message: str, user_id: str = None) -> Optional[str]:
-        """Obtém resposta do agente de forma síncrona com tratamento robusto de erros.
+        """Obtém resposta do agente de forma síncrona com tratamento robusto de erros e retry.
         
         Args:
             message: Mensagem do usuário
@@ -440,30 +442,114 @@ QUALIDADE:
             logger.warning("Agente não está disponível, usando resposta de fallback")
             return "Agente não está disponível no momento. Tente novamente em alguns instantes."
         
-        try:
-            logger.info(f"Processando mensagem para usuário {user_id or 'anônimo'}: {message[:50]}...")
-            
-            # Configurar contexto do usuário se fornecido
-            if user_id:
-                self.agent.user_id = user_id
-            
-            # Obter resposta síncrona (sem streaming)
-            response = self.agent.run(message, stream=False)
-            
-            # Extrair conteúdo da resposta
-            if hasattr(response, 'content'):
-                result = response.content
-            elif hasattr(response, 'text'):
-                result = response.text
-            else:
-                result = str(response)
-            
-            logger.info(f"Resposta gerada com sucesso ({len(result)} chars)")
-            return result
+        max_retries = 3
+        base_delay = 1.0
+        
+        for attempt in range(max_retries + 1):
+            try:
+                logger.info(
+                    "processing_message_attempt",
+                    extra={
+                        "attempt": attempt + 1,
+                        "max_attempts": max_retries + 1,
+                        "user_id": user_id or 'anônimo',
+                        "message_preview": message[:50] + "..." if len(message) > 50 else message
+                    }
+                )
                 
-        except Exception as e:
-            logger.error(f"Erro ao obter resposta para usuário {user_id or 'anônimo'}: {e}", exc_info=True)
-            return "Desculpe, ocorreu um erro interno. Nossa equipe foi notificada e está trabalhando na correção."
+                # Configurar contexto do usuário se fornecido
+                if user_id:
+                    self.agent.user_id = user_id
+                
+                # Obter resposta síncrona (sem streaming)
+                response = self.agent.run(message, stream=False)
+                
+                # Extrair conteúdo da resposta
+                result = None
+                if hasattr(response, 'content'):
+                    result = response.content
+                elif hasattr(response, 'text'):
+                    result = response.text
+                else:
+                    result = str(response)
+                
+                if result and result.strip():
+                    logger.info(
+                        "response_generated_successfully",
+                        extra={
+                            "attempt": attempt + 1,
+                            "user_id": user_id or 'anônimo',
+                            "response_length": len(result)
+                        }
+                    )
+                    return result
+                else:
+                    logger.warning(
+                        "empty_response_received",
+                        extra={
+                            "attempt": attempt + 1,
+                            "user_id": user_id or 'anônimo',
+                            "response_raw": str(response)[:100]
+                        }
+                    )
+                    if attempt >= max_retries:
+                        return "Desculpe, não consegui gerar uma resposta adequada. Tente reformular sua pergunta."
+                    
+            except Exception as e:
+                error_type = type(e).__name__
+                error_msg = str(e)
+                
+                logger.error(
+                    "error_getting_response",
+                    extra={
+                        "attempt": attempt + 1,
+                        "max_attempts": max_retries + 1,
+                        "user_id": user_id or 'anônimo',
+                        "error_type": error_type,
+                        "error": error_msg
+                    },
+                    exc_info=True
+                )
+                
+                # Verificar se é um erro recuperável
+                is_recoverable = (
+                    "timeout" in error_msg.lower() or
+                    "rate limit" in error_msg.lower() or
+                    "network" in error_msg.lower() or
+                    "connection" in error_msg.lower() or
+                    "503" in error_msg or
+                    "502" in error_msg or
+                    "504" in error_msg or
+                    error_type in ["TimeoutError", "ConnectTimeout", "ReadTimeout", "RequestException"]
+                )
+                
+                if attempt >= max_retries or not is_recoverable:
+                    logger.error(
+                        "final_error_after_retries",
+                        extra={
+                            "total_attempts": attempt + 1,
+                            "user_id": user_id or 'anônimo',
+                            "error_type": error_type,
+                            "is_recoverable": is_recoverable
+                        }
+                    )
+                    return "Desculpe, ocorreu um erro interno. Nossa equipe foi notificada e está trabalhando na correção."
+                
+                # Exponential backoff para retry
+                delay = base_delay * (2 ** attempt)
+                logger.info(
+                    "retrying_after_delay",
+                    extra={
+                        "attempt": attempt + 1,
+                        "delay_seconds": delay,
+                        "next_attempt": attempt + 2
+                    }
+                )
+                
+                import time
+                time.sleep(delay)
+        
+        return "Desculpe, não foi possível processar sua mensagem após várias tentativas."
     
     async def get_stream_response(self, message: str, user_id: str = None) -> AsyncGenerator[str, None]:
         """Obtém resposta em streaming do agente.

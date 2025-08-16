@@ -58,7 +58,7 @@ async def initialize_agno_agent_with_retry(app: FastAPI, max_retries: int = 1, b
         max_retries: Maximum number of retry attempts
         base_delay: Base delay in seconds for exponential backoff
     """
-    from app.core.agno.graph import AgnoAgent
+    from app.core.agno.improved_agent import get_improved_agno_agent
     
     for attempt in range(max_retries + 1):
         try:
@@ -71,8 +71,8 @@ async def initialize_agno_agent_with_retry(app: FastAPI, max_retries: int = 1, b
             # Validate critical dependencies before initialization
             await validate_agno_dependencies()
             
-            # Initialize AgnoAgent
-            agno_agent = AgnoAgent()
+            # Initialize ImprovedAgnoAgent
+            agno_agent = get_improved_agno_agent(session_id="main_session")
             
             # Perform health check to ensure AgnoAgent is fully operational
             health_result = agno_agent.health_check()
@@ -184,8 +184,8 @@ async def lifespan(app: FastAPI):
         logger.error("agno_agent_initialization_failed_non_blocking", error=str(e), exc_info=True)
         # Create a basic fallback agent
         try:
-            from app.core.agno.graph import AgnoAgent
-            fallback_agent = AgnoAgent()
+            from app.core.agno.improved_agent import get_improved_agno_agent
+            fallback_agent = get_improved_agno_agent(session_id="fallback_session")
             app.state.agno_agent = fallback_agent
             logger.warning("using_fallback_agno_agent")
         except Exception as fallback_error:

@@ -15,7 +15,7 @@ from fastapi import (
 from fastapi.responses import StreamingResponse
 
 from app.api.v1.auth import get_current_session
-from app.core.agno.graph import AgnoAgent
+from app.core.agno.improved_agent import get_improved_agno_agent
 from app.core.config import settings
 from app.core.dependencies import DatabaseServiceDep, MessageServiceDep
 from app.core.limiter import limiter
@@ -38,7 +38,7 @@ from app.schemas.chat import (
 from app.shared.constants.http import CONTENT_TYPE_SSE
 
 router = APIRouter()
-agent = AgnoAgent()
+agent = get_improved_agno_agent(session_id="chatbot_session")
 
 
 @router.post("/chat", response_model=ChatResponse)
